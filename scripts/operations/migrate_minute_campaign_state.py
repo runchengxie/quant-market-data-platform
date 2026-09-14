@@ -49,7 +49,11 @@ def _planned_run_roots(plans: list[Path]) -> tuple[int, int]:
 
 
 def migrate(  # noqa: C901,PLR0912,PLR0915
-    campaign_dir: Path, *, backup_dir: Path | None, apply: bool
+    campaign_dir: Path,
+    *,
+    backup_dir: Path | None,
+    apply: bool,
+    mdp_dir: Path | None,
 ) -> int:
     plans_dir = campaign_dir / "plans"
     plans = sorted(plans_dir.glob("*.plan.json"))
@@ -76,6 +80,8 @@ def migrate(  # noqa: C901,PLR0912,PLR0915
         )
 
     if not apply:
+        if mdp_dir is not None:
+            print(f"config paths would use MDP_DIR={mdp_dir}")
         print(f"dry-run: {len(migrations)} plans would be migrated")
         return 0
     if backup_dir is None:
@@ -130,6 +136,10 @@ def migrate(  # noqa: C901,PLR0912,PLR0915
 
     manifest_path = campaign_dir / "manifest.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if mdp_dir is not None:
+        config = manifest.setdefault("config", {})
+        config["repo_root"] = str(mdp_dir)
+        config["marketdata_bin"] = str(mdp_dir / ".venv/bin/marketdata")
     for day in manifest.get("days", []):
         for phase in day.get("phases", []):
             for lane in phase.get("lanes", {}).values():
@@ -159,11 +169,17 @@ def main() -> int:
     parser.add_argument("campaign_dir", type=Path)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--backup-dir", type=Path)
+    parser.add_argument(
+        "--mdp-dir",
+        type=Path,
+        help="deployed market-data-platform root for campaign config paths",
+    )
     args = parser.parse_args()
     return migrate(
         args.campaign_dir.expanduser().resolve(),
         backup_dir=args.backup_dir,
         apply=args.apply,
+        mdp_dir=args.mdp_dir.expanduser().resolve() if args.mdp_dir else None,
     )
 
 
