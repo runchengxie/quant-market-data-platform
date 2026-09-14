@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import os
 import subprocess
 from pathlib import Path
@@ -34,22 +35,18 @@ def test_systemd_renderer_can_render_retention_units(tmp_path: Path) -> None:
     from scripts.operations.render_tushare_minute_campaign_units import render_units
 
     output_dir = tmp_path / "systemd"
-    args = type(
-        "Args",
-        (),
-        {
-            "template_root": REPO_ROOT / "scripts" / "systemd",
-            "template_glob": "market-data-platform-retention.*",
-            "home": tmp_path / "home",
-            "mdp_dir": REPO_ROOT,
-            "data_platform_root": tmp_path / "data" / "quant" / "market-data-platform",
-            "campaign_manifest": tmp_path / "unused-manifest.json",
-            "logs_dir": tmp_path / "logs",
-            "marketdata_cli": tmp_path / "bin" / "marketdata",
-            "output_dir": output_dir,
-            "dry_run": False,
-        },
-    )()
+    args = argparse.Namespace(
+        template_root=REPO_ROOT / "scripts" / "systemd",
+        template_glob="market-data-platform-retention.*",
+        home=tmp_path / "home",
+        mdp_dir=REPO_ROOT,
+        data_platform_root=tmp_path / "data" / "quant" / "market-data-platform",
+        campaign_manifest=tmp_path / "unused-manifest.json",
+        logs_dir=tmp_path / "logs",
+        marketdata_cli=tmp_path / "bin" / "marketdata",
+        output_dir=output_dir,
+        dry_run=False,
+    )
 
     rendered = render_units(args)
 
