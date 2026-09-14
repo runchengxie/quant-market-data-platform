@@ -90,34 +90,40 @@ def _coerce_options(
     return option_type(**option_kwargs)
 
 
-def _request_policy(
+def _request_policy(  # noqa: PLR0913
     *,
     request_attempts: int = DEFAULT_REQUEST_ATTEMPTS,
     retry_sleep_seconds: float = DEFAULT_RETRY_SLEEP_SECONDS,
     retry_max_sleep_seconds: float = DEFAULT_RETRY_MAX_SLEEP_SECONDS,
     quota_cooldown_seconds: float = DEFAULT_QUOTA_COOLDOWN_SECONDS,
     disable_proxy: bool = DEFAULT_DISABLE_PROXY,
+    request_timeout_seconds: float | None = None,
 ) -> TushareRequestPolicy:
     attempts = max(1, int(request_attempts))
     retry_sleep = max(0.0, float(retry_sleep_seconds))
     retry_max_sleep = max(retry_sleep, float(retry_max_sleep_seconds))
     quota_cooldown = max(0.0, float(quota_cooldown_seconds))
+    timeout = None if request_timeout_seconds is None else float(request_timeout_seconds)
+    if timeout is not None and timeout <= 0:
+        raise ValueError("request_timeout_seconds must be positive when provided")
     return TushareRequestPolicy(
         attempts=attempts,
         retry_sleep_seconds=retry_sleep,
         retry_max_sleep_seconds=retry_max_sleep,
         quota_cooldown_seconds=quota_cooldown,
         disable_proxy=bool(disable_proxy),
+        request_timeout_seconds=timeout,
     )
 
 
-def request_policy(
+def request_policy(  # noqa: PLR0913
     *,
     request_attempts: int = DEFAULT_REQUEST_ATTEMPTS,
     retry_sleep_seconds: float = DEFAULT_RETRY_SLEEP_SECONDS,
     retry_max_sleep_seconds: float = DEFAULT_RETRY_MAX_SLEEP_SECONDS,
     quota_cooldown_seconds: float = DEFAULT_QUOTA_COOLDOWN_SECONDS,
     disable_proxy: bool = DEFAULT_DISABLE_PROXY,
+    request_timeout_seconds: float | None = None,
 ) -> TushareRequestPolicy:
     return _request_policy(
         request_attempts=request_attempts,
@@ -125,6 +131,7 @@ def request_policy(
         retry_max_sleep_seconds=retry_max_sleep_seconds,
         quota_cooldown_seconds=quota_cooldown_seconds,
         disable_proxy=disable_proxy,
+        request_timeout_seconds=request_timeout_seconds,
     )
 
 

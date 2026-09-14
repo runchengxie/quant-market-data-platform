@@ -47,6 +47,7 @@ def tushare_request_policy_from_args(args: argparse.Namespace) -> TushareRequest
         retry_sleep_seconds=args.retry_sleep_seconds,
         retry_max_sleep_seconds=args.retry_max_sleep_seconds,
         quota_cooldown_seconds=args.quota_cooldown_seconds,
+        request_timeout_seconds=args.request_timeout_seconds,
     )
 
 

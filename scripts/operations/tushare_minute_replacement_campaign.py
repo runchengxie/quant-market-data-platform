@@ -188,6 +188,7 @@ class _PlannerConfig(NamedTuple):
     cooldown_seconds: float
     retry_attempts: int
     quota_cooldown_seconds: float
+    request_timeout_seconds: float | None
 
 
 class _PrepareContext(NamedTuple):
@@ -242,7 +243,11 @@ def _planner_command(
         "30",
         "--quota-cooldown-seconds",
         str(config.quota_cooldown_seconds),
-    ]
+    ] + (
+        ["--request-timeout-seconds", str(config.request_timeout_seconds)]
+        if config.request_timeout_seconds is not None
+        else []
+    )
 
 
 def _plan_lane(
@@ -308,6 +313,7 @@ def prepare_campaign(args: argparse.Namespace) -> int:
             cooldown_seconds=args.cooldown_seconds,
             retry_attempts=args.retry_attempts,
             quota_cooldown_seconds=args.quota_cooldown_seconds,
+            request_timeout_seconds=args.request_timeout_seconds,
         ),
     )
     planned_days: list[dict[str, Any]] = []
@@ -348,6 +354,7 @@ def prepare_campaign(args: argparse.Namespace) -> int:
             "cooldown_seconds": args.cooldown_seconds,
             "retry_attempts": args.retry_attempts,
             "quota_cooldown_seconds": args.quota_cooldown_seconds,
+            "request_timeout_seconds": args.request_timeout_seconds,
             "stagger_seconds": args.stagger_seconds,
             "blocker_services": list(args.blocker_service),
         },
@@ -453,6 +460,7 @@ def build_parser() -> argparse.ArgumentParser:  # noqa: PLR0915
     prepare.add_argument("--cooldown-seconds", type=float, default=1.2)
     prepare.add_argument("--retry-attempts", type=int, default=2)
     prepare.add_argument("--quota-cooldown-seconds", type=float, default=390.0)
+    prepare.add_argument("--request-timeout-seconds", type=_positive_float, default=15.0)
     prepare.add_argument("--stagger-seconds", type=float, default=45.0)
     prepare.add_argument("--blocker-service", action="append", default=list(DEFAULT_BLOCKERS))
     prepare.add_argument("--token-env", default="TUSHARE_TOKEN_2")
