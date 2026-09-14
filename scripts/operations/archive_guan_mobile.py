@@ -800,7 +800,35 @@ def _hash_stable_file(path: Path) -> tuple[str, os.stat_result]:
     return digest.hexdigest(), after_path
 
 
-def verify_archive(  # noqa: C901,PLR0912,PLR0915
+def _verify_receipt(
+    relative: str, target: Path, receipt: dict[str, Any]
+) -> tuple[os.stat_result, str]:
+    """Validate one archived file against its receipt and return its stat/hash."""
+    try:
+        actual_hash, target_stat = _hash_stable_file(target)
+    except (FileNotFoundError, NotADirectoryError) as exc:
+        raise ArchiveVerificationError(f"Archived file is missing: {target}") from exc
+    expected_size = int(receipt.get("size", -1))
+    expected_mtime = int(receipt.get("destination_mtime_ns", -1))
+    expected_hash = str(receipt.get("sha256", ""))
+    mismatches: dict[str, Any] = {}
+    if target_stat.st_size != expected_size:
+        mismatches["size"] = {"expected": expected_size, "actual": target_stat.st_size}
+    if target_stat.st_mtime_ns != expected_mtime:
+        mismatches["mtime_ns"] = {
+            "expected": expected_mtime,
+            "actual": target_stat.st_mtime_ns,
+        }
+    if actual_hash != expected_hash:
+        mismatches["sha256"] = {"expected": expected_hash, "actual": actual_hash}
+    if mismatches:
+        raise ArchiveVerificationError(
+            f"Archived file failed verification: {relative}: {mismatches}"
+        )
+    return target_stat, actual_hash
+
+
+def verify_archive(  # noqa: PLR0915
     source_dir: str | Path,
     destination_dir: str | Path,
     manifest: str | Path,
@@ -867,27 +895,7 @@ def verify_archive(  # noqa: C901,PLR0912,PLR0915
                 current_path = relative
                 receipt = receipts[relative]
                 target = _destination_path(destination, relative)
-                try:
-                    actual_hash, target_stat = _hash_stable_file(target)
-                except (FileNotFoundError, NotADirectoryError) as exc:
-                    raise ArchiveVerificationError(f"Archived file is missing: {target}") from exc
-                expected_size = int(receipt.get("size", -1))
-                expected_mtime = int(receipt.get("destination_mtime_ns", -1))
-                expected_hash = str(receipt.get("sha256", ""))
-                mismatches: dict[str, Any] = {}
-                if target_stat.st_size != expected_size:
-                    mismatches["size"] = {"expected": expected_size, "actual": target_stat.st_size}
-                if target_stat.st_mtime_ns != expected_mtime:
-                    mismatches["mtime_ns"] = {
-                        "expected": expected_mtime,
-                        "actual": target_stat.st_mtime_ns,
-                    }
-                if actual_hash != expected_hash:
-                    mismatches["sha256"] = {"expected": expected_hash, "actual": actual_hash}
-                if mismatches:
-                    raise ArchiveVerificationError(
-                        f"Archived file failed verification: {relative}: {mismatches}"
-                    )
+                target_stat, actual_hash = _verify_receipt(relative, target, receipt)
                 receipt["verified_at"] = _utc_now()
                 receipt["verified_sha256"] = actual_hash
                 receipt["verification_status"] = "verified"
