@@ -60,15 +60,30 @@ def migrate(  # noqa: C901,PLR0912,PLR0915
 
     for old_id, (new_id, path) in migrations.items():
         payload = json.loads(path.read_text(encoding="utf-8"))
+        old_output = payload.get("output", {})
+        old_run = (
+            Path(str(old_output["run_root"]))
+            if isinstance(old_output, dict) and old_output.get("run_root")
+            else None
+        )
         payload["plan_id"] = new_id
         output = payload.get("output", {})
         if isinstance(output, dict):
             output["run_root"] = _replace_run_id(output.get("run_root"), old_id, new_id)
             output["data_dir"] = _replace_run_id(output.get("data_dir"), old_id, new_id)
         _write_json(path, payload)
-        old_run = campaign_dir / "runs" / old_id
-        new_run = campaign_dir / "runs" / new_id
-        if old_run.exists() and not new_run.exists():
+        new_run = (
+            Path(str(output["run_root"]))
+            if isinstance(output, dict) and output.get("run_root")
+            else None
+        )
+        if (
+            old_run is not None
+            and new_run is not None
+            and old_run.exists()
+            and not new_run.exists()
+        ):
+            new_run.parent.mkdir(parents=True, exist_ok=True)
             new_run.symlink_to(old_run, target_is_directory=True)
 
     for path in sorted((campaign_dir / "receipts").glob("*.receipt.json")):
