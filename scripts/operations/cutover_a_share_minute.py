@@ -281,12 +281,12 @@ def _validate_sh_sz_gap_contract(
         raise MinuteCutoverError("SH/SZ production policy does not expose the BJ coverage gap")
 
 
-def _validate_production_contract(  # noqa: C901,PLR0912
+def _validate_coverage_contract_fields(
     payload: Mapping[str, Any],
     *,
     target_market_scope: str,
-) -> Mapping[str, int]:
-    _validate_target_market_scope(target_market_scope)
+) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
+    """Validate shared coverage fields and return inputs plus source lineage."""
     expected_coverage_status = (
         "full_a_share" if target_market_scope == _TARGET_MARKET_SCOPE_FULL_A_SHARE else "full_sh_sz"
     )
@@ -340,6 +340,19 @@ def _validate_production_contract(  # noqa: C901,PLR0912
         raise MinuteCutoverError(
             "Full-A production cutover requires the no-intraday-merge replacement policy"
         )
+    return inputs, lineage
+
+
+def _validate_production_contract(
+    payload: Mapping[str, Any],
+    *,
+    target_market_scope: str,
+) -> Mapping[str, int]:
+    _validate_target_market_scope(target_market_scope)
+    inputs, lineage = _validate_coverage_contract_fields(
+        payload,
+        target_market_scope=target_market_scope,
+    )
     if target_market_scope == _TARGET_MARKET_SCOPE_SH_SZ:
         _validate_sh_sz_gap_contract(payload, inputs=inputs, lineage=lineage)
         return _PRODUCTION_TIER_COUNTS
