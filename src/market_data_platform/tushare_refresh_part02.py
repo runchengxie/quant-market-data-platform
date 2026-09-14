@@ -329,7 +329,7 @@ def _apply_promotion(
         alias_path=refresh_paths.aliases["daily_clean"],
         target=Path(context["daily_clean"]),
     )
-    file_updates = {
+    file_updates: dict[str, dict[str, Any]] = {
         key: _copy_release_file(
             source=Path(path),
             destination=(
