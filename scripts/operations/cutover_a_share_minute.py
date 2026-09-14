@@ -1235,16 +1235,12 @@ def _preserve_pending_directory(pending: Path, backup: Path) -> None:
     _fsync_directory(backup.parent)
 
 
-def cutover_minute_current(  # noqa: C901,PLR0912,PLR0913,PLR0915
-    *,
-    coverage_manifest: str | Path,
+def _validate_cutover_endpoints(
     current_path: str | Path,
     new_version: str | Path,
     backup_path: str | Path,
-    dry_run: bool = False,
-    target_market_scope: str = _TARGET_MARKET_SCOPE_FULL_A_SHARE,
-) -> dict[str, Any]:
-    """Atomically exchange current with a prepared link and preserve the old endpoint."""
+) -> tuple[Path, Path, Path, Path]:
+    """Resolve and validate the three endpoints used by a minute cutover."""
     current = _absolute_endpoint(current_path)
     version = _absolute_endpoint(new_version)
     backup = _absolute_endpoint(backup_path)
@@ -1255,6 +1251,22 @@ def cutover_minute_current(  # noqa: C901,PLR0912,PLR0913,PLR0915
     pending = current.parent / f".{current.name}.cutover-pending"
     if pending in {current, version, backup}:
         raise MinuteCutoverError("Cutover pending path conflicts with a dataset endpoint")
+    return current, version, backup, pending
+
+
+def cutover_minute_current(  # noqa: PLR0912,PLR0913
+    *,
+    coverage_manifest: str | Path,
+    current_path: str | Path,
+    new_version: str | Path,
+    backup_path: str | Path,
+    dry_run: bool = False,
+    target_market_scope: str = _TARGET_MARKET_SCOPE_FULL_A_SHARE,
+) -> dict[str, Any]:
+    """Atomically exchange current with a prepared link and preserve the old endpoint."""
+    current, version, backup, pending = _validate_cutover_endpoints(
+        current_path, new_version, backup_path
+    )
 
     with minute_dataset_lock(version, operation="cutover-a-share-minute-current"):
         validate_cutover_receipt(

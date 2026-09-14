@@ -32,6 +32,30 @@ def _load_script() -> ModuleType:
 cutover = _load_script()
 
 
+def test_validate_cutover_endpoints_returns_pending_sibling(tmp_path: Path) -> None:
+    current, version, backup, pending = cutover._validate_cutover_endpoints(
+        tmp_path / "current",
+        tmp_path / "v2",
+        tmp_path / "backup",
+    )
+
+    assert (current, version, backup) == (
+        tmp_path / "current",
+        tmp_path / "v2",
+        tmp_path / "backup",
+    )
+    assert pending == tmp_path / ".current.cutover-pending"
+
+
+def test_validate_cutover_endpoints_rejects_mixed_parent(tmp_path: Path) -> None:
+    with pytest.raises(cutover.MinuteCutoverError, match="share one parent"):
+        cutover._validate_cutover_endpoints(
+            tmp_path / "current",
+            tmp_path / "versions" / "v2",
+            tmp_path / "backup",
+        )
+
+
 def _production_dates() -> list[str]:
     pre_bse = [
         (date(2016, 1, 4) + timedelta(days=offset)).strftime("%Y%m%d") for offset in range(1_426)
