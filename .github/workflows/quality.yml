@@ -1,0 +1,34 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - run: uv sync --locked --extra dev
+      - name: Audit public snapshot boundary
+        run: >-
+          uv run --locked --extra dev python scripts/dev/audit_public_snapshot.py .
+          --exclude-file scripts/dev/public_snapshot_excludes.txt
+      - name: Run shared code-quality ratchet
+        run: uv run --locked --extra dev research-code-quality --scope src --scope scripts --scope tests --baseline .code-quality-baseline.json --ratchet --json
+      - run: uv run --locked --extra dev ruff check src scripts tests
+      - run: uv run --locked --extra dev pytest -q
+      - name: Audit public dependencies
+        run: >-
+          uvx --from pip-audit pip-audit --strict
+          -r <(uv export --locked --extra dev --format requirements-txt
+          --no-hashes --no-emit-project --no-emit-local
+          --no-emit-package research-code-quality)

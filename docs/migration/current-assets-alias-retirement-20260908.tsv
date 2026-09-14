@@ -1,0 +1,10 @@
+alias	category	decision	reason
+context/cn/catalog/cn_context_catalog_latest.manifest.yml	context-build	retain	上下文构建兼容入口
+context/cn/catalog/cn_context_catalog_latest.parquet	context-build	retain	上下文构建兼容入口
+context/cn/normalized/cn_context_observations_latest	context-build	retain	上下文构建兼容入口
+context/cn/pit/cn_context_pit_latest	context-build	retain	上下文构建兼容入口
+context/cn/release_calendar/cn_context_release_calendar_latest.manifest.yml	context-build	retain	上下文发布兼容入口
+context/cn/release_calendar/cn_context_release_calendar_latest.parquet	context-build	retain	上下文发布兼容入口
+context/cn/builds/*/latest	context-build	retain	按 as_of 日期选择构建结果
+tushare/a_share/*/*_latest	asset-compatibility	defer	仍有发布、恢复或内部输入引用
+tushare/a_share/ths_member/*_latest	asset-compatibility	defer	ths_member 暂缓发布，先保留现状

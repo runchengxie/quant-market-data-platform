@@ -1,0 +1,21 @@
+[Unit]
+Description=Retention cleanup for market-data-platform dated snapshots
+ConditionPathExists=@DATA_PLATFORM_ROOT@
+
+[Service]
+Type=oneshot
+WorkingDirectory=@MDP_DIR@
+EnvironmentFile=-@MDP_DIR@/.env.local
+Environment=HOME=@HOME@
+Environment=PATH=@HOME@/.local/bin:@HOME@/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+Environment=MARKET_DATA_ROOT=@DATA_PLATFORM_ROOT@
+Environment=DATA_PLATFORM_ROOT=@DATA_PLATFORM_ROOT@
+Environment=MARKETDATA_CLI=@MARKETDATA_CLI@
+ExecStart=@MDP_DIR@/scripts/operations/market_data_platform_retention.sh apply
+StandardOutput=append:@HOME@/.hermes/logs/market_data_platform_retention.log
+StandardError=append:@HOME@/.hermes/logs/market_data_platform_retention.log
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+TimeoutStartSec=30min
+Restart=no

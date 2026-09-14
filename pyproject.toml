@@ -1,0 +1,134 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "market-data-platform"
+version = "0.2.0"
+description = "Shared multi-market research data control plane contracts and helpers."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.23,<3",
+  "PyYAML>=6.0",
+  "research-code-quality",
+]
+
+[project.optional-dependencies]
+dev = [
+  "duckdb>=1.5.5",
+  "pandas>=2.2",
+  "polars>=1.43.2,<2",
+  "pre-commit>=4.6.1",
+  "pyarrow>=25.0.0",
+  "python-dotenv>=1",
+  "pip-audit>=2.7",
+  "pytest>=9.1.1",
+  "pytest-cov>=6",
+  "ruff>=0.16.2",
+  "ty>=0.0.69",
+]
+research-features = [
+  "pandas>=2.2",
+  "pyarrow>=25.0.0",
+]
+quality = [
+  "pyarrow>=25.0.0",
+]
+duckdb = [
+  "duckdb>=1.5.5",
+]
+minute-fusion = [
+  "duckdb>=1.5.5",
+  "pandas>=2.2",
+  "polars>=1.43.2,<2",
+  "pyarrow>=25.0.0",
+]
+qlib = [
+  "pandas>=2.2",
+  "pyarrow>=25.0.0",
+  "pyqlib>=0.9.7",
+]
+tushare = [
+  "pandas>=2",
+  "pyarrow>=25.0.0",
+  "tushare>=1.4",
+]
+etf-minute-public = [
+  "akshare>=1.18.94,<2",
+  "pandas>=2.2",
+  "pyarrow>=25.0.0",
+]
+
+[project.scripts]
+marketdata = "market_data_platform.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = [
+  ".venv",
+  "artifacts",
+  "data",
+  "reports",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4", "RET", "RUF100", "C90", "PLR0911", "PLR0912", "PLR0913", "PLR0915"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 14
+
+[tool.ruff.lint.per-file-ignores]
+  "src/market_data_platform/cli_data.py" = ["F401"]
+  "src/market_data_platform/contract_health.py" = ["F401"]
+  "src/market_data_platform/data_governance.py" = ["F401"]
+  "src/market_data_platform/data_providers_core.py" = ["F401"]
+  "src/market_data_platform/data_warehouse_materialize.py" = ["F401"]
+  "src/market_data_platform/guan_mobile_raw.py" = ["F401"]
+  "src/market_data_platform/providers/_a_share_minute_coverage_audit.py" = ["F401"]
+  "src/market_data_platform/providers/_adapters.py" = ["F401"]
+  "src/market_data_platform/providers/_coverage_manifest.py" = ["F401"]
+  "src/market_data_platform/providers/_coverage_materialize.py" = ["F401"]
+  "src/market_data_platform/providers/a_share_minute_bj_overlay.py" = ["F401"]
+  "src/market_data_platform/providers/a_share_minute_fusion.py" = ["F401"]
+  "src/market_data_platform/providers/guan_annual_minbar.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share_clean.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share_flow_features.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share_fundamentals.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share_fundamentals_pit.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share_hotspot_features.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share_options.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share_ownership_features.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share_quality.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share_research.py" = ["F401"]
+  "src/market_data_platform/providers/tushare_a_share_universe.py" = ["F401"]
+  "src/market_data_platform/research_views/daily_watch20_candidate_pool.py" = ["F401"]
+  "src/market_data_platform/tushare_minute_backfill.py" = ["F401"]
+  "src/market_data_platform/tushare_minute_replacement_campaign_runner.py" = ["F401"]
+  "src/market_data_platform/tushare_refresh.py" = ["F401"]
+
+[tool.uv.sources]
+research-code-quality = { git = "https://github.com/runchengxie/quant-code-quality.git", rev = "1c754c3" }
+
+[tool.ty.src]
+include = ["src", "scripts", "tests"]
+exclude = [
+  ".venv",
+  "artifacts",
+  "data",
+  "reports",
+]
+
+[tool.coverage.run]
+source = ["src/market_data_platform"]
+
+[tool.coverage.report]
+show_missing = true

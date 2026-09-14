@@ -1,0 +1,6 @@
+[Unit]
+Description=Hard backstop for the TuShare minute tail filler
+
+[Service]
+Type=oneshot
+ExecStart=-/usr/bin/systemctl --user kill --kill-whom=all --signal=SIGKILL tushare-minute-replacement-campaign-tail.service

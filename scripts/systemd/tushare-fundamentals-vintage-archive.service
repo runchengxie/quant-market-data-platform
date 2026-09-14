@@ -1,0 +1,22 @@
+[Unit]
+Description=Daily immutable TuShare A-share fundamentals vintage archive
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=@MDP_DIR@
+EnvironmentFile=-@MDP_DIR@/.env.local
+ExecStart=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/archive_tushare_fundamentals_vintage.py --artifacts-root @DATA_PLATFORM_ROOT@ --start-date 20150101 --token-env TUSHARE_TOKEN_2 --api-url https://proxy-a.example.com --observation-frequency daily
+Environment=HOME=@HOME@
+Environment=PATH=@HOME@/.local/bin:@HOME@/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+Environment=REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+StandardOutput=append:@HOME@/.hermes/logs/tushare_fundamentals_vintage_archive.log
+StandardError=append:@HOME@/.hermes/logs/tushare_fundamentals_vintage_archive.log
+TimeoutStartSec=4h
+TimeoutStopSec=6min
+KillSignal=SIGINT
+SendSIGKILL=yes
+Restart=no
+Nice=10
+IOSchedulingClass=idle

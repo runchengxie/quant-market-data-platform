@@ -1,0 +1,12 @@
+[Unit]
+Description=Initialize daily TuShare minute request holds at 00:05 CST
+
+[Timer]
+OnCalendar=*-*-* 00:05:00 Asia/Shanghai
+AccuracySec=1min
+RandomizedDelaySec=0
+Persistent=true
+Unit=tushare-minute-quota-coordinator.service
+
+[Install]
+WantedBy=timers.target

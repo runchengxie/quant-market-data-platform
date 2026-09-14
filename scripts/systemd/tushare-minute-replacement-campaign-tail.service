@@ -1,0 +1,34 @@
+[Unit]
+# Render @...@ placeholders before installing this template.
+Description=Burst-band TuShare minute campaign tail filler
+Wants=network-online.target
+Requires=tushare-minute-quota-coordinator.service
+After=network-online.target tushare-minute-quota-coordinator.service
+ConditionPathExists=@CAMPAIGN_MANIFEST@
+OnFailure=tushare-minute-replacement-campaign-status.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=@MDP_DIR@
+EnvironmentFile=-@HOME@/.config/market-data-platform/config.env
+# Refuse a same-day catch-up after a policy migration. An existing rows-gated
+# pool is immutable until the next Asia/Shanghai quota date.
+ExecCondition=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_quota_schedule.py status --manifest @CAMPAIGN_MANIFEST@ --minute-quota-db @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/minute_quota.sqlite3 --state-root @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/schedule --allow-burst --minute-quota-limit-requests 10000 --minute-quota-burst-limit-requests 20000 --minute-quota-safety-requests 500 --minute-quota-limit-rows 160000000 --minute-quota-safety-rows 4000000
+# This checks the downloader-owned evidence, not the final result of the 21:00
+# factor service. A later walk-forward failure must not strand safe quota.
+ExecCondition=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_quota_schedule.py await-marker --raw-completeness-root @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/raw_completeness --consumer daily_watch20 --weekdays-only --not-before-local 05:15 --deadline-local 23:25 --poll-seconds 60
+ExecStartPre=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_quota_schedule.py release-ready --manifest @CAMPAIGN_MANIFEST@ --minute-quota-db @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/minute_quota.sqlite3 --state-root @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/schedule --raw-completeness-root @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/raw_completeness --consumer daily_watch20 --weekdays-only --not-before-local 05:15 --minute-quota-limit-requests 10000 --minute-quota-burst-limit-requests 20000 --minute-quota-safety-requests 500 --minute-quota-limit-rows 160000000 --minute-quota-safety-rows 4000000
+ExecStart=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_replacement_campaign.py run-budgeted --manifest @CAMPAIGN_MANIFEST@ --max-new-rows 155000000 --max-runtime-seconds 8400 --poll-seconds 10 --interrupt-grace-seconds 300 --quota-timezone Asia/Shanghai --quota-reset-guard-seconds 1500 --run-window-start 21:15 --run-window-drain 23:30 --run-window-stop 23:35 --heartbeat-seconds 300 --no-progress-limit 2 --single-lane-threshold-rows 5500000 --allow-stalled-retry --ignore-blocker-service a-share-factor-observation-refresh.service --minute-quota-mode enforce --minute-quota-db @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/minute_quota.sqlite3 --minute-quota-consumer replacement_campaign --minute-quota-gate requests --minute-quota-limit-requests 10000 --minute-quota-burst-limit-requests 20000 --minute-quota-safety-requests 500 --minute-quota-allow-burst --minute-quota-limit-rows 160000000 --minute-quota-safety-rows 4000000
+Environment=HOME=@HOME@
+Environment=MDP_DIR=@MDP_DIR@
+Environment=PATH=@HOME@/.local/bin:@HOME@/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+Environment=REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+StandardOutput=append:@HERMES_LOGS_DIR@/tushare_minute_replacement_campaign_tail.log
+StandardError=append:@HERMES_LOGS_DIR@/tushare_minute_replacement_campaign_tail.log
+TimeoutStartSec=2h25min
+TimeoutStopSec=6min
+KillSignal=SIGINT
+SendSIGKILL=yes
+Restart=no
+Nice=10
+IOSchedulingClass=idle

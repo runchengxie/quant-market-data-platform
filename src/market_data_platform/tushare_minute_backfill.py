@@ -1,0 +1,72 @@
+"""Re-export surface for the split modules of tushare_minute_backfill."""
+
+from market_data_platform.providers.tushare_a_share_mins import (
+    mirror_minute_bars,
+)
+from market_data_platform.tushare_minute_backfill_part01 import (
+    BSE_FIRST_TRADE_DATE,
+    MINUTE_BACKFILL_PLAN_SCHEMA,
+    MINUTE_BACKFILL_RECEIPT_SCHEMA,
+    MINUTE_BACKFILL_SCOPES,
+    MINUTE_BACKFILL_SEGMENTS,
+    MinuteBackfillBudgetError,
+    MinuteBackfillDateOrder,
+    MinuteBackfillPlanOptions,
+    MinuteBackfillRunOptions,
+    MinuteBackfillScope,
+    MinuteBackfillSegment,
+    _active_symbol_count,
+    _atomic_write_json,
+    _canonical_instrument_intervals,
+    _endpoint_identifier,
+    _expanded,
+    _load_open_dates,
+    _load_requested_dates,
+    _MinuteBackfillExecution,
+    _normalize_nullable_dates,
+    _plan_id,
+    _policy_from_payload,
+    _policy_payload,
+    _read_json,
+    _requested_dates_from_json,
+    _requested_dates_from_text,
+    _segment_dates,
+    _sha256_file,
+    _source_fingerprint,
+    _utc_now,
+    _validate_plan_options,
+    _write_immutable_plan,
+)
+from market_data_platform.tushare_minute_backfill_part02 import (
+    _execute_backfill_plan,
+    _execute_planned_segment,
+    _execution_context,
+    _load_or_create_receipt,
+    _load_run_plan,
+    _new_receipt,
+    _receipt_totals,
+    _redacted_error,
+    _run_lock,
+    _save_receipt,
+    _validate_plan,
+    build_minute_backfill_plan,
+)
+from market_data_platform.tushare_minute_backfill_part03 import (
+    run_minute_backfill,
+    summarize_minute_backfill_artifact,
+)
+
+__all__ = [
+    "BSE_FIRST_TRADE_DATE",
+    "MINUTE_BACKFILL_PLAN_SCHEMA",
+    "MINUTE_BACKFILL_RECEIPT_SCHEMA",
+    "MINUTE_BACKFILL_SCOPES",
+    "MINUTE_BACKFILL_SEGMENTS",
+    "MinuteBackfillPlanOptions",
+    "MinuteBackfillDateOrder",
+    "MinuteBackfillRunOptions",
+    "MinuteBackfillBudgetError",
+    "build_minute_backfill_plan",
+    "run_minute_backfill",
+    "summarize_minute_backfill_artifact",
+]

@@ -1,0 +1,51 @@
+{
+  "generated_on": "2026-09-05",
+  "ratchets": {
+    "ruff_complexity": {
+      "by_code": {
+        "C901": 9
+      },
+      "total": 9
+    }
+  },
+  "source_root": "src",
+  "tools": {
+    "ruff": {
+      "excluded_files": 0,
+      "excluded_lines": 0,
+      "excluded_patterns": [
+        ".venv",
+        "artifacts",
+        "data",
+        "reports"
+      ],
+      "included_files": 290,
+      "included_lines": 65708,
+      "included_patterns": [],
+      "included_pct": 100.0,
+      "total_files": 290,
+      "total_lines": 65708
+    },
+    "ty": {
+      "excluded_files": 0,
+      "excluded_lines": 0,
+      "excluded_patterns": [
+        ".venv",
+        "artifacts",
+        "data",
+        "reports"
+      ],
+      "included_files": 290,
+      "included_lines": 65708,
+      "included_patterns": [
+        "scripts",
+        "src",
+        "tests"
+      ],
+      "included_pct": 100.0,
+      "total_files": 290,
+      "total_lines": 65708
+    }
+  },
+  "version": 2
+}

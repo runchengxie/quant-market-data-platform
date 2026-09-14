@@ -1,0 +1,4 @@
+# Paths retained only in the private archive and omitted from the public snapshot.
+docs/archive/
+docs/superpowers/
+docs/data-root-migration-20260908.md

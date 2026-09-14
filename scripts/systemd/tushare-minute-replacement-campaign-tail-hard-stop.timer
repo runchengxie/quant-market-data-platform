@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily hard backstop for the TuShare minute tail filler
+
+[Timer]
+OnCalendar=*-*-* 23:36:00 Asia/Shanghai
+AccuracySec=1min
+RandomizedDelaySec=0
+Persistent=true
+Unit=tushare-minute-replacement-campaign-tail-hard-stop.service
+
+[Install]
+WantedBy=timers.target

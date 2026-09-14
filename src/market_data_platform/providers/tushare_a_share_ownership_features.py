@@ -1,0 +1,68 @@
+"""Re-export surface for the split modules of tushare_a_share_ownership_features."""
+
+from market_data_platform.providers.tushare_a_share_fund_top10_features import (
+    build_a_share_fund_top10_portfolio_features,
+    validate_a_share_fund_top10_portfolio_features,
+)
+from market_data_platform.providers.tushare_a_share_ownership_features_part01 import (
+    DAILY_AMOUNT_COLUMNS,
+    DAILY_BASIC_COLUMNS,
+    FUND_PORTFOLIO_FEATURE_KEY_COLUMNS,
+    FUND_PORTFOLIO_NUMERIC_COLUMNS,
+    INSTITUTION_HOLDER_NAME_PATTERNS,
+    PERSON_HOLDER_TYPES,
+    STK_HOLDERTRADE_NUMERIC_COLUMNS,
+    TOP10_HOLDER_NUMERIC_COLUMNS,
+    TOP_INST_NUMERIC_COLUMNS,
+    _aggregate_fund_rows,
+    _apply_available_dates,
+    _asset_files,
+    _availability_date,
+    _load_daily_basic,
+    _load_fund_portfolio,
+    _load_stk_holdertrade_asset,
+    _load_top10_holder_asset,
+    _load_top_inst_events,
+    _prepare_daily_basic_part,
+    _prepare_fund_portfolio_frame,
+    _prepare_stk_holdertrade_frame,
+    _prepare_top10_holder_frame,
+    _prepare_top_inst_frame,
+    _require_stk_holdertrade_columns,
+    _trade_date_from_path,
+    _trade_date_partition_from_path,
+    _trade_dates_from_daily_basic,
+)
+from market_data_platform.providers.tushare_a_share_ownership_features_part02 import (
+    _aggregate_symbol_holdings,
+    _build_pit_state_events,
+    _days_since_flags,
+    _dedupe_holder_events,
+    _holdertrade_direction,
+    _holding_from_row,
+    _is_institution_holder,
+    _load_daily_amount,
+    _merge_holder_event_frames,
+    _prepare_holder_events,
+    _with_change_features,
+    _with_daily_basic_ratios,
+    _with_holder_change_features,
+    _with_signed_holdertrade_values,
+    _with_top_inst_event_features,
+)
+from market_data_platform.providers.tushare_a_share_ownership_features_part03 import (
+    _normalize_feature_key_columns,
+    _prepare_stk_holdertrade_events,
+    _with_holdertrade_event_features,
+    _write_trade_date_partitions,
+    build_a_share_fund_portfolio_features,
+    build_a_share_holder_structure_features,
+    validate_a_share_fund_portfolio_features,
+    validate_a_share_holder_structure_features,
+)
+from market_data_platform.providers.tushare_a_share_ownership_features_part04 import (
+    build_a_share_holdertrade_events,
+    build_a_share_top_inst_events,
+    validate_a_share_holdertrade_events,
+    validate_a_share_top_inst_events,
+)

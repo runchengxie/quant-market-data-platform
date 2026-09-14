@@ -1,0 +1,16 @@
+[Unit]
+# Render @...@ placeholders before installing this template.
+Description=Capture TuShare minute campaign status after a failed run
+ConditionPathExists=@CAMPAIGN_MANIFEST@
+
+[Service]
+Type=oneshot
+WorkingDirectory=@MDP_DIR@
+ExecStart=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_replacement_campaign.py status --manifest @CAMPAIGN_MANIFEST@ --max-new-rows 80000000 --quota-timezone Asia/Shanghai --run-window-start 00:45 --run-window-drain 04:15 --run-window-stop 04:20 --json
+ExecStart=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_quota_schedule.py status --manifest @CAMPAIGN_MANIFEST@ --minute-quota-db @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/minute_quota.sqlite3 --state-root @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/schedule --minute-quota-limit-requests 10000 --minute-quota-burst-limit-requests 20000 --minute-quota-safety-requests 500 --minute-quota-limit-rows 160000000 --minute-quota-safety-rows 4000000 --allow-burst
+Environment=HOME=@HOME@
+Environment=MDP_DIR=@MDP_DIR@
+Environment=PATH=@HOME@/.local/bin:@HOME@/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+StandardOutput=append:@HERMES_LOGS_DIR@/tushare_minute_replacement_campaign_status.log
+StandardError=append:@HERMES_LOGS_DIR@/tushare_minute_replacement_campaign_status.log
+TimeoutStartSec=10min

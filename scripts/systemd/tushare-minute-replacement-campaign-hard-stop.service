@@ -1,0 +1,8 @@
+[Unit]
+Description=Hard backstop for the staged TuShare minute campaign
+
+[Service]
+Type=oneshot
+# The runner drains at 04:15 and force-kills children at 04:20. This is an
+# independent manager-level backstop in case the runner itself is wedged.
+ExecStart=-/usr/bin/systemctl --user kill --kill-whom=all --signal=SIGKILL tushare-minute-replacement-campaign.service

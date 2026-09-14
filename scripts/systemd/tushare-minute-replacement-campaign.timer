@@ -1,0 +1,16 @@
+[Unit]
+Description=Safe-window opportunities for the staged TuShare minute campaign
+
+[Timer]
+# Avoid the randomized midnight backup window, then retry every 30 minutes.
+OnCalendar=*-*-* 00:45:00 Asia/Shanghai
+OnCalendar=*-*-* 01..03:15,45:00 Asia/Shanghai
+OnCalendar=*-*-* 04:00:00 Asia/Shanghai
+AccuracySec=1min
+RandomizedDelaySec=0
+Persistent=false
+DeferReactivation=true
+Unit=tushare-minute-replacement-campaign.service
+
+[Install]
+WantedBy=timers.target

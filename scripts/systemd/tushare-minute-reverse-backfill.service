@@ -1,0 +1,25 @@
+[Unit]
+Description=Nightly staged reverse TuShare A-share minute backfill
+Wants=network-online.target
+Requires=tushare-minute-quota-coordinator.service
+After=network-online.target tushare-minute-quota-coordinator.service
+ConditionPathExists=@DATA_PLATFORM_ROOT@/metadata/current_assets/a_share_current.json
+
+[Service]
+Type=oneshot
+WorkingDirectory=@MDP_DIR@
+ExecStart=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_reverse_backfill.py --artifacts-root @DATA_PLATFORM_ROOT@ --token-env TUSHARE_TOKEN_2 --max-dates 1 --bj-missing-policy report
+Environment=HOME=@HOME@
+EnvironmentFile=-@HOME@/.config/market-data-platform/config.env
+Environment=PYTHONPATH=@MDP_DIR@/src
+Environment=PATH=@HOME@/.local/bin:@HOME@/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+Environment=REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+StandardOutput=append:@HERMES_LOGS_DIR@/tushare_minute_reverse_backfill.log
+StandardError=append:@HERMES_LOGS_DIR@/tushare_minute_reverse_backfill.log
+TimeoutStartSec=70min
+TimeoutStopSec=6min
+KillSignal=SIGINT
+SendSIGKILL=yes
+Restart=no
+Nice=10
+IOSchedulingClass=idle

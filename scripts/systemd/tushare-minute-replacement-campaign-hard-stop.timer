@@ -1,0 +1,14 @@
+[Unit]
+Description=Daily hard backstop for the staged TuShare minute campaign
+
+[Timer]
+OnCalendar=*-*-* 04:21:00 Asia/Shanghai
+AccuracySec=1min
+RandomizedDelaySec=0
+# Catching up a missed kill is safe: it can only stop this campaign and can
+# never start a download. This also covers suspend across the 04:21 deadline.
+Persistent=true
+Unit=tushare-minute-replacement-campaign-hard-stop.service
+
+[Install]
+WantedBy=timers.target

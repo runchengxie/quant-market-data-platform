@@ -1,0 +1,231 @@
+{
+  "generated_on": "2026-09-05",
+  "metrics": {
+    "functions_over_100": 38,
+    "functions_over_250": 1,
+    "functions_over_500": 0,
+    "functions_with_10_plus_args": 10,
+    "largest_files": [
+      {
+        "lines": 2045,
+        "long_lines_over_100": 0,
+        "path": "tests/test_tushare_a_share_fundamentals.py"
+      },
+      {
+        "lines": 1922,
+        "long_lines_over_100": 0,
+        "path": "tests/test_tushare_a_share.py"
+      },
+      {
+        "lines": 1912,
+        "long_lines_over_100": 0,
+        "path": "tests/test_tushare_a_share_mins.py"
+      },
+      {
+        "lines": 1486,
+        "long_lines_over_100": 0,
+        "path": "tests/test_a_share_minute_coverage.py"
+      },
+      {
+        "lines": 1460,
+        "long_lines_over_100": 1,
+        "path": "scripts/operations/cutover_a_share_minute.py"
+      },
+      {
+        "lines": 1277,
+        "long_lines_over_100": 0,
+        "path": "tests/test_tushare_minute_replacement_campaign_runner.py"
+      },
+      {
+        "lines": 1228,
+        "long_lines_over_100": 0,
+        "path": "tests/test_cutover_a_share_minute.py"
+      },
+      {
+        "lines": 995,
+        "long_lines_over_100": 0,
+        "path": "scripts/operations/archive_guan_mobile.py"
+      },
+      {
+        "lines": 957,
+        "long_lines_over_100": 0,
+        "path": "tests/test_cli_data_minutes.py"
+      },
+      {
+        "lines": 893,
+        "long_lines_over_100": 0,
+        "path": "src/market_data_platform/providers/tushare_a_share_fundamentals_part03.py"
+      },
+      {
+        "lines": 877,
+        "long_lines_over_100": 0,
+        "path": "src/market_data_platform/providers/public_etf_minute.py"
+      },
+      {
+        "lines": 859,
+        "long_lines_over_100": 0,
+        "path": "tests/test_a_share_minute_build.py"
+      },
+      {
+        "lines": 837,
+        "long_lines_over_100": 0,
+        "path": "scripts/operations/detach_a_share_minute_v3.py"
+      },
+      {
+        "lines": 754,
+        "long_lines_over_100": 0,
+        "path": "tests/test_guan_annual_minbar.py"
+      },
+      {
+        "lines": 718,
+        "long_lines_over_100": 0,
+        "path": "tests/test_a_share_minute_bj_overlay.py"
+      }
+    ],
+    "largest_functions": [
+      {
+        "arguments": 1,
+        "end_line": 512,
+        "lines": 309,
+        "name": "_fixture",
+        "path": "tests/test_cutover_a_share_minute.py",
+        "start_line": 204
+      },
+      {
+        "arguments": 3,
+        "end_line": 305,
+        "lines": 196,
+        "name": "_aggregate_polars_deal_batch",
+        "path": "src/market_data_platform/standardize/fusion/a_share_minute/fusion.py",
+        "start_line": 110
+      },
+      {
+        "arguments": 3,
+        "end_line": 895,
+        "lines": 192,
+        "name": "test_finalize_minute_coverage_materializes_before_strict_audit",
+        "path": "tests/test_cli_data_minutes.py",
+        "start_line": 704
+      },
+      {
+        "arguments": 6,
+        "end_line": 1422,
+        "lines": 185,
+        "name": "cutover_minute_current",
+        "path": "scripts/operations/cutover_a_share_minute.py",
+        "start_line": 1238
+      },
+      {
+        "arguments": 1,
+        "end_line": 485,
+        "lines": 171,
+        "name": "_build_fused_minute_dataset",
+        "path": "src/market_data_platform/standardize/materialize/a_share_minute/build.py",
+        "start_line": 315
+      },
+      {
+        "arguments": 5,
+        "end_line": 229,
+        "lines": 169,
+        "name": "_audit_partition",
+        "path": "src/market_data_platform/providers/_coverage_materialize_part03.py",
+        "start_line": 61
+      },
+      {
+        "arguments": 4,
+        "end_line": 800,
+        "lines": 165,
+        "name": "detach_version_hardlinks",
+        "path": "scripts/operations/detach_a_share_minute_v3.py",
+        "start_line": 636
+      },
+      {
+        "arguments": 1,
+        "end_line": 213,
+        "lines": 162,
+        "name": "build_announcement_event_pit",
+        "path": "src/market_data_platform/providers/tushare_a_share_announcement_event_pit.py",
+        "start_line": 52
+      },
+      {
+        "arguments": 3,
+        "end_line": 962,
+        "lines": 160,
+        "name": "verify_archive",
+        "path": "scripts/operations/archive_guan_mobile.py",
+        "start_line": 803
+      },
+      {
+        "arguments": 3,
+        "end_line": 858,
+        "lines": 158,
+        "name": "_validate_bj_overlay_evidence",
+        "path": "scripts/operations/cutover_a_share_minute.py",
+        "start_line": 701
+      },
+      {
+        "arguments": 1,
+        "end_line": 852,
+        "lines": 152,
+        "name": "test_audit_passes_exact_tiers_and_writes_manifest",
+        "path": "tests/test_a_share_minute_coverage.py",
+        "start_line": 701
+      },
+      {
+        "arguments": 5,
+        "end_line": 184,
+        "lines": 151,
+        "name": "_copy_source_to_raw_staging",
+        "path": "src/market_data_platform/providers/guan_annual_minbar_part02.py",
+        "start_line": 34
+      },
+      {
+        "arguments": 1,
+        "end_line": 197,
+        "lines": 147,
+        "name": "build_minute_backfill_plan",
+        "path": "src/market_data_platform/tushare_minute_backfill_part02.py",
+        "start_line": 51
+      },
+      {
+        "arguments": 3,
+        "end_line": 780,
+        "lines": 146,
+        "name": "archive_directory",
+        "path": "scripts/operations/archive_guan_mobile.py",
+        "start_line": 635
+      },
+      {
+        "arguments": 6,
+        "end_line": 210,
+        "lines": 143,
+        "name": "evaluate_l2_quality",
+        "path": "src/market_data_platform/l2_quality_gate.py",
+        "start_line": 68
+      }
+    ],
+    "max_argument_count": 16,
+    "max_file_lines": 2045,
+    "max_function_lines": 309,
+    "public_facade": {
+      "exports": 0,
+      "path": "src/market_data_platform/__init__.py",
+      "private_exports": 0
+    },
+    "python_files": 421,
+    "python_lines": 105016,
+    "roots": [
+      "src",
+      "scripts",
+      "tests"
+    ],
+    "thresholds": {
+      "huge_function_lines": 500,
+      "large_function_lines": 100,
+      "many_arguments": 10,
+      "very_large_function_lines": 250
+    },
+    "version": 1
+  },
+  "version": 1
+}

@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule the nightly reverse TuShare minute backfill
+
+[Timer]
+OnCalendar=*-*-* 00:45:00 Asia/Shanghai
+AccuracySec=1min
+RandomizedDelaySec=0
+Persistent=false
+Unit=tushare-minute-reverse-backfill.service
+
+[Install]
+WantedBy=timers.target

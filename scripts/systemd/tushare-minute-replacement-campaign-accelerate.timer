@@ -1,0 +1,14 @@
+[Unit]
+Description=Guaranteed-band TuShare minute campaign catch-up opportunities
+
+[Timer]
+OnCalendar=*-*-* 08:00:00 Asia/Shanghai
+OnCalendar=*-*-* 09..16:00:00 Asia/Shanghai
+AccuracySec=1min
+RandomizedDelaySec=0
+Persistent=false
+DeferReactivation=true
+Unit=tushare-minute-replacement-campaign-accelerate.service
+
+[Install]
+WantedBy=timers.target

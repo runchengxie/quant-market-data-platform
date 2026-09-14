@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule daily immutable TuShare fundamentals vintage archive
+
+[Timer]
+OnCalendar=*-*-* 02:30:00 Asia/Shanghai
+AccuracySec=5min
+RandomizedDelaySec=10min
+Persistent=true
+Unit=tushare-fundamentals-vintage-archive.service
+
+[Install]
+WantedBy=timers.target

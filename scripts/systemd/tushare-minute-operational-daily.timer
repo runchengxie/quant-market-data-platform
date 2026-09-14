@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule the TuShare-native minute operational update
+
+[Timer]
+OnCalendar=Mon..Fri *-*-* 19:10:00 Asia/Shanghai
+AccuracySec=1min
+RandomizedDelaySec=0
+Persistent=true
+Unit=tushare-minute-operational-daily.service
+
+[Install]
+WantedBy=timers.target

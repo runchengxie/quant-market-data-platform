@@ -1,0 +1,27 @@
+[Unit]
+# Render @...@ placeholders before installing this template.
+Description=Staged TuShare all-A minute replacement campaign
+Wants=network-online.target
+Requires=tushare-minute-quota-coordinator.service
+After=network-online.target tushare-minute-quota-coordinator.service
+ConditionPathExists=@CAMPAIGN_MANIFEST@
+OnFailure=tushare-minute-replacement-campaign-status.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=@MDP_DIR@
+EnvironmentFile=-@HOME@/.config/market-data-platform/config.env
+ExecStart=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_replacement_campaign.py run-budgeted --manifest @CAMPAIGN_MANIFEST@ --max-new-rows 80000000 --max-runtime-seconds 14400 --poll-seconds 10 --interrupt-grace-seconds 300 --quota-timezone Asia/Shanghai --quota-reset-guard-seconds 1200 --run-window-start 00:45 --run-window-drain 04:15 --run-window-stop 04:20 --heartbeat-seconds 300 --no-progress-limit 2 --single-lane-threshold-rows 5500000 --minute-quota-mode enforce --minute-quota-db @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/minute_quota.sqlite3 --minute-quota-consumer replacement_campaign --minute-quota-gate requests --minute-quota-limit-requests 10000 --minute-quota-burst-limit-requests 20000 --minute-quota-safety-requests 500 --no-minute-quota-allow-burst --minute-quota-limit-rows 160000000 --minute-quota-safety-rows 4000000
+Environment=HOME=@HOME@
+Environment=MDP_DIR=@MDP_DIR@
+Environment=PATH=@HOME@/.local/bin:@HOME@/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+Environment=REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+StandardOutput=append:@HERMES_LOGS_DIR@/tushare_minute_replacement_campaign.log
+StandardError=append:@HERMES_LOGS_DIR@/tushare_minute_replacement_campaign.log
+TimeoutStartSec=4h
+TimeoutStopSec=6min
+KillSignal=SIGINT
+SendSIGKILL=yes
+Restart=no
+Nice=10
+IOSchedulingClass=idle

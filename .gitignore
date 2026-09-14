@@ -1,0 +1,25 @@
+.venv/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.egg-info/
+.coverage
+coverage.xml
+htmlcov/
+
+# Local credentials and direnv state.
+.env
+.env.*
+!.env.example
+.envrc
+.envrc.local
+
+# Data and generated reports live outside Git.
+artifacts/
+data/
+reports/
+.worktrees/
+.env.local

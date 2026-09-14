@@ -1,0 +1,15 @@
+[Unit]
+Description=Burst-band TuShare minute campaign tail-fill opportunities
+
+[Timer]
+OnCalendar=*-*-* 21:15,45:00 Asia/Shanghai
+OnCalendar=*-*-* 22:15,45:00 Asia/Shanghai
+OnCalendar=*-*-* 23:15:00 Asia/Shanghai
+AccuracySec=1min
+RandomizedDelaySec=0
+Persistent=false
+DeferReactivation=true
+Unit=tushare-minute-replacement-campaign-tail.service
+
+[Install]
+WantedBy=timers.target

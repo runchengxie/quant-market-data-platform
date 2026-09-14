@@ -1,0 +1,23 @@
+[Unit]
+# Render @...@ placeholders before installing this template.
+Description=Initialize request-first TuShare minute quota holds
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=@CAMPAIGN_MANIFEST@
+
+[Service]
+Type=oneshot
+# Exit 75 means the immutable policy for this quota day does not match this
+# deployment.  Keep it a failure so ordered Requires= dependants cannot run.
+# The mismatch cannot heal within the quota day, so avoid an immediate retry
+# loop; opportunity timers and the next persistent 00:05 timer retry safely.
+Restart=no
+WorkingDirectory=@MDP_DIR@
+ExecStart=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_quota_schedule.py coordinate --manifest @CAMPAIGN_MANIFEST@ --minute-quota-db @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/minute_quota.sqlite3 --state-root @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/schedule --daily-consumer daily_watch20 --daily-hold-requests 300 --top200-consumer top200_factor_observation --top200-hold-requests 30 --weekdays-only --minute-quota-limit-requests 10000 --minute-quota-burst-limit-requests 20000 --minute-quota-safety-requests 500 --minute-quota-limit-rows 160000000 --minute-quota-safety-rows 4000000
+Environment=HOME=@HOME@
+Environment=PYTHONPATH=@MDP_DIR@/src
+Environment=PATH=@HOME@/.local/bin:@HOME@/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+Environment=REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+StandardOutput=append:@HERMES_LOGS_DIR@/tushare_minute_quota_coordinator.log
+StandardError=append:@HERMES_LOGS_DIR@/tushare_minute_quota_coordinator.log
+TimeoutStartSec=10min

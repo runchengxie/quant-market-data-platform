@@ -1,0 +1,24 @@
+[Unit]
+Description=Daily TuShare-native all-A minute operational update
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=@DATA_PLATFORM_ROOT@/metadata/current_assets/a_share_current.json
+
+[Service]
+Type=oneshot
+WorkingDirectory=@MDP_DIR@
+ExecStart=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_operational_daily.py --artifacts-root @DATA_PLATFORM_ROOT@ --token-env TUSHARE_TOKEN_2 --fallback-token-env TUSHARE_TOKEN
+Environment=HOME=@HOME@
+EnvironmentFile=-@HOME@/.config/market-data-platform/config.env
+Environment=PYTHONPATH=@MDP_DIR@/src
+Environment=PATH=@HOME@/.local/bin:@HOME@/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+Environment=REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+StandardOutput=append:@HOME@/.hermes/logs/tushare_minute_operational_daily.log
+StandardError=append:@HOME@/.hermes/logs/tushare_minute_operational_daily.log
+TimeoutStartSec=2h
+TimeoutStopSec=6min
+KillSignal=SIGINT
+SendSIGKILL=yes
+Restart=no
+Nice=10
+IOSchedulingClass=idle
