@@ -110,7 +110,10 @@ uv sync --extra dev --extra duckdb
 - private 仓库如需启用远端 CI，应在仓库文档中记录原因、检查范围和资源成本，并由维护者明确批准。
 - 本地完整门禁继续由仓库自身检查和工作区共享 `pre-push` 承担。
 
-本仓库是 private 仓库，当前不运行 GitHub Actions。质量事实来源是本地门禁与共享 `pre-push`。
+本仓库是 public 仓库，默认运行 GitHub Actions。公开 workflow 只运行无 secrets、无生产数据的静态检查、契约检查和 fixture 测试；需要真实凭证或生产数据的检查不得从 pull request workflow 获取。完整本地门禁仍由仓库自身检查和共享 `pre-push` 承担。
+
+公开化后的旧实现、真实部署配置和内部运行记录位于 private 的
+`quant-market-data-platform-archive` 与 `quant-market-data-deploy`。本仓库是唯一活跃的业务代码来源，deploy 通过不可变 release/tag 或 commit 使用本仓库，不在 private 仓库维护业务代码副本。
 
 ## 修改规则
 
