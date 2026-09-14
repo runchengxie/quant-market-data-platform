@@ -60,6 +60,11 @@ etf-minute-public = [
   "pyarrow>=25.0.0",
 ]
 
+[dependency-groups]
+docs = [
+  "mkdocs-material>=9.6,<10",
+]
+
 [project.scripts]
 marketdata = "market_data_platform.cli:main"
 

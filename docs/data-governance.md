@@ -106,7 +106,7 @@ marketdata governance plan-retention \
 ```
 
 命令只读扫描资产并写报告，不提供删除、移动或重命名动作。现有 systemd retention 定时任务继续运行
-窄策略；窄策略脚本现已由本仓库维护，并通过统一 renderer 注入 canonical data root 和本仓库的
+窄策略。窄策略脚本现已由本仓库维护，并通过统一 renderer 注入 canonical data root 和本仓库的
 `marketdata` CLI。治理规划与窄策略报告分别写入 `governance-latest.tsv` 和
 `scheduled-latest.tsv`，不应将两种 schema 混用。
 
@@ -134,15 +134,15 @@ systemctl --user enable --now market-data-platform-retention.timer
 ```
 
 正式迁移前应先执行 `market_data_platform_retention.sh dry-run`，并确认已有
-`metadata/retention/governance-latest.tsv` 是软链接。普通文件不会被覆盖；应先人工备份并确认
+`metadata/retention/governance-latest.tsv` 是软链接。普通文件不会被覆盖。应先人工备份并确认
 其来源，再重新执行治理规划。
 
 ### A 股日报输入 snapshot
 
 历史日报 replay 使用数据平台拥有的 immutable version 目录，不直接把当前
 `*_latest` 入口当作历史输入。构建器只创建 symlink overlay，并写入
-`a_share.report_input_snapshot.v1` receipt；源目录、版本日期和 `manifest.yml` hash
-都会记录在 receipt 中：
+`a_share.report_input_snapshot.v1` receipt。源目录、版本日期和 `manifest.yml` hash
+都会记录在 receipt 中。
 
 ```bash
 uv run python scripts/operations/build_a_share_report_input_snapshot.py \
@@ -157,7 +157,7 @@ uv run python scripts/operations/build_a_share_report_input_snapshot.py \
 ```
 
 如果任一显式要求的数据集没有覆盖目标日期的 completed immutable version，命令整体失败，
-不会生成半成品 snapshot。snapshot receipt 只证明输入版本选择和 manifest 身份；它不把
+不会生成半成品 snapshot。snapshot receipt 只证明输入版本选择和 manifest 身份。它不把
 缺失数据伪装成可用，也不替代下游对实际文件的校验。
 
 ### 第一批 current 目录版本化

@@ -54,4 +54,6 @@ RQData 已完全退役，HK 行情支持已移除。当前活跃主线是中国�
 
 港股历史资产恢复入口已随 RQData 一起退役，历史复现见 `hk-freeze-20260613` 标签或私有归档仓库，详见 `operations/hk-archive-restore.md`（已退役）。
 
+内部运行记录和迁移计划由 private `quant-market-data-deploy` 仓库保存，public 文档只保留通用架构、契约和操作说明。
+
 入口文档只说明项目定位、边界和导航。数据契约、操作命令和质量门禁分别放在对应专题文档中。

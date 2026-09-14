@@ -381,7 +381,7 @@ def test_docs_link_maintenance_audit_and_avoid_style_regressions() -> None:
     docs_index = docs_root.joinpath("README.md").read_text(encoding="utf-8")
 
     assert "maintenance-audit.md" in docs_index
-    assert "archive/README.md" in docs_index
+    assert "quant-market-data-deploy" in docs_index
     assert "operations.md" in docs_index
 
     forbidden_fragments = (

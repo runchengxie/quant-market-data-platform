@@ -38,7 +38,11 @@ def render_units(args: argparse.Namespace) -> list[Path]:
         "@DATA_PLATFORM_ROOT@": str(args.data_platform_root.expanduser().resolve()),
         "@CAMPAIGN_MANIFEST@": str(args.campaign_manifest.expanduser().resolve()),
         "@HERMES_LOGS_DIR@": str(args.logs_dir.expanduser().resolve()),
-        "@MARKETDATA_CLI@": str(args.marketdata_cli.expanduser().resolve()),
+        "@MARKETDATA_CLI@": str(
+            getattr(args, "marketdata_cli", args.mdp_dir / ".venv" / "bin" / "marketdata")
+            .expanduser()
+            .resolve()
+        ),
     }
     template_glob = getattr(args, "template_glob", "tushare-minute-*")
     templates = sorted(

@@ -1,0 +1,99 @@
+site_name: quant-market-data-platform
+site_description: Public market data control plane for ingestion, quality, publication, and research access
+site_url: https://runchengxie.github.io/quant-market-data-platform/
+repo_name: runchengxie/quant-market-data-platform
+repo_url: https://github.com/runchengxie/quant-market-data-platform
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: zh
+  font: false
+  icon:
+    logo: material/chart-line
+  features:
+    - navigation.instant
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - toc.follow
+    - content.code.copy
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: 切换到深色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: 切换到浅色模式
+
+plugins:
+  - search
+
+exclude_docs: |
+  README.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - toc:
+      permalink: true
+
+nav:
+  - 首页: index.md
+  - 架构与边界:
+      - 数据平台概览: architecture/quant-repo-boundaries.md
+      - 数据生命周期: data-lifecycle-architecture.md
+      - 数据所有权迁移: ownership-migration.md
+      - 集成边界: integrations.md
+  - 数据契约:
+      - 契约总览: contracts.md
+      - 数据仓库: data-warehouse.md
+      - 研究数据接口: research-data-interface.md
+      - 研究完整性: research-integrity.md
+  - 数据源与操作:
+      - 操作总览: operations.md
+      - A 股 TuShare: operations/a-share-tushare.md
+      - A 股分钟数据: operations/a-share-minutes.md
+      - ETF 分钟数据: operations/etf-minutes.md
+      - 凭证与配置: operations/credentials.md
+      - 备份与开发: operations/backup-and-dev.md
+  - 质量与治理:
+      - 数据治理: data-governance.md
+      - L2 接入门禁: l2-ingestion-gate.md
+      - 质量治理: quality-governance.md
+      - 测试: operations/testing.md
+      - 维护性审计: maintenance-audit.md
+  - 开发参考:
+      - 兼容层: compatibility.md
+      - 发布与打包: operations/package-publishing.md
+      - 测试入口: testing.md
+      - 文档规范: documentation-style.md
+      - 研究数据 IO: research-parquet-io.md
+      - 配额渲染: quota-rendering.md
+      - AFML 研究特征: afml-research-features.md
+      - A 股研究画像: a-share-research-profile.md
+      - A 股基本面: a-share-fundamentals.md
+      - A 股资金与持仓特征: a-share-flow-ownership-features.md
+      - 基金十大持仓特征: a-share-fund-top10-ownership-features.md
+      - L2 特殊事件语义: l2-special-event-semantics.md
+  - 迁移与专题:
+      - 历史行业标签: concepts/historical-industry-labels.md
+      - 当前资产消费审计: migration/current-assets-consumer-audit.md
+      - 当前资产迁移状态: migration/current-assets-migration-status.md
+      - 当前资产回滚清单: migration/current-assets-publish-rollback-checklist.md
+      - 上下文数据: operations/context-data.md
+      - 港股历史恢复: operations/hk-archive-restore.md
