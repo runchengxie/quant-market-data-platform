@@ -362,7 +362,7 @@ def _add_tushare_minute_backfill_parsers(
         "plan-a-share-minute-backfill",
         help="Create an immutable, offline BJ-only or full-A minute backfill plan.",
     )
-    plan.add_argument("--scope", choices=("bj-only", "all-a"), required=True)
+    plan.add_argument("--scope", choices=("bj-only", "sh-sz-only", "all-a"), required=True)
     plan.add_argument("--start-date", required=True)
     plan.add_argument("--end-date", required=True)
     plan.add_argument("--trade-cal", required=True)

@@ -78,6 +78,25 @@ def _plan_options(
     return backfill.MinuteBackfillPlanOptions(**values)
 
 
+def test_sh_sz_plan_excludes_bj_symbols(tmp_path: Path) -> None:
+    options = _plan_options(
+        tmp_path,
+        dates=["20240102"],
+        instruments=[
+            ("000001.SZ", "19910101", ""),
+            ("600000.SH", "19990101", ""),
+            ("920001.BJ", "20211115", ""),
+        ],
+        scope="sh-sz-only",
+    )
+
+    plan = backfill.build_minute_backfill_plan(options)
+
+    assert plan["identity"]["scope"] == "sh-sz-only"
+    assert plan["identity"]["exchange_filter"] == "SH_SZ"
+    assert plan["summary"]["instrument_stats"]["scope_symbols"] == 2
+
+
 def test_bj_plan_uses_bse_era_dynamic_intervals_and_request_budget(tmp_path: Path) -> None:
     options = _plan_options(
         tmp_path,

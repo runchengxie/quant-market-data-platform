@@ -27,13 +27,13 @@ MINUTE_BACKFILL_PLAN_SCHEMA = "tushare.a_share.minute_backfill.plan.v2"
 
 MINUTE_BACKFILL_RECEIPT_SCHEMA = "tushare.a_share.minute_backfill.receipt.v2"
 
-MINUTE_BACKFILL_SCOPES = ("bj-only", "all-a")
+MINUTE_BACKFILL_SCOPES = ("bj-only", "sh-sz-only", "all-a")
 
 MINUTE_BACKFILL_SEGMENTS = ("month", "year")
 
 BSE_FIRST_TRADE_DATE = "20211115"
 
-MinuteBackfillScope = Literal["bj-only", "all-a"]
+MinuteBackfillScope = Literal["bj-only", "sh-sz-only", "all-a"]
 
 MinuteBackfillSegment = Literal["month", "year"]
 
@@ -272,6 +272,8 @@ def _canonical_instrument_intervals(
     eligible = frame[frame["curr_type"].eq("CNY") & canonical].copy()
     if scope == "bj-only":
         eligible = eligible[eligible["ts_code"].str.endswith(".BJ")]
+    elif scope == "sh-sz-only":
+        eligible = eligible[eligible["ts_code"].str.endswith((".SH", ".SZ"))]
     invalid_list_dates = eligible[~eligible["list_date"].str.fullmatch(r"\d{8}")]
     invalid_delist_dates = eligible[
         eligible["delist_date"].ne("") & ~eligible["delist_date"].str.fullmatch(r"\d{8}")

@@ -355,7 +355,7 @@ systemctl --user start tushare-minute-reverse-backfill.service
 生成新计划，避免重复请求已接受的北交所缺失。超过上限的大计划保持原样。
 
 
-北交所独立补齐使用 `--scope bj-only`。整日替换使用 `--scope all-a`。两类计划使用各自的 plan、run 目录和 receipt。
+北交所独立补齐使用 `--scope bj-only`。当前生产分钟数据使用 `--scope sh-sz-only`，只覆盖沪深市场。两类计划使用各自的 plan、run 目录和 receipt。
 
 ### Guan 原始数据与重叠审计
 
