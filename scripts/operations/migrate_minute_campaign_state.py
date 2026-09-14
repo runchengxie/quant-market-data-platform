@@ -32,6 +32,22 @@ def _replace_run_id(value: Any, old: str, new: str) -> Any:
     return value
 
 
+def _planned_run_roots(plans: list[Path]) -> tuple[int, int]:
+    """Count existing and missing immutable output roots before rewriting IDs."""
+
+    existing = 0
+    missing = 0
+    for path in plans:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        output = payload.get("output")
+        run_root = output.get("run_root") if isinstance(output, dict) else None
+        if run_root and Path(str(run_root)).exists():
+            existing += 1
+        else:
+            missing += 1
+    return existing, missing
+
+
 def migrate(  # noqa: C901,PLR0912,PLR0915
     campaign_dir: Path, *, backup_dir: Path | None, apply: bool
 ) -> int:
@@ -47,6 +63,17 @@ def migrate(  # noqa: C901,PLR0912,PLR0915
         new_id = _plan_id(identity)
         migrations[old_id] = (new_id, path)
         print(f"{path.name}: {old_id} -> {new_id}")
+
+    existing_roots, missing_roots = _planned_run_roots(plans)
+    print(
+        "output roots: "
+        f"existing={existing_roots} missing={missing_roots}"
+    )
+    if missing_roots:
+        print(
+            "warning: missing output roots are preserved as missing; "
+            "receipts and readiness must not be treated as proof of data presence"
+        )
 
     if not apply:
         print(f"dry-run: {len(migrations)} plans would be migrated")
