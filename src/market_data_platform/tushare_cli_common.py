@@ -80,6 +80,11 @@ def add_provider_runtime_arguments(parser: argparse.ArgumentParser) -> None:
             f"(default: {DEFAULT_QUOTA_COOLDOWN_SECONDS})."
         ),
     )
+    parser.add_argument(
+        "--request-timeout-seconds",
+        type=float,
+        help="Maximum seconds allowed for one TuShare HTTP request.",
+    )
 
 
 def add_tushare_date_mirror_parser(

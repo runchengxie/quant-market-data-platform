@@ -58,3 +58,16 @@
 公共 CLI 的文档覆盖由测试从 parser 派生检查。新增命令时，先把命令放入对应主题页，再更新测试。
 
 历史分钟反向回填的北交所缺失策略和续跑上限见 [A 股分钟数据](operations/a-share-minutes.md)。
+# 分钟分区恢复
+
+被隔离的分钟分区可以先用 dry-run 检查，再显式应用恢复。工具会校验 sidecar 中的完整证券集合、每个交易日 241 根分钟线、现有分区是否会回退，并在应用前创建备份。
+
+```bash
+uv run python scripts/operations/restore_minute_partition_from_quarantine.py \
+  --partition-dir /path/to/trade_date=20241128 \
+  --quarantine-file /path/to/quarantine/part-00000.parquet \
+  --trade-date 20241128 \
+  --ledger /path/to/campaign/ledger.json
+```
+
+确认输出后追加 `--apply`。已有完整分区默认禁止回退，只有经过人工核对才使用 `--allow-regression`。
