@@ -127,7 +127,13 @@ def build_minute_backfill_plan(options: MinuteBackfillPlanOptions) -> dict[str, 
     resolved_api_url = resolve_tushare_api_url(options.api_url, token_env=options.token_env)
     identity: dict[str, Any] = {
         "scope": options.scope,
-        "exchange_filter": "BJ" if options.scope == "bj-only" else None,
+        "exchange_filter": (
+            "BJ"
+            if options.scope == "bj-only"
+            else "SH_SZ"
+            if options.scope == "sh-sz-only"
+            else None
+        ),
         "query": {
             "requested_start_date": start_date,
             "effective_start_date": effective_start,
@@ -387,7 +393,7 @@ def _execution_context(
         resolved_api_url=resolved_api_url,
         provider_no_data_exceptions_path=options.provider_no_data_exceptions_path,
         policy=_policy_from_payload(identity["request_policy"]),
-        exchange="BJ" if scope == "bj-only" else None,
+        exchange=("BJ" if scope == "bj-only" else "SH_SZ" if scope == "sh-sz-only" else None),
         secrets=[token_value, str(options.api_url or ""), str(resolved_api_url or "")],
         limits=identity["limits"],
         minute_quota_mode=options.minute_quota_mode,

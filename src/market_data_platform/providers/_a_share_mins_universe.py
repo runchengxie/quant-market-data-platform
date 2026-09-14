@@ -254,10 +254,11 @@ def _trading_dates_from_provider(
 def _resolve_explicit_universe(inputs: _UniverseInputs) -> _ResolvedUniverse:
     stock_history = cast(pd.DataFrame, inputs.stock_history)
     symbols = set(inputs.explicit_symbols)
+    allowed_suffixes = {"SH_SZ": (".SH", ".SZ")}.get(
+        inputs.exchange, (f".{inputs.exchange}",) if inputs.exchange else ()
+    )
     wrong_exchange = {
-        symbol
-        for symbol in symbols
-        if inputs.exchange and not symbol.endswith(f".{inputs.exchange}")
+        symbol for symbol in symbols if allowed_suffixes and not symbol.endswith(allowed_suffixes)
     }
     if wrong_exchange:
         raise ValueError(
@@ -332,6 +333,8 @@ def _resolve_minute_universe(inputs: _UniverseInputs) -> _ResolvedUniverse:
     )
     symbols, rule, source = resolved.symbols, resolved.rule, resolved.source
     if inputs.exchange is not None:
+        suffixes = {"SH_SZ": (".SH", ".SZ")}.get(inputs.exchange, (f".{inputs.exchange}",))
+        symbols = {symbol for symbol in symbols if symbol.endswith(suffixes)}
         rule = f"{rule}:exchange={inputs.exchange}"
         source = f"{source}+exchange_filter({inputs.exchange})"
     if not symbols:
@@ -370,8 +373,8 @@ def _validate_mirror_options(options: Any) -> str | None:
     if options.gc_frequency <= 0:
         raise ValueError("gc_frequency must be positive")
     exchange = str(options.exchange or "").strip().upper() or None
-    if exchange not in {None, "SH", "SZ", "BJ"}:
-        raise ValueError("exchange must be one of SH, SZ, or BJ")
+    if exchange not in {None, "SH", "SZ", "BJ", "SH_SZ"}:
+        raise ValueError("exchange must be one of SH, SZ, BJ, or SH_SZ")
     if exchange is not None and options.output_dir is None:
         raise ValueError("exchange-filtered minute mirrors require an explicit output_dir")
     return exchange

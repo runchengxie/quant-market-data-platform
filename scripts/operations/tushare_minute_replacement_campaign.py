@@ -210,7 +210,7 @@ def _planner_command(
         "tushare",
         "plan-a-share-minute-backfill",
         "--scope",
-        "all-a",
+        "sh-sz-only",
         "--start-date",
         min(dates),
         "--end-date",
