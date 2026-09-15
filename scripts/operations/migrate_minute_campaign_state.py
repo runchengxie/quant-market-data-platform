@@ -69,10 +69,7 @@ def migrate(  # noqa: C901,PLR0912,PLR0915
         print(f"{path.name}: {old_id} -> {new_id}")
 
     existing_roots, missing_roots = _planned_run_roots(plans)
-    print(
-        "output roots: "
-        f"existing={existing_roots} missing={missing_roots}"
-    )
+    print(f"output roots: existing={existing_roots} missing={missing_roots}")
     if missing_roots:
         print(
             "warning: missing output roots are preserved as missing; "
