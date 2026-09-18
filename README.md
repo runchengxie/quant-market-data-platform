@@ -1,6 +1,6 @@
-# market-data-platform
+# quant-market-data-platform
 
-> 项目状态：独立数据平台。新的数据生产、质量治理和 published asset 能力继续进入本仓库。通用回测、组合、风险和执行模拟进入 `quant-platform`，策略专属数据派生进入 `quant-research`。
+> 项目状态：独立数据平台。新的数据生产、质量治理和 published asset 能力继续进入本仓库。通用回测、组合、风险和执行模拟进入 `quant-platform`，策略专属数据派生进入 `quant-research`。历史名称 `market-data-platform` 仅保留在兼容命令、迁移记录和数据路径中。
 
 `market-data-platform` 是量化研究和交易系统共享的市场数据资产平台。它统一管理数据采集、清洗、检查、发布和读取入口。
 
