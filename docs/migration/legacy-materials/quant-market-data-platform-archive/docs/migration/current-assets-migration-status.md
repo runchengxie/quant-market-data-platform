@@ -24,10 +24,6 @@
 - 逐个确认兼容链接的代码、调度、发布和恢复引用
 - 确认无引用后，再逐批删除兼容链接
 
-## 与仓库迁移的关系
-
-本页的“仍需推进”是当前数据平台内部的 current-assets 兼容层清理，不是旧仓库能力迁移的未完成项。旧仓库和历史说明材料已经在 `quant-market-data-platform/docs/migration/legacy-materials/` 或 `quant-research/docs/migration/legacy-materials/` 建立可读副本；这里列出的 `latest`、rollback fixture、兼容链接和 `ths_member` 工作仍按数据生产风险单独推进，未经 no-send、回滚和恢复验证不得删除。
-
 ## 当前判断
 
 本轮没有删除兼容链接。当前链接仍有发布、恢复、分钟数据物化或上下文构建用途，直接删除会增加生产风险。
