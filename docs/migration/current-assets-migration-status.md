@@ -1,6 +1,6 @@
 # current_assets 迁移状态
 
-更新时间：2026 年 9 月 8 日
+更新时间：2026 年 9 月 18 日
 
 ## 已完成
 
@@ -17,16 +17,16 @@
 
 - `ths_member` 暂缓。原因是缺少 `manifest.yml`，同时 TuShare 接口存在限流问题。
 
-## 仍需推进
+## 收尾结论
 
-- 继续排查部署仓库中直接读取 `latest` 的内部输入流程
-- 在独立 fixture 上补充发布失败和回滚演练
-- 逐个确认兼容链接的代码、调度、发布和恢复引用
-- 确认无引用后，再逐批删除兼容链接
+- 部署、研究、发布和恢复流程对 `latest` 的读取已完成审计。
+- 发布失败和回滚路径已有独立 fixture、no-send 检查和测试覆盖。
+- `latest` 仍被分钟物化、上下文构建、发布和恢复使用，因此按生产契约保留，不删除。
+- `ths_member` 仍受真实 TuShare 数据源和限流阻塞，满足恢复条件前不发布。
 
 ## 与仓库迁移的关系
 
-本页的“仍需推进”是当前数据平台内部的 current-assets 兼容层清理，不是旧仓库能力迁移的未完成项。旧仓库和历史说明材料已经在 `quant-market-data-platform/docs/migration/legacy-materials/` 或 `quant-research/docs/migration/legacy-materials/` 建立可读副本；这里列出的 `latest`、rollback fixture、兼容链接和 `ths_member` 工作仍按数据生产风险单独推进，未经 no-send、回滚和恢复验证不得删除。
+本页的“仍需推进”是当前数据平台内部的 current-assets 兼容层清理，不是旧仓库能力迁移的未完成项。旧仓库和历史说明材料已经在 `quant-market-data-platform/docs/migration/legacy-materials/` 或 `quant-research/docs/migration/legacy-materials/` 建立可读副本；这里列出的 `latest`、rollback fixture、兼容链接和 `ths_member` 工作属于数据生产契约治理；当前已完成审计并记录明确决策，未经 no-send、回滚和恢复验证不得删除或发布。
 
 ## 当前判断
 
