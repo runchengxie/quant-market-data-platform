@@ -26,7 +26,7 @@
 
 ## 与仓库迁移的关系
 
-本页的“仍需推进”是当前数据平台内部的 current-assets 兼容层清理，不是旧仓库能力迁移的未完成项。旧仓库和历史说明材料已经在 `quant-market-data-platform/docs/migration/legacy-materials/` 或 `quant-research/docs/migration/legacy-materials/` 建立可读副本；这里列出的 `latest`、rollback fixture、兼容链接和 `ths_member` 工作属于数据生产契约治理；当前已完成审计并记录明确决策，未经 no-send、回滚和恢复验证不得删除或发布。
+本页标记为仍需推进的内容描述当前数据平台内部的 current-assets 兼容层清理。旧仓库能力迁移已经完成。旧仓库和历史说明材料已经在 `quant-market-data-platform/docs/migration/legacy-materials/` 或 `quant-research/docs/migration/legacy-materials/` 建立可读副本。这里列出的 `latest`、rollback fixture、兼容链接和 `ths_member` 工作属于数据生产契约治理。当前已完成审计并记录明确决策，未经 no-send、回滚和恢复验证不得删除或发布。
 
 ## 当前判断
 

@@ -7,7 +7,7 @@
 保护仍被 sibling symlink 引用的目录，并在删除前写入 `scheduled-latest.tsv`。同一次运行还会调用
 `marketdata governance plan-retention`，生成独立的 `governance-latest.tsv`。治理规划本身仍是只读的。
 
-使用本仓库 renderer 安装 unit；不要让服务回退到 `$HOME/bin` 或
+使用本仓库 renderer 安装 unit。不要让服务回退到 `$HOME/bin` 或
 `research-workspace` 下的脚本：
 
 ```bash
