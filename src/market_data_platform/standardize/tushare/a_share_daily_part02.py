@@ -38,6 +38,7 @@ from market_data_platform.standardize.tushare.a_share_daily_part01 import (
     _fill_missing_pre_close,
     _latest_adj_factors,
     _load_instruments,
+    _load_st_history,
     _load_suspension_trade_date_frame,
     _merge_adjustment_columns_for_trade_date,
     _merge_overlay_frame,
@@ -213,6 +214,7 @@ def _build_daily_clean_manifest(request: _DailyCleanManifestRequest) -> dict[str
             "limit_status_dir": _resolved_optional_path(inputs.limit_status_dir),
             "suspend_dir": _resolved_optional_path(inputs.suspend_dir),
             "instruments_file": _resolved_optional_path(inputs.instruments_file),
+            "st_history_file": _resolved_optional_path(inputs.st_history_file),
         },
         "build": {
             "mode": "streaming_trade_date_to_symbol",
@@ -260,6 +262,7 @@ def _build_daily_clean_trade_date_frame(
     out = _add_instrument_columns_frame(
         out,
         inputs.instruments,
+        inputs.st_history,
         first_trade_dates=inputs.first_trade_dates,
     )
     return out.sort_values(["symbol", "trade_date"]).reset_index(drop=True)
@@ -268,11 +271,12 @@ def _build_daily_clean_trade_date_frame(
 def _add_instrument_columns_frame(
     frame: pd.DataFrame,
     instruments: pd.DataFrame,
+    st_history: pd.DataFrame | None,
     *,
     first_trade_dates: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     out = frame
-    out["is_st"] = _derive_st_flag(out, instruments)
+    out["is_st"] = _derive_st_flag(out, st_history)
     if not instruments.empty and "list_date" in instruments.columns:
         listed_frame = cast(pd.DataFrame, instruments[["symbol", "list_date"]])
         listed = listed_frame.sort_values("symbol").groupby("symbol", as_index=False).tail(1)
@@ -302,6 +306,7 @@ def build_a_share_daily_clean(  # noqa: PLR0913
     limit_status_dir: str | Path | None = None,
     suspend_dir: str | Path | None = None,
     instruments_file: str | Path | None = None,
+    st_history_file: str | Path | None = None,
     out_dir: str | Path,
     min_rows: int = 1,
     min_symbols: int = 1,
@@ -316,6 +321,7 @@ def build_a_share_daily_clean(  # noqa: PLR0913
         limit_status_dir=limit_status_dir,
         suspend_dir=suspend_dir,
         instruments_file=instruments_file,
+        st_history_file=st_history_file,
         out_dir=out_dir,
     )
 
@@ -351,6 +357,7 @@ def build_a_share_daily_clean(  # noqa: PLR0913
     first_trade_dates: dict[str, str] = {}
 
     trade_dates = sorted(daily_parts)
+    st_history_by_date = _load_st_history(inputs.st_history_file, trade_dates)
     batch_frames: list[pd.DataFrame] = []
     try:
         for trade_date in trade_dates:
@@ -373,6 +380,19 @@ def build_a_share_daily_clean(  # noqa: PLR0913
                     ),
                     suspend=_load_suspension_trade_date_frame(suspend_parts, trade_date),
                     instruments=instruments,
+                    st_history=(
+                        st_history_by_date.get(
+                            trade_date,
+                            pd.DataFrame(
+                                {
+                                    "ts_code": pd.Series(dtype="str"),
+                                    "trade_date": pd.Series(dtype="str"),
+                                }
+                            ),
+                        )
+                        if st_history_by_date is not None
+                        else None
+                    ),
                     latest_adj_factors=latest_adj_factors,
                     first_trade_dates=first_trade_dates,
                 )
