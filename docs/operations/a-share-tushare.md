@@ -437,7 +437,11 @@ partition，写入临时暂存目录，再用 streaming Parquet writer compact �
 `validate-a-share-daily-clean` 使用列投影和 Parquet batch scan，不会逐文件做 pandas 整块读取。
 `baseline` profile 是当前数据刷新发布前的阻塞门禁，覆盖 manifest 对账、字段类型、唯一键、
 OHLC、成交量和成交额。`research` profile 在此基础上增加估值、涨跌停、停牌、交易日历、上市天数、
-板块分类和 ST 来源说明。当前 `is_st` 来自 latest instruments snapshot，只能视为非 PIT 标记。
+板块分类和 ST 来源校验。`--st-history-file` 指向由 `build-a-share-st-history` 生成的
+`st_history_reconstructed.parquet` 或已发布的 latest 资产，配套 receipt 必须为 `complete`
+且覆盖全部构建日期。
+`is_st` 按交易日匹配这份历史表。没有历史表时输出未知值，研究级校验拒绝该资产。
+历史表按名称生效日期重建，仍需区分公告实际可用时间。
 `daily_basic` 也只是逐日估值 overlay，不能描述成 PIT fundamentals。
 
 ```bash
@@ -447,6 +451,7 @@ marketdata tushare build-a-share-daily-clean \
   --daily-basic-dir "$DATA_PLATFORM_ROOT/assets/tushare/a_share/daily_basic/a_share_all_20240101_20260529_daily_basic" \
   --limit-status-dir "$DATA_PLATFORM_ROOT/assets/tushare/a_share/limit_status/a_share_limit_status_20240101_20260529" \
   --instruments-file "$DATA_PLATFORM_ROOT/assets/tushare/a_share/instruments/a_share_all_instruments_latest.parquet" \
+  --st-history-file "$DATA_PLATFORM_ROOT/assets/tushare/a_share/st_history_reconstructed/a_share_all_st_history_reconstructed_latest.parquet" \
   --out-dir "$DATA_PLATFORM_ROOT/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily_clean" \
   --min-rows 3000000 --min-symbols 5000
 

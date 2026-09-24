@@ -131,15 +131,14 @@ def _build_checks(request: _BuildChecksRequest) -> list[dict[str, Any]]:
                 "max_warning_rate": request.max_warning_rate,
             }
         )
+        st_history_file = (request.manifest or {}).get("inputs", {}).get("st_history_file")
         checks.append(
             {
                 "check": "st_provenance",
-                "severity": "info",
-                "status": "passed",
-                "message": (
-                    "is_st derives from the latest instruments snapshot and is not PIT-safe."
-                ),
-                "affected_rows": 0,
+                "severity": "error",
+                "status": "passed" if st_history_file else "failed",
+                "message": "Research-profile is_st requires validated dated ST history.",
+                "affected_rows": 0 if st_history_file else accumulator.rows,
                 "sample_rows": [],
             }
         )
@@ -321,6 +320,7 @@ def _validation_report(request: _ValidationReportRequest) -> dict[str, Any]:
     options = request.options
     accumulator = request.accumulator
     checks = request.checks
+    st_history_file = (request.manifest or {}).get("inputs", {}).get("st_history_file")
     checks.append(
         {
             "check": "file_readability",
@@ -370,7 +370,11 @@ def _validation_report(request: _ValidationReportRequest) -> dict[str, Any]:
             "daily_clean_dir": str(request.root),
             "manifest": str(request.manifest_path),
             "trade_cal_file": request.trade_calendar_path,
-            "st_provenance": "latest_instruments_snapshot_non_pit",
+            "st_provenance": (
+                "validated_historical_effective_date"
+                if st_history_file
+                else "unknown_no_dated_history"
+            ),
             "daily_basic_provenance": "daily_valuation_overlay_not_pit_fundamentals",
         },
         "scanner": request.scanner.telemetry.to_dict(),
@@ -438,6 +442,7 @@ def _execute_validation(options: DailyCleanValidationOptions) -> dict[str, Any]:
             options=options,
             root=root,
             manifest_path=manifest_path,
+            manifest=manifest,
             trade_calendar_path=trade_calendar_path,
             accumulator=accumulator,
             checks=checks,

@@ -37,6 +37,7 @@ plugins:
 
 exclude_docs: |
   README.md
+  migration/legacy-materials/
 
 markdown_extensions:
   - admonition

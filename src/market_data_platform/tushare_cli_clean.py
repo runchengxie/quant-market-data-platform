@@ -15,6 +15,9 @@ def add_tushare_clean_parsers(subparsers: argparse._SubParsersAction) -> None:
     clean.add_argument("--limit-status-dir")
     clean.add_argument("--suspend-dir")
     clean.add_argument("--instruments-file")
+    clean.add_argument(
+        "--st-history-file", help="Validated reconstructed daily ST history parquet."
+    )
     clean.add_argument("--min-rows", type=int, default=1)
     clean.add_argument("--min-symbols", type=int, default=1)
     clean.add_argument(
