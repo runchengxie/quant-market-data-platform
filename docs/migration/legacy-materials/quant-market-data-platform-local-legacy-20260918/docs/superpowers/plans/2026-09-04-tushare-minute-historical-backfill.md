@@ -43,7 +43,7 @@
 ### Task 3: 小规模重启 canary 并确认最早可用边界
 
 **Files:**
-- Modify: campaign metadata under `/home/richard/data/quant/market-data-platform/metadata/minute_backfill/`（运行产物，不提交 Git）
+- Modify: campaign metadata under `/path/to/data/quant/market-data-platform/metadata/minute_backfill/`（运行产物，不提交 Git）
 - Docs: `docs/operations/a-share-minutes.md`
 
 - [ ] 重新执行 2016-01-04 至 2016-01-11 canary，记录完整/partial/exception 股票数和 241-grid 覆盖。

@@ -64,6 +64,8 @@ def _lineage(dataset: str, receipt_path: Path, receipt: dict[str, Any]) -> dict[
             {
                 "pit_class": receipt.get("pit_class"),
                 "revision_safe": receipt.get("revision_safe"),
+                "start_date": receipt.get("start_date"),
+                "end_date": receipt.get("end_date"),
             }
         )
     elif receipt.get("semantics"):

@@ -59,8 +59,8 @@ Interfaces:
 ### 任务三：补充兼容性文档并完成比较
 
 Files:
-- Modify: `/home/richard/code/deep-learning-tick-data-prediction/docs/project-status.md`
-- Modify: `/home/richard/code/deep-learning-tick-data-prediction/docs/research/experiment-log.md`
+- Modify: `/path/to/code/private-tick-data-project/docs/project-status.md`
+- Modify: `/path/to/code/private-tick-data-project/docs/research/experiment-log.md`
 - Create: `/tmp/deep-learning-platform-quality-comparison.json`
 
 - [x] Document that structural L2 quality is platform-owned while model-specific checks remain in deep-learning.
