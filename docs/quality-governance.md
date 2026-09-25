@@ -3,7 +3,7 @@
 > status: active
 > owner: market-data-platform
 > audience: human and agent
-> last_verified: 2026-09-06
+> last_verified: 2026-09-25
 > source_of_truth: yes
 > superseded_by: n/a
 
@@ -126,9 +126,10 @@ uv run --extra dev pre-commit install
 uv run --extra dev pre-commit run --all-files
 ```
 
-当前仓库没有活动 GitHub Actions workflow。作为子模块使用时，`core.hooksPath` 指向
-`research-workspace/.githooks`。共享 pre-push 会运行 Ruff、格式、`ty`、pytest、质量债务
-baseline/ratchet、维护性 baseline、兼容层和架构治理。发布前按目标模块运行 coverage。
+当前仓库有两条活动 GitHub Actions 工作流。`.github/workflows/quality.yml` 在 PR 和
+`main` 推送时运行公开快照边界检查、共享代码质量 ratchet、Ruff、pytest 和 `pip-audit`。
+`.github/workflows/docs.yml` 对文档变更执行 strict MkDocs 构建，并在主分支发布 Pages。
+本地 pre-commit 和治理脚本用于更早发现问题，不能替代远端必需检查。发布前按目标模块运行 coverage。
 
 维护性指标：
 
