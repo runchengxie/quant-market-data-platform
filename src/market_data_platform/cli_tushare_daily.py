@@ -22,6 +22,7 @@ def _handle_tushare_daily_and_universe(args: argparse.Namespace) -> int | None:
             limit_status_dir=args.limit_status_dir,
             suspend_dir=args.suspend_dir,
             instruments_file=args.instruments_file,
+            st_history_file=args.st_history_file,
             out_dir=args.out_dir,
             min_rows=args.min_rows,
             min_symbols=args.min_symbols,

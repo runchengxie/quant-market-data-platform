@@ -22,7 +22,7 @@
 **Files:**
 - Modify: `src/market_data_platform/` 中现有分钟质量/receipt 模块（沿用已存在边界）
 - Test: `tests/test_tushare_minute_*`, `tests/test_minute_*`
-- Verify: `/home/richard/data/quant/market-data-platform/metadata/minute_operational/versions/minute_1m_tushare_v1_20260903.json`
+- Verify: `/path/to/data/quant/market-data-platform/metadata/minute_operational/versions/minute_1m_tushare_v1_20260903.json`
 
 - [ ] 读取当前版本 receipt，验证日期范围、分区数量、市场范围和所有分区 SHA-256。
 - [ ] 增加/补齐每个 symbol-day 的 241 grid、09:30 bar、重复主键、OHLCV 和 provider exception 检查。

@@ -51,6 +51,7 @@
 - `marketdata tushare run-a-share-minute-backfill`
 - `marketdata tushare build-a-share-fund-top10-portfolio-features`
 - `marketdata tushare validate-a-share-fund-top10-portfolio-features`
+- `marketdata tushare build-a-share-daily-clean --st-history-file ...`
 - `.venv/bin/python scripts/operations/cutover_a_share_minute.py`
 - `marketdata backup-data`
 - `marketdata tushare ...`

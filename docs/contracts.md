@@ -148,6 +148,7 @@ marketdata contract inspect \
 | `ths_index` | `assets/tushare/a_share/ths_index/a_share_all_ths_index_latest` |
 | `ths_member` | `assets/tushare/a_share/ths_member/a_share_all_ths_member_latest` |
 | `daily_clean` | `assets/tushare/a_share/daily/a_share_all_daily_clean_latest` |
+
 | `flow_ownership_features` | `assets/tushare/a_share/flow_ownership_features/a_share_all_flow_ownership_features_latest` |
 | `hotspot_features` | `assets/tushare/a_share/hotspot_features/a_share_all_hotspot_features_latest` |
 | `fund_portfolio_features` | `assets/tushare/a_share/fund_portfolio_features/a_share_all_fund_portfolio_features_latest` |
@@ -161,6 +162,10 @@ marketdata contract inspect \
 | `universe_by_date` | `assets/universe/a_share_all_full_by_date.csv` |
 | `universe_symbols` | `assets/universe/a_share_all_full_symbols.txt` |
 | `universe_meta` | `assets/universe/a_share_all_full_by_date.meta.yml` |
+
+`daily_clean.is_st` 仅在构建时提供已验证且覆盖全区间的 `st_history_reconstructed`
+资产后才有布尔值。未提供时为未知值，不能将最新 instruments 名称回填为历史 ST 状态。
+构建清单记录 `st_history_file` 来源，研究级质量检查要求这项来源存在。
 
 DailyWatch20 的 `ths_hot_strict_v2` 与 `ths_hot_strict_v3` 快照都保留 TuShare 原始排名，
 不补号。历史兼容策略 v2 要求前 20 名完整，生产策略 v3 要求 rank 1 存在，并允许整张

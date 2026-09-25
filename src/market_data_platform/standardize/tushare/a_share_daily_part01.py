@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import gc
+import hashlib
+import json
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -27,6 +29,7 @@ class _DailyCleanInputs:
     limit_status_dir: str | Path | None
     suspend_dir: str | Path | None
     instruments_file: str | Path | None
+    st_history_file: str | Path | None
     out_dir: str | Path
 
 
@@ -88,6 +91,7 @@ class _DailyCleanTradeDateFrameInputs:
     limit_status: pd.DataFrame
     suspend: pd.DataFrame | None
     instruments: pd.DataFrame
+    st_history: pd.DataFrame | None
     latest_adj_factors: dict[str, float]
     first_trade_dates: dict[str, str]
 
@@ -201,20 +205,50 @@ def _derive_is_suspended(daily: pd.DataFrame, suspend: pd.DataFrame | None) -> p
     return result
 
 
-def _derive_st_flag(daily: pd.DataFrame, instruments: pd.DataFrame) -> pd.Series:
-    result = pd.Series(False, index=daily.index, dtype=bool)
+def _derive_st_flag(daily: pd.DataFrame, st_history: pd.DataFrame | None) -> pd.Series:
+    result = pd.Series(pd.NA, index=daily.index, dtype="boolean")
     if daily.empty:
         return result
-    name_cols = [col for col in ("name", "fullname") if col in instruments.columns]
-    if not name_cols or "symbol" not in instruments.columns:
+    if st_history is None:
         return result
-    lookup = instruments.set_index("symbol")
-    st_symbols: set[str] = set()
-    for col in name_cols:
-        names = cast(pd.Series, lookup[col]).astype(str)
-        st_mask = names.str.contains(r"\*?ST", case=False, regex=True, na=False)
-        st_symbols.update(str(symbol) for symbol in names.loc[st_mask].index.tolist())
-    return cast(pd.Series, daily["symbol"].isin(list(st_symbols)))
+    keys = set(zip(st_history["ts_code"], st_history["trade_date"], strict=False))
+    return (
+        pd.Series(list(zip(daily["symbol"], daily["trade_date"], strict=False)), index=daily.index)
+        .isin(keys)
+        .astype("boolean")
+    )
+
+
+def _load_st_history(
+    st_history_file: str | Path | None, trade_dates: list[str]
+) -> dict[str, pd.DataFrame] | None:
+    if st_history_file is None:
+        return None
+    path = Path(st_history_file).expanduser().resolve()
+    receipt_path = path.with_name("st_history_reconstructed.receipt.json")
+    if not receipt_path.is_file():
+        receipt_path = path.with_suffix(".receipt.json")
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    if (
+        receipt.get("quality_status") != "complete"
+        or receipt.get("source_quality_status", "complete") != "complete"
+    ):
+        raise ValueError("ST history must have a complete validation receipt")
+    with path.open("rb") as source:
+        actual_sha256 = hashlib.file_digest(source, "sha256").hexdigest()
+    if receipt.get("history_sha256", receipt.get("sha256")) != actual_sha256:
+        raise ValueError("ST history does not match its validation receipt")
+    if trade_dates and (
+        trade_dates[0] < receipt.get("start_date", "99999999")
+        or trade_dates[-1] > receipt.get("end_date", "00000000")
+    ):
+        raise ValueError("ST history receipt does not cover the daily_clean date range")
+    history = pd.read_parquet(path, columns=["ts_code", "trade_date"])
+    history["ts_code"] = history["ts_code"].map(normalize_ts_code)
+    history["trade_date"] = history["trade_date"].map(_normalize_trade_date)
+    if history.duplicated(["ts_code", "trade_date"]).any():
+        raise ValueError("ST history has duplicate symbol/date rows")
+    return {str(date): group for date, group in history.groupby("trade_date", sort=False)}
 
 
 def _board_from_symbol(symbol: str) -> str:

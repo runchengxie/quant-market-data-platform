@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 import json
 
+import pandas as pd
 import yaml
 
 from market_data_platform.providers import tushare_a_share_clean, tushare_a_share_quality
@@ -12,10 +14,90 @@ from market_data_platform.providers.tushare_a_share_clean import (
 from market_data_platform.standardize.tushare.a_share_daily import (
     build_a_share_daily_clean as standardized_build_a_share_daily_clean,
 )
+from market_data_platform.standardize.tushare.a_share_daily_part01 import _derive_st_flag
 
 
 def test_legacy_daily_clean_build_is_a_compatibility_facade() -> None:
     assert build_a_share_daily_clean is standardized_build_a_share_daily_clean
+
+
+def test_st_flag_uses_trade_date_history_instead_of_current_name() -> None:
+    daily = pd.DataFrame(
+        {
+            "symbol": ["000001.SZ", "000001.SZ"],
+            "trade_date": ["20240102", "20240103"],
+        }
+    )
+    history = pd.DataFrame({"ts_code": ["000001.SZ"], "trade_date": ["20240103"]})
+    assert _derive_st_flag(daily, history).tolist() == [False, True]
+    assert _derive_st_flag(daily, None).isna().all()
+
+
+def test_daily_clean_uses_validated_st_history_across_dates(tmp_path) -> None:
+    raw = tmp_path / "raw"
+    out = tmp_path / "clean"
+    instruments = tmp_path / "instruments.parquet"
+    history = tmp_path / "st_history_reconstructed.parquet"
+    for date in ("20240102", "20240103"):
+        _write_part(
+            pd.DataFrame(
+                [
+                    {
+                        "ts_code": "000001.SZ",
+                        "trade_date": date,
+                        "close": 10.0,
+                        "pre_close": 10.0,
+                        "open": 10.0,
+                        "high": 10.0,
+                        "low": 10.0,
+                        "vol": 100.0,
+                        "amount": 1000.0,
+                    }
+                ]
+            ),
+            raw,
+            date,
+        )
+    pd.DataFrame(
+        [
+            {
+                "ts_code": "000001.SZ",
+                "name": "ST金龙鱼",
+                "list_date": "20200101",
+            }
+        ]
+    ).to_parquet(instruments, index=False)
+    pd.DataFrame(
+        [
+            {
+                "ts_code": "000001.SZ",
+                "trade_date": "20240103",
+            }
+        ]
+    ).to_parquet(history, index=False)
+    history.with_name("st_history_reconstructed.receipt.json").write_text(
+        json.dumps(
+            {
+                "quality_status": "complete",
+                "start_date": "20240102",
+                "end_date": "20240103",
+                "history_sha256": hashlib.sha256(history.read_bytes()).hexdigest(),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    manifest = build_a_share_daily_clean(
+        daily_dir=raw,
+        instruments_file=instruments,
+        st_history_file=history,
+        out_dir=out,
+        memory_soft_limit_mb=0,
+        memory_hard_limit_mb=0,
+    )
+    rows = pd.read_parquet(out / "data" / "000001.SZ.parquet")
+    assert rows["is_st"].tolist() == [False, True]
+    assert manifest["inputs"]["st_history_file"] == str(history)
 
 
 def _write_part(frame, root, trade_date):
@@ -53,6 +135,7 @@ def _write_clean_manifest(  # noqa: PLR0913
     files,
     start_date="20260522",
     end_date="20260522",
+    st_history_file=None,
 ):
     (root / "manifest.yml").write_text(
         yaml.safe_dump(
@@ -60,6 +143,7 @@ def _write_clean_manifest(  # noqa: PLR0913
                 "schema_version": "tushare.a_share.daily_clean.v1",
                 "dataset": "daily_clean",
                 "query": {"start_date": start_date, "end_date": end_date},
+                "inputs": {"st_history_file": st_history_file},
                 "totals": {"rows": rows, "symbols": symbols, "files": files},
             },
             sort_keys=False,
@@ -383,7 +467,7 @@ def test_validate_a_share_daily_clean_reports_manifest_drift_and_ohlc_samples(tm
     }
 
 
-def test_validate_a_share_daily_clean_writes_research_report_and_records_non_pit_st(tmp_path):
+def test_validate_a_share_daily_clean_rejects_unproven_st_history(tmp_path):
     pd = __import__("pandas")
     root = tmp_path / "daily_clean"
     data_dir = root / "data"
@@ -415,15 +499,14 @@ def test_validate_a_share_daily_clean_writes_research_report_and_records_non_pit
         out=report,
     )
 
-    assert summary["status"] == "passed"
-    assert summary["lineage"]["st_provenance"] == "latest_instruments_snapshot_non_pit"
+    assert summary["status"] == "failed"
+    assert summary["lineage"]["st_provenance"] == "unknown_no_dated_history"
     assert summary["lineage"]["daily_basic_provenance"] == (
         "daily_valuation_overlay_not_pit_fundamentals"
     )
     checks = {check["check"]: check for check in summary["checks"]}
-    assert checks["st_provenance"]["status"] == "passed"
-    assert summary["errors"] == []
-    assert json.loads(report.read_text(encoding="utf-8"))["status"] == "passed"
+    assert checks["st_provenance"]["status"] == "failed"
+    assert json.loads(report.read_text(encoding="utf-8"))["status"] == "failed"
 
 
 def test_validate_a_share_daily_clean_research_profile_rejects_limit_flag_mismatch(tmp_path):
@@ -515,7 +598,7 @@ def test_validate_a_share_daily_clean_warning_rate_is_configurable(tmp_path):
         ]
     ).to_parquet(data_dir / "600519.SH.parquet", index=False)
     pd.DataFrame({"cal_date": ["20260522"], "is_open": [1]}).to_parquet(trade_cal, index=False)
-    _write_clean_manifest(root, rows=1, symbols=1, files=1)
+    _write_clean_manifest(root, rows=1, symbols=1, files=1, st_history_file="fixture")
 
     rejected = validate_a_share_daily_clean(
         daily_clean_dir=root,
