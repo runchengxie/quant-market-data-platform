@@ -47,7 +47,7 @@
 - 修改：`scripts/operations/tushare_minute_operational_daily.py`
 - 修改：`src/market_data_platform/tushare_minute_operational_daily.py`
 - 测试：`tests/` 下现有的分钟数据运维测试
-- 仅在验证完成后，在 `/home/richard/data/quant/market-data-platform` 下新建不可变版本和回执
+- 仅在验证完成后，在 `/path/to/data/quant/market-data-platform` 下新建不可变版本和回执
 
 接口要求：
 

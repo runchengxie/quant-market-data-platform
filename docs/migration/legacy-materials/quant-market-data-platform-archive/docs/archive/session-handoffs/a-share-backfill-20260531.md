@@ -22,7 +22,7 @@
 已完成的清洗快照：
 
 ```text
-/home/richard/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily_clean
+/path/to/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily_clean
 ```
 
 清洗构建汇总：
@@ -40,7 +40,7 @@ missing_tr_close: 0
 
 ```bash
 .venv/bin/marketdata tushare validate-a-share-daily-clean \
-  --daily-clean-dir /home/richard/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily_clean \
+  --daily-clean-dir /path/to/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily_clean \
   --min-rows 3000000 --min-symbols 5000 \
   --require-valuation --require-limit-status
 ```
@@ -57,7 +57,7 @@ duplicate_rows: 0
 同时镜像了对应日期的交易日历资产：
 
 ```text
-/home/richard/data/quant/market-data-platform/assets/tushare/a_share/trade_cal/a_share_trade_cal_20240101_20260529.parquet
+/path/to/data/quant/market-data-platform/assets/tushare/a_share/trade_cal/a_share_trade_cal_20240101_20260529.parquet
 rows: 880
 open_dates: 580
 status: completed
@@ -77,15 +77,15 @@ status: completed
 完成的清洗历史已经用于替换五日样例股票池。旧样例文件已归档到：
 
 ```text
-/home/richard/data/quant/market-data-platform/metadata/archive/universe/a_share_sample_20260109_pre_backfill_20260531/
+/path/to/data/quant/market-data-platform/metadata/archive/universe/a_share_sample_20260109_pre_backfill_20260531/
 ```
 
 标准股票池输出为：
 
 ```text
-/home/richard/data/quant/market-data-platform/assets/universe/a_share_all_full_by_date.csv
-/home/richard/data/quant/market-data-platform/assets/universe/a_share_all_full_symbols.txt
-/home/richard/data/quant/market-data-platform/assets/universe/a_share_all_full_by_date.meta.yml
+/path/to/data/quant/market-data-platform/assets/universe/a_share_all_full_by_date.csv
+/path/to/data/quant/market-data-platform/assets/universe/a_share_all_full_symbols.txt
+/path/to/data/quant/market-data-platform/assets/universe/a_share_all_full_by_date.meta.yml
 ```
 
 股票池构建汇总：
@@ -110,19 +110,19 @@ duplicate_rows: 0
 旧样例当前契约已归档到：
 
 ```text
-/home/richard/data/quant/market-data-platform/metadata/archive/current_assets/a_share_current_20260109_sample_pre_backfill_20260531.json
+/path/to/data/quant/market-data-platform/metadata/archive/current_assets/a_share_current_20260109_sample_pre_backfill_20260531.json
 ```
 
 标准当前契约已经重建到：
 
 ```text
-/home/richard/data/quant/market-data-platform/metadata/current_assets/a_share_current.json
+/path/to/data/quant/market-data-platform/metadata/current_assets/a_share_current.json
 ```
 
 当前契约健康门禁已通过，共检查十项资产，缺失资产数为 0，过期资产数为 0，问题数为 0。JSON 报告为：
 
 ```text
-/home/richard/data/quant/market-data-platform/reports/a_share_current_health_20260529.json
+/path/to/data/quant/market-data-platform/reports/a_share_current_health_20260529.json
 ```
 
 ## 原始交接状态
@@ -130,7 +130,7 @@ duplicate_rows: 0
 本记录供下一次会话使用。当时正在将中等时间窗口的 A 股 TuShare 原始历史数据回补到外部数据根目录：
 
 ```text
-/home/richard/data/quant/market-data-platform
+/path/to/data/quant/market-data-platform
 ```
 
 目标窗口为：
@@ -154,7 +154,7 @@ ps -eo pid,ppid,stat,etime,pcpu,pmem,args | rg 'backfill-a-share-history|PID'
 ```text
 PID 20728
 .venv/bin/marketdata tushare backfill-a-share-history \
-  --artifacts-root /home/richard/data/quant/market-data-platform \
+  --artifacts-root /path/to/data/quant/market-data-platform \
   --start-date 20240101 --end-date 20260529 \
   --dataset daily --dataset adj_factor --dataset daily_basic --dataset limit_status \
   --segment month --continue-on-error
@@ -185,18 +185,18 @@ limit_status: 0 files; directory had not appeared yet
 用于检查的命令：
 
 ```bash
-find /home/richard/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily/data -name part.parquet | wc -l
-find /home/richard/data/quant/market-data-platform/assets/tushare/a_share/adj_factor/a_share_all_20240101_20260529_adj_factor/data -name part.parquet | wc -l
-find /home/richard/data/quant/market-data-platform/assets/tushare/a_share/daily_basic/a_share_all_20240101_20260529_daily_basic/data -name part.parquet | wc -l
-find /home/richard/data/quant/market-data-platform/assets/tushare/a_share/limit_status/a_share_limit_status_20240101_20260529/data -name part.parquet | wc -l
+find /path/to/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily/data -name part.parquet | wc -l
+find /path/to/data/quant/market-data-platform/assets/tushare/a_share/adj_factor/a_share_all_20240101_20260529_adj_factor/data -name part.parquet | wc -l
+find /path/to/data/quant/market-data-platform/assets/tushare/a_share/daily_basic/a_share_all_20240101_20260529_daily_basic/data -name part.parquet | wc -l
+find /path/to/data/quant/market-data-platform/assets/tushare/a_share/limit_status/a_share_limit_status_20240101_20260529/data -name part.parquet | wc -l
 ```
 
 交接时已有的 manifest：
 
 ```text
-/home/richard/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily/manifest.yml
-/home/richard/data/quant/market-data-platform/assets/tushare/a_share/adj_factor/a_share_all_20240101_20260529_adj_factor/manifest.yml
-/home/richard/data/quant/market-data-platform/assets/tushare/a_share/daily_basic/a_share_all_20240101_20260529_daily_basic/manifest.yml
+/path/to/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily/manifest.yml
+/path/to/data/quant/market-data-platform/assets/tushare/a_share/adj_factor/a_share_all_20240101_20260529_adj_factor/manifest.yml
+/path/to/data/quant/market-data-platform/assets/tushare/a_share/daily_basic/a_share_all_20240101_20260529_daily_basic/manifest.yml
 ```
 
 交接时 `limit_status` 的 manifest 尚未生成。
@@ -211,7 +211,7 @@ find /home/richard/data/quant/market-data-platform/assets/tushare/a_share/limit_
 
 ```bash
 .venv/bin/marketdata tushare backfill-a-share-history \
-  --artifacts-root /home/richard/data/quant/market-data-platform \
+  --artifacts-root /path/to/data/quant/market-data-platform \
   --start-date 20240101 --end-date 20260529 \
   --dataset daily --dataset adj_factor --dataset daily_basic --dataset limit_status \
   --segment month --continue-on-error
@@ -221,12 +221,12 @@ find /home/richard/data/quant/market-data-platform/assets/tushare/a_share/limit_
 
 ```bash
 .venv/bin/marketdata tushare build-a-share-daily-clean \
-  --daily-dir /home/richard/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily \
-  --adj-factor-dir /home/richard/data/quant/market-data-platform/assets/tushare/a_share/adj_factor/a_share_all_20240101_20260529_adj_factor \
-  --daily-basic-dir /home/richard/data/quant/market-data-platform/assets/tushare/a_share/daily_basic/a_share_all_20240101_20260529_daily_basic \
-  --limit-status-dir /home/richard/data/quant/market-data-platform/assets/tushare/a_share/limit_status/a_share_limit_status_20240101_20260529 \
-  --instruments-file /home/richard/data/quant/market-data-platform/assets/tushare/a_share/instruments/a_share_all_instruments_latest.parquet \
-  --out-dir /home/richard/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily_clean \
+  --daily-dir /path/to/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily \
+  --adj-factor-dir /path/to/data/quant/market-data-platform/assets/tushare/a_share/adj_factor/a_share_all_20240101_20260529_adj_factor \
+  --daily-basic-dir /path/to/data/quant/market-data-platform/assets/tushare/a_share/daily_basic/a_share_all_20240101_20260529_daily_basic \
+  --limit-status-dir /path/to/data/quant/market-data-platform/assets/tushare/a_share/limit_status/a_share_limit_status_20240101_20260529 \
+  --instruments-file /path/to/data/quant/market-data-platform/assets/tushare/a_share/instruments/a_share_all_instruments_latest.parquet \
+  --out-dir /path/to/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily_clean \
   --min-rows 3000000 --min-symbols 5000
 ```
 
@@ -234,7 +234,7 @@ find /home/richard/data/quant/market-data-platform/assets/tushare/a_share/limit_
 
 ```bash
 .venv/bin/marketdata tushare validate-a-share-daily-clean \
-  --daily-clean-dir /home/richard/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily_clean \
+  --daily-clean-dir /path/to/data/quant/market-data-platform/assets/tushare/a_share/daily/a_share_all_20240101_20260529_daily_clean \
   --min-rows 3000000 --min-symbols 5000 --require-limit-status
 ```
 
@@ -255,7 +255,7 @@ limit_status: 39
 
 ```bash
 .venv/bin/marketdata tushare backfill-a-share-history \
-  --artifacts-root /home/richard/data/quant/market-data-platform \
+  --artifacts-root /path/to/data/quant/market-data-platform \
   --start-date 20240101 --end-date 20260529 \
   --dataset daily --dataset adj_factor --dataset limit_status \
   --segment month --continue-on-error
@@ -267,7 +267,7 @@ limit_status: 39
 
 ```bash
 .venv/bin/marketdata tushare backfill-a-share-history \
-  --artifacts-root /home/richard/data/quant/market-data-platform \
+  --artifacts-root /path/to/data/quant/market-data-platform \
   --start-date 20240101 --end-date 20260529 \
   --dataset daily --dataset limit_status \
   --segment month --continue-on-error

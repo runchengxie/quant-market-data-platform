@@ -182,6 +182,7 @@ class _ValidationReportRequest:
     options: DailyCleanValidationOptions
     root: Path
     manifest_path: Path
+    manifest: dict[str, Any] | None
     trade_calendar_path: str | None
     accumulator: _Accumulator
     checks: list[dict[str, Any]]
