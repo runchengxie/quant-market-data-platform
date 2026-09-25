@@ -426,7 +426,6 @@ def test_current_entry_docs_have_lifecycle_metadata() -> None:
         "> status: active",
         "> owner: market-data-platform",
         "> audience: human and agent",
-        "> last_verified: 2026-09-06",
         "> superseded_by: n/a",
     )
     missing = [
@@ -435,7 +434,17 @@ def test_current_entry_docs_have_lifecycle_metadata() -> None:
         for field in required
         if field not in "\n".join(path.read_text(encoding="utf-8").splitlines()[:12])
     ]
+    invalid_dates = [
+        str(path)
+        for path in paths
+        if not any(
+            line.startswith("> last_verified: 20")
+            and len(line.removeprefix("> last_verified: ").strip()) == 10
+            for line in path.read_text(encoding="utf-8").splitlines()[:12]
+        )
+    ]
     assert missing == []
+    assert invalid_dates == []
 
 
 def test_superseded_docs_point_to_existing_pages() -> None:
