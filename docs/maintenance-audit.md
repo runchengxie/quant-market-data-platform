@@ -3,7 +3,7 @@
 > status: active
 > owner: market-data-platform
 > audience: human and agent
-> last_verified: 2026-09-06
+> last_verified: 2026-09-25
 > source_of_truth: yes
 > superseded_by: n/a
 
@@ -54,15 +54,14 @@ exclude（`data_providers.py` 和 `data_warehouse.py` 已收敛为薄入口 + �
 `deprecations.py`、`intraday_paths.py`、`pit_feature_stats.py`、`rebalance.py`
 和 `rqdata_cli_common.py` 无活跃调用，已从源码包退役。港股恢复能力已随 RQData 于 2026-07-26 完全移除。
 
-当前 Ruff 覆盖整个产品包。`ty` 合并了迁移前的日常检查与发布检查范围。精确文件和行数由 `scripts/dev/quality_baseline.json` 记录：
+当前 Ruff 和 `ty` 都覆盖 `scripts/dev/quality_baseline.json` 登记的完整源码面。2026-09-05 baseline 记录如下：
 
 | 工具 | 文件 | 行数 | exclude |
 | --- | ---: | ---: | --- |
-| Ruff | 113/113 | 44809/44809 | 0 files / 0 lines |
-| `ty` | 18/113 | 5057/44809 | 95 files / 39752 lines |
+| Ruff | 290/290 | 65708/65708 | 0 files / 0 lines |
+| `ty` | 290/290 | 65708/65708 | 0 files / 0 lines |
 
-`[tool.ty.src].include` 已合并原有 `ty` 范围与迁移前的发布检查范围，并额外纳入 `symbols.py`。
-`ty check --error-on-warning` 当前通过。质量覆盖 baseline 会阻止检查行数下降、排除行数增加或保护路径退出检查面。
+`ty check --error-on-warning` 当前按 `pyproject.toml` 的 `src`、`scripts` 和 `tests` 范围执行。质量覆盖 baseline 会阻止检查行数下降、排除行数增加或保护路径退出检查面。
 
 现行 Ruff complexity 阻塞 ratchet 尊重已登记的 inline `noqa`，`quality_baseline.json`
 当前记录 2 条未豁免的 C901。后续任何未豁免分类计数或总数增长都会阻塞本地推送门禁。
@@ -73,13 +72,13 @@ PLR0913 27、PLR0915 3。先前记录的总数 27、PLR0913 24 来自较早快�
 当前 HEAD。27 条 PLR0913 主要是为兼容保留显式参数的 provider / coverage 入口。内部服务
 优先改为 options/request 对象，并在迁移完成后删除对应 `noqa`。
 
-维护性基线：
+维护性基线以 `scripts/dev/maintainability_baseline.json` 为准。2026-09-05 baseline 记录：
 
 | 指标 | 当前 |
 | --- | ---: |
-| Python 文件 | 379 |
-| Python 行数 | 101106 |
-| 超过 100 行函数 | 37 |
+| Python 文件 | 421 |
+| Python 行数 | 105016 |
+| 超过 100 行函数 | 38 |
 | 超过 250 行函数 | 1 |
 | 超过 500 行函数 | 0 |
 | 10 个及以上参数函数 | 10 |
@@ -87,35 +86,7 @@ PLR0913 27、PLR0915 3。先前记录的总数 27、PLR0913 24 来自较早快�
 | 最大函数 | 309 行 |
 | 最大参数数 | 16 |
 
-本轮将静态检查覆盖基线前滚到 100 个文件和 39,267 行，并把维护性基线的最大函数上限
-从 338 行收紧到 309 行。现行阻塞 complexity ratchet 为 8 条 C901。包含 inline `noqa`
-的完整 inventory 收紧到 39 条，其余维护性上限没有放宽。
-
-超过 250 行的函数只剩两个，均有 focused characterization tests 覆盖当前行为：
-
-| 函数 | 行数 | 当前职责与风险 | 后续切片 |
-| --- | ---: | --- | --- |
-| `test_cutover_a_share_minute.py::_fixture` | 309 | 构造完整 cutover 证据，单个 fixture 修改成本高 | 按 raw、full-day、BJ receipt 拆 fixture builder |
-| `tushare_a_share_mins.py::mirror_minute_bars` | 298 | 分页、恢复、校验和 receipt 编排，也是剩余三条控制流债务的唯一来源 | 拆 daily executor、checkpoint/receipt finalizer |
-
-当前较大的生产文件集中在分钟覆盖和 TuShare provider：
-
-| 文件 | 行数 | 主要后续风险 |
-| --- | ---: | --- |
-| `providers/a_share_minute_coverage.py` | 2284 | 仍包含分类、materialization 与 partition primitive。audit orchestration 已迁入私有模块 |
-| `providers/tushare_a_share.py` | 1754 | 多个数据集 adapter 聚合，需继续按 endpoint family 拆分 |
-| `providers/tushare_a_share_fundamentals.py` | 1711 | 下载、PIT 构建和发布仍集中在同一 provider 模块 |
-| `providers/tushare_a_share_ownership_features.py` | 1488 | 多类 ownership 特征构建共享单文件 |
-| `providers/guan_annual_minbar.py` | 1373 | 年度扫描、staging、恢复和 promotion 状态机仍较集中 |
-| `providers/a_share_minute_build.py` | 1339 | fused dataset worker 仍有 216 行 |
-| `providers/tushare_a_share_mins.py` | 1484 | `mirror_minute_bars` 是下一轮首要控制流热点 |
-| `providers/a_share_minute_fusion.py` | 1299 | pandas / Polars 双实现需要持续保持语义对齐 |
-
-本轮已拆分分钟 coverage、fusion、build、CLI、年度构建、BJ overlay、dataset lock 和 backfill
-编排。coverage audit 通过显式 bindings 注入迁入无循环的私有模块。Daily-clean quality、universe
-frame、THS member、PIT fundamentals、cold-storage freeze 和 contract inspection 等内部入口已改为
-options/request 对象。下一轮应优先继续缩短 `mirror_minute_bars`，再处理 cutover fixture 与
-`_build_fused_minute_dataset`。后续拆分继续以真实实测值收紧 baseline。
+当前唯一超过 250 行的函数是 `tests/test_cutover_a_share_minute.py::_fixture`，309 行。生产代码中较长函数仍集中在分钟数据标准化、切换和归档流程。具体热点不要在本文重复维护，直接读取 `scripts/dev/maintainability_baseline.json` 的 `largest_files` 和 `largest_functions`，避免代码拆分后文档继续保留旧路径。
 
 常规检查：
 
@@ -160,7 +131,7 @@ uv run --extra dev python scripts/dev/architecture_governance.py --check
 - 当前入口使用 `marketdata` 和 `market_data_platform`。
 - 归档和下游兼容面集中记录在 `docs/compatibility.md`。
 - 港股恢复专用操作已随 RQData 退役，历史复现见 `hk-freeze-20260613` 标签或私有归档仓库。
-- 本地验证命令是当前唯一阻塞检查口径。仓库没有活动 CI workflow。
+- 本地治理命令与 GitHub Actions 共同构成质量门禁。`quality.yml` 覆盖边界检查、共享维护性 ratchet、Ruff、pytest 和依赖审计，`docs.yml` 负责 strict 文档构建。
 - sdist 显式包含 `docs/` 和 `tests/`。wheel 只包含运行包。当前暂不发布 `py.typed`。
 - 文档保留少量关键英文术语，如 CLI、provider、release、baseline、cache、artifacts、workflow。可执行流程、目录、校验和指标描述尽量用中文，避免临时翻译造成歧义。
 
