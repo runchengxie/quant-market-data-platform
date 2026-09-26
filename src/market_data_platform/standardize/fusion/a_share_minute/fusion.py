@@ -107,25 +107,10 @@ def _try_import_polars() -> ModuleType | None:
         raise
 
 
-def _aggregate_polars_deal_batch(
-    context: _PolarsDealBatchContext,
-    table: pa.Table,
-    stream_offset: int,
-) -> tuple[Any, dict[str, int]]:
-    """Aggregate one Arrow batch of guan deal ticks into minute OHLCV rows.
-
-    The function is a single linear polars pipeline split into clearly labeled
-    stages below (cast -> validate -> clock -> session -> symbol map -> aggregate).
-    Intermediate columns are intentionally kept on the frame and reused across
-    stages, so the stages are not extracted into separate helpers.
-    """
-    pl = context.pl
-    trade_date = context.trade_date
-    symbol_mapping = context.symbol_mapping
-    path = context.path
-    # Stage 1: lift raw string/int columns into typed helper columns.
+def _cast_polars_deal_columns(pl: ModuleType, table: pa.Table, stream_offset: int) -> Any:
+    """Convert source columns to numeric working columns for one Arrow batch."""
     frame = pl.from_arrow(table).with_row_index("_stream_order", offset=stream_offset)
-    frame = frame.with_columns(
+    return frame.with_columns(
         pl.col("TradingDay").cast(pl.Float64, strict=False).alias("_trading_day"),
         pl.col("DealTime").cast(pl.Float64, strict=False).alias("_deal_time_numeric"),
         pl.col("Price").cast(pl.Float64, strict=False).alias("_price_cents"),
@@ -133,7 +118,16 @@ def _aggregate_polars_deal_batch(
         pl.col("SecuCode").cast(pl.Float64, strict=False).alias("_secu_code_numeric"),
         pl.col("BizIndex").cast(pl.Float64, strict=False).alias("_biz_index_numeric"),
     )
-    # Stage 2: TradingDay must match the partition date, else the batch is corrupt.
+
+
+def _validate_polars_trading_day(
+    frame: Any,
+    *,
+    pl: ModuleType,
+    trade_date: str,
+    path: Path,
+) -> None:
+    """Reject rows whose source trading date does not match the partition."""
     valid_trading_day = (
         pl.col("_trading_day").is_not_null()
         & pl.col("_trading_day").is_finite()
@@ -151,7 +145,9 @@ def _aggregate_polars_deal_batch(
         )
         raise ValueError(f"{path} contains invalid TradingDay values for {trade_date}: {examples}")
 
-    # Stage 3: validate DealTime / SecuCode / BizIndex, derive typed integer columns.
+
+def _normalize_polars_deal_identifiers(frame: Any, pl: ModuleType) -> Any:
+    """Validate and cast deal time, security code, and source ordering fields."""
     valid_deal_time = (
         pl.col("_deal_time_numeric").is_not_null()
         & pl.col("_deal_time_numeric").is_finite()
@@ -164,7 +160,7 @@ def _aggregate_polars_deal_batch(
         & pl.col("_secu_code_numeric").is_between(0, 999_999)
         & (pl.col("_secu_code_numeric") == pl.col("_secu_code_numeric").floor())
     )
-    frame = frame.with_columns(
+    return frame.with_columns(
         pl.when(valid_deal_time)
         .then(pl.col("_deal_time_numeric"))
         .otherwise(-1)
@@ -187,7 +183,9 @@ def _aggregate_polars_deal_batch(
         valid_secu_code.alias("_valid_secu_code"),
     )
 
-    # Stage 4: decode deal time into ms-since-midnight and validate the trading clock.
+
+def _add_polars_trading_session(frame: Any, pl: ModuleType) -> Any:
+    """Derive the exchange clock, session eligibility, and canonical minute."""
     hours = pl.col("_deal_time") // 10_000_000
     minutes = (pl.col("_deal_time") // 100_000) % 100
     seconds = (pl.col("_deal_time") // 1_000) % 100
@@ -240,16 +238,20 @@ def _aggregate_polars_deal_batch(
         .then(_CONTINUOUS_CLOSE_MS // 60_000)
         .otherwise(minute_number)
     )
-    frame = frame.with_columns(
+    return frame.with_columns(
         in_session.alias("_in_session"),
         minute_number.alias("_minute_number"),
+    )
+
+
+def _map_polars_deal_symbols(frame: Any, pl: ModuleType, symbol_mapping: Any) -> Any:
+    """Map numeric Guan security codes to canonical market symbols."""
+    frame = frame.with_columns(
         pl.when(pl.col("_valid_secu_code"))
         .then(pl.col("_secu_code").cast(pl.String).str.pad_start(6, "0"))
         .otherwise(pl.lit(None, dtype=pl.String))
         .alias("symbol"),
     ).join(symbol_mapping, on="symbol", how="left")
-
-    # Stage 6: map symbol to ts_code via the lookup table, with exchange-suffix fallback.
     fallback_ts_code = (
         pl.when(pl.col("symbol").str.contains(r"^(600|601|603|605|688|689)"))
         .then(pl.col("symbol") + pl.lit(".SH"))
@@ -259,14 +261,21 @@ def _aggregate_polars_deal_batch(
         .then(pl.col("symbol") + pl.lit(".SZ"))
         .otherwise(pl.lit(None, dtype=pl.String))
     )
-    frame = frame.with_columns(
+    return frame.with_columns(
         pl.col("ts_code").is_not_null().alias("_mapped"),
         fallback_ts_code.alias("_fallback_ts_code"),
     ).with_columns(
         pl.coalesce("ts_code", "_fallback_ts_code").alias("ts_code"),
     )
 
-    # Stage 7: count eligibility buckets, then aggregate eligible rows into minute OHLCV.
+
+def _aggregate_polars_deal_frame(
+    frame: Any,
+    *,
+    pl: ModuleType,
+    trade_date: str,
+) -> tuple[Any, dict[str, int]]:
+    """Count eligibility buckets and aggregate eligible rows into minute OHLCV."""
     eligible = pl.col("_in_session") & pl.col("_valid_values") & pl.col("ts_code").is_not_null()
     counts_row = frame.select(
         pl.col("_in_session").sum().alias("session_rows"),
@@ -303,6 +312,26 @@ def _aggregate_polars_deal_batch(
         pl.col("_stream_order").sort_by(order).last().alias("_last_stream_order"),
     )
     return partial, {key: int(value) for key, value in counts_row.items()}
+
+
+def _aggregate_polars_deal_batch(
+    context: _PolarsDealBatchContext,
+    table: pa.Table,
+    stream_offset: int,
+) -> tuple[Any, dict[str, int]]:
+    """Aggregate one Arrow batch of Guan deal ticks into minute OHLCV rows."""
+    pl = context.pl
+    frame = _cast_polars_deal_columns(pl, table, stream_offset)
+    _validate_polars_trading_day(
+        frame,
+        pl=pl,
+        trade_date=context.trade_date,
+        path=context.path,
+    )
+    frame = _normalize_polars_deal_identifiers(frame, pl)
+    frame = _add_polars_trading_session(frame, pl)
+    frame = _map_polars_deal_symbols(frame, pl, context.symbol_mapping)
+    return _aggregate_polars_deal_frame(frame, pl=pl, trade_date=context.trade_date)
 
 
 def _compact_polars_deal_partials(pl: ModuleType, partials: list[Any]) -> Any:
