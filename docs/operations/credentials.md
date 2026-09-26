@@ -8,19 +8,20 @@
 export DATA_PLATFORM_ROOT=/data/market-data-platform
 ```
 
-本地开发可使用仓库内的默认 `artifacts/`：
+本地开发可在 shell 中设置仓库内的默认 `artifacts/`：
 
 ```bash
-cp .envrc.example .envrc
-cp .env.example .env.local
-direnv allow
+export DATA_PLATFORM_ROOT="$PWD/artifacts"
+uv sync --extra dev
 ```
 
-真实凭证写入未跟踪的 `.env.local`，或写入：
+TuShare 等服务凭证优先写入用户级私有配置文件：
 
 ```text
-~/.config/market-data-platform/secrets.env
+~/.config/market-data-platform/config.env
 ```
+
+该文件采用 `KEY=VALUE` 格式，例如 `TUSHARE_TOKEN=...`。限制文件权限，避免其他用户读取。CI 和部署环境应使用对应平台的 secret 管理功能注入凭证。仓库仍兼容 `.env.local` 和 `.env`，但新环境不必创建这些文件。
 
 ## 主要变量
 
@@ -33,7 +34,7 @@ direnv allow
 | `TUSHARE_API_URL` / `TUSHARE_API_URL_2` | 可选 TuShare SDK API 地址。`TUSHARE_API_URL_2` 会自动匹配 `TUSHARE_TOKEN_2` |
 
 `TUSHARE_API_URL*` 是 SDK 请求地址覆盖，作用范围不涉及本机 HTTP 代理。使用 15000 分 `TUSHARE_TOKEN_2`
-这类需要代理域名的 token 时，可在未跟踪的 `.env.local` 写入：
+这类需要代理域名的 token 时，可在上面的私有配置文件中写入：
 
 ```bash
 TUSHARE_TOKEN_2=...

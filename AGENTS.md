@@ -76,7 +76,9 @@ A 股是当前活跃主线。下游系统只读消费本仓发布的数据资产
 uv sync --extra dev
 ```
 
-真实凭证放在未跟踪的 `.env.local`、本地 `.env` 或个人 secret 文件中。文档只记录变量名和配置方式。
+真实凭证优先放在用户目录下的私有配置文件
+`~/.config/market-data-platform/config.env`，并限制文件权限。CI 和部署环境按其凭证管理机制注入变量。
+`.env.local`、`.env` 仍为本地兼容入口，但不作为新环境的默认配置方式。文档只记录变量名和配置方式。
 
 TuShare 凭证与自定义 API 地址的规则见 `docs/operations/credentials.md`。不要读取、打印或提交 token。
 
