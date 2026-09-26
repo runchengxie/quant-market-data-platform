@@ -31,20 +31,139 @@ from market_data_platform.providers.guan_annual_minbar_part01 import (
 )
 
 
-def _copy_source_to_raw_staging(
-    connection: Any,
-    *,
-    source: Path,
-    raw_root: Path,
-    year: int,
-    profile: AnnualMinbarUnitProfile,
-) -> None:
-    """Perform the build's sole full scan of the annual source Parquet."""
-    ticker = "lpad(trim(CAST(ticker AS VARCHAR)), 6, '0')"
-    ts_code = _mapped_ts_code_sql("_ticker")
-    # Guan encodes absent placeholder values as IEEE NaN in real annual files.
-    # Treat NaN like SQL NULL for the all-empty/partial-empty distinction, but
-    # reserve the non-finite error for +/- infinity.
+def _annual_typed_staging_cte(
+    *, ticker: str, source_literal: str, all_empty: str, any_empty: str, non_finite: str
+) -> str:
+    return f"""WITH typed AS (
+        SELECT
+            {ticker} AS _ticker,
+            CAST(timestamp AS BIGINT) AS _epoch,
+            CAST(open AS DOUBLE) AS _open,
+            CAST(close AS DOUBLE) AS _close,
+            CAST(high AS DOUBLE) AS _high,
+            CAST(low AS DOUBLE) AS _low,
+            CAST(volume AS DOUBLE) AS _volume,
+            CAST(amount AS DOUBLE) AS _amount,
+            ({all_empty}) AS _empty_numeric,
+            (({any_empty}) AND NOT ({all_empty})) AS _partial_null,
+            ((NOT ({all_empty})) AND ({non_finite})) AS _non_finite
+        FROM read_parquet({source_literal}, hive_partitioning = false)
+    )"""
+
+
+def _annual_mapped_staging_cte(*, ts_code: str) -> str:
+    return f""", mapped AS (
+        SELECT
+            *,
+            {ts_code} AS ts_code,
+            CASE
+                WHEN _epoch BETWEEN {_MIN_SAFE_EPOCH_SECONDS} AND {_MAX_SAFE_EPOCH_SECONDS}
+                    THEN CAST(make_timestamp(_epoch * 1000000) AS TIMESTAMP_NS)
+                ELSE NULL
+            END AS trade_time
+        FROM typed
+    )"""
+
+
+def _annual_validation_staging_ctes(*, year: int) -> str:
+    return f""", flags AS (
+        SELECT
+            *,
+            (NOT _empty_numeric AND ts_code IS NULL) AS _invalid_ticker,
+            (NOT _empty_numeric AND trade_time IS NULL) AS _invalid_timestamp,
+            (NOT _empty_numeric AND trade_time IS NOT NULL
+                AND year(trade_time) <> {year}) AS _wrong_year,
+            (NOT _empty_numeric AND trade_time IS NOT NULL
+                AND _epoch % 60 <> 0) AS _non_minute,
+            (NOT _empty_numeric AND NOT _partial_null AND NOT _non_finite
+                AND (_volume < 0 OR _amount < 0)) AS _negative_flow,
+            (NOT _empty_numeric
+                AND NOT _partial_null
+                AND NOT _non_finite
+                AND _volume = 0
+                AND _amount > 0) AS _zero_volume_nonzero_amount,
+            (NOT _empty_numeric
+                AND NOT _partial_null
+                AND NOT _non_finite
+                AND _volume > 0
+                AND _amount = 0) AS _positive_volume_zero_amount,
+            (NOT _empty_numeric
+                AND NOT _partial_null
+                AND NOT _non_finite
+                AND trade_time IS NOT NULL
+                AND strftime(trade_time, '%H%M%S') = '130000'
+                AND _volume = 0
+                AND _amount = 0
+                AND _open = _close
+                AND _open = _high
+                AND _open = _low) AS _dropped_off_session_zero_flow
+        FROM mapped
+    ), validated AS (
+        SELECT
+            *,
+            (NOT _empty_numeric
+                AND trade_time IS NOT NULL
+                AND NOT _dropped_off_session_zero_flow
+                AND NOT (
+                    CAST(strftime(trade_time, '%H%M') AS INTEGER) BETWEEN 930 AND 1130
+                    OR CAST(strftime(trade_time, '%H%M') AS INTEGER) BETWEEN 1301 AND 1500
+                )) AS _off_session
+        FROM flags
+    ), classified AS (
+        SELECT
+            *,
+            (NOT _empty_numeric
+                AND NOT _partial_null
+                AND NOT _non_finite
+                AND NOT _invalid_timestamp
+                AND NOT _wrong_year
+                AND NOT _non_minute
+                AND NOT _off_session
+                AND NOT _negative_flow
+                AND NOT _dropped_off_session_zero_flow
+                AND NOT _invalid_ticker) AS _keep
+        FROM validated
+    )"""
+
+
+def _annual_canonical_staging_cte(*, profile: AnnualMinbarUnitProfile) -> str:
+    return f""", canonical AS (
+        SELECT
+            ts_code,
+            trade_time,
+            _open AS open,
+            _close AS close,
+            greatest(_high, _open, _close) AS high,
+            least(_low, _open, _close) AS low,
+            _volume * {profile.volume_scale!r} AS vol,
+            _amount * {profile.amount_scale!r} AS amount,
+            _empty_numeric,
+            _partial_null,
+            _non_finite,
+            _invalid_ticker,
+            _invalid_timestamp,
+            _wrong_year,
+            _non_minute,
+            _off_session,
+            _negative_flow,
+            _zero_volume_nonzero_amount,
+            _positive_volume_zero_amount,
+            _dropped_off_session_zero_flow,
+            (_keep AND (
+                _high IS DISTINCT FROM greatest(_high, _open, _close)
+                OR _low IS DISTINCT FROM least(_low, _open, _close)
+            )) AS _repaired_ohlc,
+            _keep,
+            CASE WHEN _keep THEN strftime(trade_time, '%Y%m%d') ELSE '_audit' END
+                AS _partition
+        FROM classified
+    )"""
+
+
+def _raw_staging_copy_query(
+    *, source: Path, raw_root: Path, year: int, profile: AnnualMinbarUnitProfile
+) -> str:
+    # NaN means missing placeholder data; only +/- infinity is a non-finite error.
     numeric_missing = [
         f"({column} IS NULL OR isnan(CAST({column} AS DOUBLE)))"
         for column in _NUMERIC_SOURCE_COLUMNS
@@ -55,133 +174,44 @@ def _copy_source_to_raw_staging(
         f"({column} IS NOT NULL AND isinf(CAST({column} AS DOUBLE)))"
         for column in _NUMERIC_SOURCE_COLUMNS
     )
-    source_literal = _sql_literal(source)
-    raw_literal = _sql_literal(raw_root)
-    query = f"""
-        COPY (
-            WITH typed AS (
-                SELECT
-                    {ticker} AS _ticker,
-                    CAST(timestamp AS BIGINT) AS _epoch,
-                    CAST(open AS DOUBLE) AS _open,
-                    CAST(close AS DOUBLE) AS _close,
-                    CAST(high AS DOUBLE) AS _high,
-                    CAST(low AS DOUBLE) AS _low,
-                    CAST(volume AS DOUBLE) AS _volume,
-                    CAST(amount AS DOUBLE) AS _amount,
-                    ({all_empty}) AS _empty_numeric,
-                    (({any_empty}) AND NOT ({all_empty})) AS _partial_null,
-                    ((NOT ({all_empty})) AND ({non_finite})) AS _non_finite
-                FROM read_parquet({source_literal}, hive_partitioning = false)
-            ), mapped AS (
-                SELECT
-                    *,
-                    {ts_code} AS ts_code,
-                    CASE
-                        WHEN _epoch BETWEEN {_MIN_SAFE_EPOCH_SECONDS} AND {_MAX_SAFE_EPOCH_SECONDS}
-                            THEN CAST(make_timestamp(_epoch * 1000000) AS TIMESTAMP_NS)
-                        ELSE NULL
-                    END AS trade_time
-                FROM typed
-            ), flags AS (
-                SELECT
-                    *,
-                    (NOT _empty_numeric AND ts_code IS NULL) AS _invalid_ticker,
-                    (NOT _empty_numeric AND trade_time IS NULL) AS _invalid_timestamp,
-                    (NOT _empty_numeric AND trade_time IS NOT NULL
-                        AND year(trade_time) <> {year}) AS _wrong_year,
-                    (NOT _empty_numeric AND trade_time IS NOT NULL
-                        AND _epoch % 60 <> 0) AS _non_minute,
-                    (NOT _empty_numeric AND NOT _partial_null AND NOT _non_finite
-                        AND (_volume < 0 OR _amount < 0)) AS _negative_flow,
-                    (NOT _empty_numeric
-                        AND NOT _partial_null
-                        AND NOT _non_finite
-                        AND _volume = 0
-                        AND _amount > 0) AS _zero_volume_nonzero_amount,
-                    (NOT _empty_numeric
-                        AND NOT _partial_null
-                        AND NOT _non_finite
-                        AND _volume > 0
-                        AND _amount = 0) AS _positive_volume_zero_amount,
-                    (NOT _empty_numeric
-                        AND NOT _partial_null
-                        AND NOT _non_finite
-                        AND trade_time IS NOT NULL
-                        AND strftime(trade_time, '%H%M%S') = '130000'
-                        AND _volume = 0
-                        AND _amount = 0
-                        AND _open = _close
-                        AND _open = _high
-                        AND _open = _low) AS _dropped_off_session_zero_flow
-                FROM mapped
-            ), validated AS (
-                SELECT
-                    *,
-                    (NOT _empty_numeric
-                        AND trade_time IS NOT NULL
-                        AND NOT _dropped_off_session_zero_flow
-                        AND NOT (
-                            CAST(strftime(trade_time, '%H%M') AS INTEGER) BETWEEN 930 AND 1130
-                            OR CAST(strftime(trade_time, '%H%M') AS INTEGER) BETWEEN 1301 AND 1500
-                        )) AS _off_session
-                FROM flags
-            ), classified AS (
-                SELECT
-                    *,
-                    (NOT _empty_numeric
-                        AND NOT _partial_null
-                        AND NOT _non_finite
-                        AND NOT _invalid_timestamp
-                        AND NOT _wrong_year
-                        AND NOT _non_minute
-                        AND NOT _off_session
-                        AND NOT _negative_flow
-                        AND NOT _dropped_off_session_zero_flow
-                        AND NOT _invalid_ticker) AS _keep
-                FROM validated
-            ), canonical AS (
-                SELECT
-                    ts_code,
-                    trade_time,
-                    _open AS open,
-                    _close AS close,
-                    greatest(_high, _open, _close) AS high,
-                    least(_low, _open, _close) AS low,
-                    _volume * {profile.volume_scale!r} AS vol,
-                    _amount * {profile.amount_scale!r} AS amount,
-                    _empty_numeric,
-                    _partial_null,
-                    _non_finite,
-                    _invalid_ticker,
-                    _invalid_timestamp,
-                    _wrong_year,
-                    _non_minute,
-                    _off_session,
-                    _negative_flow,
-                    _zero_volume_nonzero_amount,
-                    _positive_volume_zero_amount,
-                    _dropped_off_session_zero_flow,
-                    (_keep AND (
-                        _high IS DISTINCT FROM greatest(_high, _open, _close)
-                        OR _low IS DISTINCT FROM least(_low, _open, _close)
-                    )) AS _repaired_ohlc,
-                    _keep,
-                    CASE WHEN _keep THEN strftime(trade_time, '%Y%m%d') ELSE '_audit' END
-                        AS _partition
-                FROM classified
-            )
-            SELECT * FROM canonical
-        ) TO {raw_literal} (
-            FORMAT PARQUET,
-            COMPRESSION ZSTD,
-            PARTITION_BY (_partition),
-            FILENAME_PATTERN 'chunk-{{uuid}}',
-            OVERWRITE_OR_IGNORE true,
-            ROW_GROUP_SIZE 250000
-        )
-    """
-    connection.execute(query)
+    typed = _annual_typed_staging_cte(
+        ticker="lpad(trim(CAST(ticker AS VARCHAR)), 6, '0')",
+        source_literal=_sql_literal(source),
+        all_empty=all_empty,
+        any_empty=any_empty,
+        non_finite=non_finite,
+    )
+    ctes = (
+        typed
+        + _annual_mapped_staging_cte(ts_code=_mapped_ts_code_sql("_ticker"))
+        + _annual_validation_staging_ctes(year=year)
+        + _annual_canonical_staging_cte(profile=profile)
+    )
+    return f"""COPY (
+        {ctes}
+        SELECT * FROM canonical
+    ) TO {_sql_literal(raw_root)} (
+        FORMAT PARQUET,
+        COMPRESSION ZSTD,
+        PARTITION_BY (_partition),
+        FILENAME_PATTERN 'chunk-{{uuid}}',
+        OVERWRITE_OR_IGNORE true,
+        ROW_GROUP_SIZE 250000
+    )"""
+
+
+def _copy_source_to_raw_staging(
+    connection: Any,
+    *,
+    source: Path,
+    raw_root: Path,
+    year: int,
+    profile: AnnualMinbarUnitProfile,
+) -> None:
+    """Perform the build's sole full scan of the annual source Parquet."""
+    connection.execute(
+        _raw_staging_copy_query(source=source, raw_root=raw_root, year=year, profile=profile)
+    )
 
 
 def _raw_staging_stats(connection: Any, raw_root: Path) -> dict[str, int]:
