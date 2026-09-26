@@ -41,10 +41,32 @@ uv build --clear
 发布前先确认 `pyproject.toml` 中的版本号已经递增。不要用同一个版本号重复发布
 不同内容。
 
+## 下游依赖尚未发布 registry 的 owner commit
+
+registry 尚未配置时，下游可以直接安装本仓已经合并的 commit。依赖应锁定完整 commit
+SHA，不使用浮动的 `main`、开发分支或未合并的 PR 分支。这样可以在 registry 准备期间先完成
+跨仓绑定，同时避免生产环境依赖某个开发者本地 checkout。
+
+下游 `pyproject.toml` 示例：
+
+```toml
+[project]
+dependencies = ["market-data-platform[research-features,duckdb]>=0.2.0"]
+
+[tool.uv.sources]
+market-data-platform = { git = "https://github.com/runchengxie/quant-market-data-platform.git", rev = "<完整的已合并 commit SHA>" }
+```
+
+根据下游的 import 范围选择 extras。契约模块的导入链未使用 pandas、Parquet 或 DuckDB 时，
+可以省略相应 extras。修改后在下游运行 `uv lock` 并提交 `uv.lock`，再执行 `uv sync --locked` 和
+公开导入、行为契约检查。升级时先合并并验证本仓改动，再将下游来源更新到新的完整 commit
+SHA。
+
 ## 下游切换
 
 `strategy-pipeline` 目前仍通过相邻目录的 editable source 使用本仓库源码，用于在
-package registry 尚未配置前保持本地联调可运行。完成首次发布后，下游切换顺序是：
+package registry 尚未配置前保持本地联调可运行。后续可先使用上面的不可变 Git commit，完成
+首次 registry 发布后再切换到包源：
 
 1. 在下游验证环境中配置可访问的包源和读取 token。
 1. 在下游仓库运行 `uv lock --no-sources`，确认能从 registry 解析
