@@ -13,7 +13,6 @@ htmlcov/
 # Local credentials and direnv state.
 .env
 .env.*
-!.env.example
 .envrc
 .envrc.local
 
