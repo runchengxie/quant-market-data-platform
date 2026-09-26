@@ -428,9 +428,9 @@ def _traded_symbols_from_provider(
         pro, api_name="daily_basic", trade_date=trade_date, policy=policy
     )
     if exchange is not None:
-        suffix = f".{exchange}"
-        daily = {symbol for symbol in daily if symbol.endswith(suffix)}
-        daily_basic = {symbol for symbol in daily_basic if symbol.endswith(suffix)}
+        suffixes = (".SH", ".SZ") if exchange == "SH_SZ" else (f".{exchange}",)
+        daily = {symbol for symbol in daily if symbol.endswith(suffixes)}
+        daily_basic = {symbol for symbol in daily_basic if symbol.endswith(suffixes)}
     daily, _daily_transitions = _apply_historical_code_transitions(daily, trade_date=trade_date)
     daily_basic, _daily_basic_transitions = _apply_historical_code_transitions(
         daily_basic, trade_date=trade_date
