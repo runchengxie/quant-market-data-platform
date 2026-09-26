@@ -120,14 +120,9 @@ def _publish_file_alias(*, alias_path: Path, target: Path) -> dict[str, str]:
     """Materialize a stable file entry from an immutable published file."""
     alias = alias_path.expanduser()
     target_path = target.expanduser().resolve(strict=True)
-    alias.parent.mkdir(parents=True, exist_ok=True)
-    if alias.is_symlink() or alias.is_file():
-        alias.unlink()
-    elif alias.exists():
-        raise RuntimeError(f"Refusing to replace non-file current alias: {alias}")
-    temporary = alias.with_name(f".{alias.name}.tmp")
-    shutil.copy2(target_path, temporary)
-    temporary.replace(alias)
+    # Require the companion metadata before changing either published entry.
+    _companion_manifest_path(target_path).resolve(strict=True)
+    _copy_release_file(source=target_path, destination=alias, copy_manifest=True)
     return {"alias_path": str(alias), "target": str(target_path), "materialized": "true"}
 
 
