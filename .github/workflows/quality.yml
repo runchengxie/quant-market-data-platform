@@ -23,7 +23,7 @@ jobs:
           uv run --locked --extra dev python scripts/dev/audit_public_snapshot.py .
           --exclude-file scripts/dev/public_snapshot_excludes.txt
       - name: Run shared code-quality ratchet
-        run: uv run --locked --extra dev research-code-quality --scope src --scope scripts --scope tests --baseline .code-quality-baseline.json --ratchet --json
+        run: uv run --locked --extra dev research-code-quality --root . --scope src --scope scripts --scope tests --baseline config/code-quality-baseline.json --ratchet --json
       - run: uv run --locked --extra dev ruff check src scripts tests
       - run: PYTHONPATH=. uv run --locked --extra dev pytest -q
       - name: Audit public dependencies
