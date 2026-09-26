@@ -4,6 +4,21 @@
 
 `market-data-platform` 是量化研究和交易系统共享的市场数据资产平台。它统一管理数据采集、清洗、检查、发布和读取入口。
 
+## 系统定位
+
+角色：Market Data Platform。
+
+负责数据接入、标准化、质量治理、版本管理和发布已登记的数据资产。下游研究和量化组件消费发布结果，本仓库不负责通用回测、研究任务编排或 Agent Harness。
+
+```text
+quant-market-data-platform ── 发布数据资产 ──→ quant-research
+quant-platform ── 领域能力与契约 ───────────→ quant-research
+quant-research ── 类型化回测任务 ─────────→ quant-backtest-runtime
+Agent Harness ── 经研究接口访问研究状态 ──→ quant-research
+```
+
+跨仓库完整架构由私有 `quant-research` 维护，内部入口见[系统架构总览](https://github.com/runchengxie/quant-research/blob/main/docs/architecture/system-overview.md)，需要仓库权限。本仓的数据消费契约和下游适配见[下游接入](docs/integrations.md)。
+
 大体量行情数据、缓存、报告和凭证不进入 Git。
 
 ## 当前范围
