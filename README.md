@@ -1,136 +1,36 @@
 # quant-market-data-platform
 
-> 项目状态：独立数据平台。新的数据生产、质量治理和 published asset 能力继续进入本仓库。通用回测、组合、风险和执行模拟进入 `quant-platform`，策略专属数据派生进入 `quant-research`。历史名称 `market-data-platform` 仅保留在兼容命令、迁移记录和数据路径中。
+`quant-market-data-platform` 负责量化研究所需的市场数据：接入数据源、整理数据、检查质量、管理版本并发布可供下游使用的数据资产。
 
-`market-data-platform` 是量化研究和交易系统共享的市场数据资产平台。它统一管理数据采集、清洗、检查、发布和读取入口。
+本项目属于 Quant Research 项目系列，与同系列的研究框架、数据消费方和交付项目各自独立维护、按接口协作。
 
-## 系统定位
+当前活跃开发以中国大陆市场为主。研究和回测项目读取这里发布的数据，不直接依赖本仓库的内部实现。大体量数据、运行结果和凭证保存在仓库之外。
 
-角色：Market Data Platform。
+当前 Qlib 接入只提供已发布数据资产的只读 DataLoader 适配器。常规开发门禁只安装 `dev` extra。安装选项和接入限制见[下游接入说明](docs/integrations.md)。
 
-负责数据接入、标准化、质量治理、版本管理和发布已登记的数据资产。下游研究和量化组件消费发布结果，本仓库不负责通用回测、研究任务编排或 Agent Harness。
+## 开始使用
 
-```text
-quant-market-data-platform ── 发布数据资产 ──→ quant-research
-quant-platform ── 领域能力与契约 ───────────→ quant-research
-quant-research ── 类型化回测任务 ─────────→ quant-backtest-runtime
-Agent Harness ── 经研究接口访问研究状态 ──→ quant-research
-```
-
-跨仓库完整架构由私有 `quant-research` 维护，内部入口见[系统架构总览](https://github.com/runchengxie/quant-research/blob/main/docs/architecture/system-overview.md)，需要仓库权限。本仓的数据消费契约和下游适配见[下游接入](docs/integrations.md)。
-
-大体量行情数据、缓存、报告和凭证不进入 Git。
-
-## 当前范围
-
-当前主线覆盖中国大陆市场数据：
-
-- TuShare 数据源入口
-- A 股原始层、日频清洗和股票池
-- Guan 与 TuShare A 股分钟数据融合、覆盖审计和原子切换
-- 当前数据契约与数据集注册表
-- 基本面时间点（PIT）、行业、资金流和热点特征
-- 标准层、DuckDB 查询和本地快照
-- 数据质量、兼容性和架构治理
-- 面向 Qlib 的条件化只读 DataLoader 适配器
-
-中国香港市场生产模块已经归档，只保留冷存储冻结和恢复入口。
-
-## Qlib 接入状态
-
-当前 Qlib 接入只提供已发布数据资产的只读 DataLoader 适配器。核心包、数据生产命令和
-当前数据契约发布链路不依赖 Qlib。Dataset、DataHandler、模型训练和实验记录由研究层负责，
-本仓库没有提供这些能力。
-
-常规开发门禁只安装 `dev` extra，不安装真实 `pyqlib`。需要验证真实 Qlib 运行时时，使用
-`dev` 与 `qlib` 两个 extra 运行定点测试。具体命令见[下游接入](docs/integrations.md)和
-[测试](docs/operations/testing.md)。
-
-## 快速开始
+项目使用 `uv` 管理 Python 环境：
 
 ```bash
 uv sync --extra dev
-cp .envrc.example .envrc
-cp .env.example .env.local
-direnv allow
-export DATA_PLATFORM_ROOT=/data/market-data-platform
-```
-
-真实数据源凭证写入未跟踪的 `.env.local`，也可以放在：
-
-```text
-~/.config/market-data-platform/config.env
-```
-
-最小检查：
-
-```bash
 marketdata --help
-marketdata paths --market a_share
-marketdata contract build --market a_share --provider tushare \
-  --artifacts-root "$DATA_PLATFORM_ROOT"
-marketdata registry build --artifacts-root "$DATA_PLATFORM_ROOT"
 ```
 
-## 稳定数据入口
+若要读取或构建真实数据，还需要配置数据目录和数据源凭证。请先阅读[本地开发与操作说明](docs/operations/backup-and-dev.md)和[凭证配置](docs/operations/credentials.md)。
 
-```text
-$DATA_PLATFORM_ROOT/metadata/current_assets/<market>_current.json
-```
+## 接下来读什么
 
-A 股权威文件名为 `a_share_current.json`。数据集注册表用于查询和审计，程序读取优先使用当前数据契约。
+- [文档首页](docs/index.md)：快速了解项目和主要入口
+- [操作总览](docs/operations.md)：查找数据命令与日常操作
+- [数据契约](docs/contracts.md)：了解已发布数据的格式和约定
+- [下游接入](docs/integrations.md)：了解其他项目如何读取发布资产
+- [文档目录](docs/README.md)：按主题查找技术说明
 
-A 股分钟数据通过两个显式分源的稳定 alias 发布：
+## 项目边界
 
-```text
-$DATA_PLATFORM_ROOT/assets/derived/a_share/minute_1m
-$DATA_PLATFORM_ROOT/assets/derived/a_share/minute_1m_tushare
-```
+本项目维护市场数据生产与发布。通用回测和组合能力属于 [`quant-platform`](https://github.com/runchengxie/quant-platform)，策略研究与实验管理属于私有 `quant-research`，持久化回测任务由 [`quant-backtest-runtime`](https://github.com/runchengxie/quant-backtest-runtime) 执行。
 
-`minute_1m` 保留 Guan legacy canonical，当前指向 `minute_1m_v3_20260714`。
-`minute_1m_tushare` 是采用独立特征、模型和阈值基线的 TuShare operational canonical。
-分钟资产尚未写入 `a_share_current.json` 或数据集注册表。读取方必须保留所选 alias、最终解析版本
-和对应 receipt，不得把两个来源当作可无缝替换的数据。来源口径与研究限制见
-[A 股分钟数据](docs/operations/a-share-minutes.md)。
+当前数据范围、各数据源能力、质量规则、命令参数和运维流程都收录在 `docs/` 中。
 
-详细规则见 [docs/contracts.md](docs/contracts.md)。
-
-## 常用入口
-
-```bash
-marketdata data catalog --artifacts-root "$DATA_PLATFORM_ROOT"
-marketdata data query --artifacts-root "$DATA_PLATFORM_ROOT" --sql "select 1 as value"
-marketdata backup-data --help
-marketdata migration freeze-hk --help
-marketdata migration hydrate-hk --help
-```
-
-TuShare 功能需要 `tushare` extra 和 token。完整操作清单见 [docs/operations.md](docs/operations.md)。
-
-## 测试和质量检查
-
-```bash
-uv run --extra dev python scripts/dev/run_pytest_isolated.py -- -q
-uv run --extra dev python -m ruff check .
-uv run --extra dev python -m ruff format --check .
-uv run --extra dev ty check --error-on-warning
-uv run --extra dev python scripts/dev/architecture_governance.py --check
-```
-
-`ty` 的配置范围合并了迁移前的日常检查与发布检查文件，并额外纳入 `symbols.py`。日常检查与发布检查使用同一配置。
-
-详细说明见 [测试](docs/operations/testing.md) 和 [docs/quality-governance.md](docs/quality-governance.md)。编码代理默认读取根 README、[文档索引](docs/README.md) 和一个任务相关分类。
-
-## 文档入口
-
-- [文档首页](docs/README.md)
-- [数据契约](docs/contracts.md)
-- [操作与 CLI](docs/operations.md)
-- [A 股分钟数据](docs/operations/a-share-minutes.md)
-- [数据仓库和查询](docs/data-warehouse.md)
-- [下游接入](docs/integrations.md)
-- [研究视图归属](docs/ownership-migration.md)
-- [研究数据完整性](docs/research-integrity.md)
-- [兼容层](docs/compatibility.md)
-- [测试](docs/operations/testing.md)
-- [质量治理](docs/quality-governance.md)
+本地开发质量检查包含 `ty check` 等门禁，完整命令见[测试说明](docs/operations/testing.md)。
