@@ -11,8 +11,8 @@
 1. 从 `origin/main` 创建 worktree 和功能分支。
 2. 在该 worktree 中完成修改和本地门禁。
 3. 提交并推送功能分支，创建 PR。
-4. PR 合并到 `main` 后，删除远端旧分支和本地功能分支。
-5. 删除已经完成的 worktree。
+4. PR review 和必需检查完成后，将 PR 合并到 `main`。
+5. 确认 PR 已合并且 worktree 没有唯一未保存内容后，先移除 worktree，再删除本地和远端旧分支。只清理本任务资源，遇到未保存或未合并改动时保留现场并报告。
 
 不要让多个 agent 直接修改同一个工作树，也不要在 `main` 上直接提交。跨仓库改动先完成 owner 仓库的 PR，再更新上游仓库中的 gitlink 或迁移说明。
 
@@ -157,13 +157,13 @@ uv sync --extra dev --extra duckdb
    git push -u origin feat/<主题>
    ```
 
-4. 用 `gh pr create` 开拉取请求，合并到 `main`。
-5. 合并完成后删除功能分支并移除 worktree：
+4. 用 `gh pr create` 开目标为 `main` 的拉取请求；review 和必需检查完成后再合并。
+5. 确认 PR 已合并且 worktree 没有唯一未保存内容后，先移除 worktree，再删除本地和远端功能分支：
 
    ```bash
-   git push origin --delete feat/<主题>
-   git branch -d feat/<主题>
    git worktree remove <path>
+   git branch -d feat/<主题>
+   git push origin --delete feat/<主题>
    ```
 
 本仓提交推送合并完成后，再回到 `research-workspace` 更新 gitlink。
