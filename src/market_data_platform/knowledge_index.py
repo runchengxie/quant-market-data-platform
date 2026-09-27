@@ -44,6 +44,10 @@ def _construct_mapping(loader: _UniqueKeyLoader, node: yaml.MappingNode) -> dict
     result: dict[object, object] = {}
     for key_node, value_node in node.value:
         key = loader.construct_object(key_node)
+        try:
+            hash(key)
+        except TypeError as exc:
+            raise ValueError("invalid YAML key: unhashable value") from exc
         if key in result:
             raise ValueError(f"duplicate YAML key: {key}")
         result[key] = loader.construct_object(value_node)

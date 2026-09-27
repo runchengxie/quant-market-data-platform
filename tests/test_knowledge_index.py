@@ -132,6 +132,18 @@ def test_duplicate_yaml_keys_fail(tmp_path: Path) -> None:
         load_manifest_documents(manifest, root)
 
 
+def test_unhashable_yaml_key_returns_issue(tmp_path: Path) -> None:
+    root, first, _ = make_repo(tmp_path)
+    first.write_text(
+        "---\n? [schema_version, id]\n: knowledge/v2\n---\n# Dataset\n",
+        encoding="utf-8",
+    )
+    issues = validate_knowledge_documents([first], root)
+    assert len(issues) == 1
+    assert issues[0].path == first
+    assert "YAML key" in issues[0].message
+
+
 def test_manifest_rejects_path_escape_and_duplicate(tmp_path: Path) -> None:
     root, _, manifest = make_repo(tmp_path)
     payload = (
