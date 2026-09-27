@@ -99,6 +99,28 @@ def _read_page(path: Path) -> dict[str, object]:
     return value
 
 
+def _valid_iso_date(value: object) -> bool:
+    if isinstance(value, date):
+        value = value.isoformat()
+    if not isinstance(value, str):
+        return False
+    try:
+        return date.fromisoformat(value).isoformat() == value
+    except ValueError:
+        return False
+
+
+def _reference_errors(record: dict[str, object], key: object) -> list[str]:
+    if not isinstance(key, str):
+        return []
+    errors: list[str] = []
+    if record.get("id") != f"{_OWNER}.dataset.a_share.{key}":
+        errors.append("id must use owner.dataset.a_share.asset_key")
+    if record.get("authority_ref") != f"asset:{_OWNER}:a_share:{key}":
+        errors.append("authority_ref must identify the asset key")
+    return errors
+
+
 def _page_errors(record: dict[str, object]) -> list[str]:
     errors: list[str] = []
     if record.keys() != _FIELDS:
@@ -116,18 +138,8 @@ def _page_errors(record: dict[str, object]) -> list[str]:
             errors.append(f"{field} must be {expected}")
     if record.get("source_of_truth") is not False:
         errors.append("source_of_truth must be false")
-    if isinstance(key, str):
-        if record.get("id") != f"{_OWNER}.dataset.a_share.{key}":
-            errors.append("id must use owner.dataset.a_share.asset_key")
-        if record.get("authority_ref") != f"asset:{_OWNER}:a_share:{key}":
-            errors.append("authority_ref must identify the asset key")
-    verified = record.get("last_verified")
-    try:
-        if isinstance(verified, date) and not isinstance(verified, str):
-            verified = verified.isoformat()
-        if not isinstance(verified, str) or date.fromisoformat(verified).isoformat() != verified:
-            raise ValueError
-    except ValueError:
+    errors.extend(_reference_errors(record, key))
+    if not _valid_iso_date(record.get("last_verified")):
         errors.append("last_verified must be an ISO date")
     relations = record.get("relations")
     if not isinstance(relations, list) or not all(isinstance(item, str) for item in relations):
@@ -163,6 +175,35 @@ def validate_knowledge_documents(
     return issues
 
 
+def _stable_asset_keys(repository_root: Path) -> set[str]:
+    contract = _contained_path(Path("docs/contracts.md"), repository_root)
+    contract_text = contract.read_text(encoding="utf-8")
+    section = contract_text.split("## 数据资产键名\n", 1)
+    if len(section) != 2:
+        raise ValueError("docs/contracts.md lacks the stable-key table")
+    return set(_CONTRACT_ROW.findall(section[1].split("\n## ", 1)[0]))
+
+
+def _manifest_entry(
+    entry: object, repository_root: Path, stable_keys: set[str]
+) -> tuple[str, Path]:
+    if not isinstance(entry, dict) or set(entry) != {"asset_key", "document"}:
+        raise ValueError("manifest entries require asset_key and document only")
+    key, document = entry["asset_key"], entry["document"]
+    if not isinstance(key, str) or not _KEY.fullmatch(key):
+        raise ValueError("invalid manifest asset_key")
+    if key not in stable_keys:
+        raise ValueError(f"asset_key {key} is not listed in docs/contracts.md")
+    if not isinstance(document, str):
+        raise ValueError("invalid manifest document path")
+    path = _contained_path(Path(document), repository_root)
+    if path.suffix != ".md":
+        raise ValueError(f"invalid manifest document path: {document}")
+    if _read_page(path).get("asset_key") != key:
+        raise ValueError(f"manifest asset_key mismatch: {document}")
+    return key, path
+
+
 def load_manifest_documents(manifest: Path, repository_root: Path) -> list[Path]:
     """Resolve and validate the pilot selection against public stable keys."""
     manifest_path = _relative_existing_path(manifest, repository_root)
@@ -174,33 +215,16 @@ def load_manifest_documents(manifest: Path, repository_root: Path) -> list[Path]
     entries = value["datasets"]
     if not isinstance(entries, list) or not entries:
         raise ValueError("manifest datasets must be nonempty")
-    contract = _contained_path(Path("docs/contracts.md"), repository_root)
-    contract_text = contract.read_text(encoding="utf-8")
-    section = contract_text.split("## 数据资产键名\n", 1)
-    if len(section) != 2:
-        raise ValueError("docs/contracts.md lacks the stable-key table")
-    stable_keys = set(_CONTRACT_ROW.findall(section[1].split("\n## ", 1)[0]))
+    stable_keys = _stable_asset_keys(repository_root)
     paths: list[Path] = []
     seen_paths: set[Path] = set()
     seen_keys: set[str] = set()
     for entry in entries:
-        if not isinstance(entry, dict) or set(entry) != {"asset_key", "document"}:
-            raise ValueError("manifest entries require asset_key and document only")
-        key, document = entry["asset_key"], entry["document"]
-        if not isinstance(key, str) or not _KEY.fullmatch(key):
-            raise ValueError("invalid manifest asset_key")
-        if key not in stable_keys:
-            raise ValueError(f"asset_key {key} is not listed in docs/contracts.md")
+        key, path = _manifest_entry(entry, repository_root, stable_keys)
         if key in seen_keys:
             raise ValueError(f"duplicate manifest asset_key: {key}")
-        if not isinstance(document, str):
-            raise ValueError("invalid manifest document path")
-        path = _contained_path(Path(document), repository_root)
-        if path.suffix != ".md" or path in seen_paths:
-            raise ValueError(f"duplicate or invalid manifest document path: {document}")
-        record = _read_page(path)
-        if record.get("asset_key") != key:
-            raise ValueError(f"manifest asset_key mismatch: {document}")
+        if path in seen_paths:
+            raise ValueError(f"duplicate manifest document path: {path}")
         seen_keys.add(key)
         seen_paths.add(path)
         paths.append(path)
