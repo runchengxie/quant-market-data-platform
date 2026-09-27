@@ -21,7 +21,9 @@ uv run --extra dev python -m ruff format --check .
 uv run --extra dev ty check --error-on-warning
 ```
 
-仓库没有活动 GitHub Actions workflow。作为 `research-workspace` 子模块使用时，Git 会读取工作区共享的 `.githooks/pre-push`。该 hook 在本地运行 Ruff、格式、`ty`、pytest、复杂度 ratchet、维护性 baseline、兼容层和架构治理。`ty` 已合并迁移前的日常与发布检查范围，发布检查沿用同一配置。
+仓库通过 GitHub Actions 检查拉取请求和 `main` 推送。质量工作流运行公开快照边界检查、共享代码质量 ratchet、Ruff、pytest 和依赖审计，文档工作流执行 strict MkDocs 构建。PR 上的必需检查是合并门禁。
+
+作为 `research-workspace` 子模块使用时，工作区可能额外配置共享 `.githooks/pre-push`，在本地运行 Ruff、格式、`ty`、pytest、复杂度 ratchet、维护性 baseline、兼容层和架构治理。该共享 hook 属于工作区约定，不由本仓 `.pre-commit-config.yaml` 管理，也不替代 CI。`ty` 已合并迁移前的日常与发布检查范围，发布检查沿用同一配置。
 
 完整测试在单个 pytest 进程中会累积较多内存。`run_pytest_isolated.py` 默认每 8 个测试文件启动一个进程，并在批次结束后释放内存。聚焦单个模块时仍可直接运行 `python -m pytest tests/<file>.py`。coverage 属于发布诊断，按目标模块运行：
 

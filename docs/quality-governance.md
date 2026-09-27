@@ -119,17 +119,10 @@ uv run --extra dev python scripts/dev/quality_debt.py --json --skip-ruff
 `--complexity` 单独使用时只报告 Ruff 的 `C90,PLR0911,PLR0912,PLR0913,PLR0915`
 规则集。本地完整门禁会同时传入 `--check-ratchet`，阻止复杂度债务超过已接受基线。类型诊断由 `ty` 阻塞检查直接处理，不再维护另一套诊断债务。
 
-本地提交前也可以运行 pre-commit：
-
-```bash
-uv run --extra dev pre-commit install
-uv run --extra dev pre-commit run --all-files
-```
-
 当前仓库有两条活动 GitHub Actions 工作流。`.github/workflows/quality.yml` 在 PR 和
 `main` 推送时运行公开快照边界检查、共享代码质量 ratchet、Ruff、pytest 和 `pip-audit`。
 `.github/workflows/docs.yml` 对文档变更执行 strict MkDocs 构建，并在主分支发布 Pages。
-本地 pre-commit 和治理脚本用于更早发现问题，不能替代远端必需检查。发布前按目标模块运行 coverage。
+PR 上的必需 CI 检查是合并门禁。开发者可按需运行本页列出的本地命令提前发现问题。发布前按目标模块运行 coverage。
 
 维护性指标：
 
