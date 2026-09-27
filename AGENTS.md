@@ -157,7 +157,7 @@ uv sync --extra dev --extra duckdb
    git push -u origin feat/<主题>
    ```
 
-4. 用 `gh pr create` 开目标为 `main` 的拉取请求；review 和必需检查完成后再合并。
+4. 用 `gh pr create` 开目标为 `main` 的拉取请求。review 和必需检查完成后再合并。
 5. 确认 PR 已合并且 worktree 没有唯一未保存内容后，先移除 worktree，再删除本地和远端功能分支：
 
    ```bash
