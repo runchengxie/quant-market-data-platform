@@ -1,0 +1,6 @@
+schema_version: knowledge-pilot/v2
+datasets:
+  - asset_key: daily_clean
+    document: docs/knowledge/datasets/a-share-daily-clean.md
+  - asset_key: limit_status
+    document: docs/knowledge/datasets/a-share-limit-status.md

@@ -107,6 +107,34 @@ uv run --extra dev python scripts/dev/compatibility_governance.py --check
 uv run --extra dev python scripts/dev/architecture_governance.py --check
 ```
 
+## 2026-09-27 共享代码质量基线调整
+
+`config/code-quality-baseline.json` 的 `python_files` 从 449 调整到 452，`python_lines` 从
+108564 调整到 109101。本次增加的 3 个 Python 文件和 537 行分别是
+`src/market_data_platform/knowledge_index.py`、`scripts/dev/knowledge_index.py` 和
+`tests/test_knowledge_index.py`。它们提供 Knowledge v2 数据集试点的严格解析、开发校验器和
+合成契约测试。额外 24 行用于拆分解析和清单校验函数，保持既有复杂度门禁通过。
+这是已批准的试点范围，其他共享指标保持原基线。
+
+调整前，GitHub Actions 使用的 `research-code-quality --ratchet` 命令只报告
+`python_files: 452 > baseline 449` 和 `python_lines: 109077 > baseline 108564`。
+完整本地门禁随后发现新解析器增加了 2 条 C901 诊断。拆分函数后，复杂度 ratchet 回到
+接受基线以内，文件行数增加到 109101。
+`quality_debt.py --json --skip-ruff` 报告 Ruff 和 `ty` 均覆盖 293/293 个源码文件、
+66549/66549 行，排除 0 个文件和 0 行。
+`maintainability_metrics.py --json --limit 30` 报告 452 个 Python 文件、109101 行、
+38 个超过 100 行的函数、1 个超过 250 行的函数，最大文件 2045 行、最大函数 309 行。
+这些热点指标没有随本次试点增加。
+
+后续收紧时，优先在知识索引的解析、清单加载和 CLI 中移除重复逻辑，保持测试覆盖。
+只有文件或行数实际下降并通过完整测试，才降低对应共享基线。验证命令为：
+
+```bash
+uv run --locked --extra dev research-code-quality --root . --scope src --scope scripts --scope tests --baseline config/code-quality-baseline.json --ratchet --json
+uv run --extra dev python scripts/dev/maintainability_metrics.py --check-baseline
+uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseline --check-ratchet
+```
+
 ## 兼容层决策
 
 `hkdata` console script、`hk_data_platform.*` Python 包名兼容层、`rqdata-hk-depth`、`rqdata-tick`、`rqdata-hk-assets`、`marketdata migration status`、`marketdata migration sync-hk-links` 和 `marketdata migration import-cross-artifacts` 已从活跃包移除。
