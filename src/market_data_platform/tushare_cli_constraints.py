@@ -55,6 +55,17 @@ def add_tushare_constraint_parsers(subparsers: argparse._SubParsersAction) -> No
     publish.add_argument("--source-dir", required=True)
     publish.add_argument("--target-date", required=True)
     publish.add_argument("--allow-partial", action="store_true")
+    publish.add_argument(
+        "--datasets",
+        nargs="+",
+        choices=(
+            "namechange",
+            "margin_secs",
+            "st_history_reconstructed",
+            "st_intervals_reconstructed",
+        ),
+        help="Publish only the named audited datasets; defaults to all four.",
+    )
 
 
 __all__ = ["add_tushare_constraint_parsers"]
