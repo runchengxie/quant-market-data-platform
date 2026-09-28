@@ -178,7 +178,12 @@ uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseli
 - sdist 显式包含 `docs/` 和 `tests/`。wheel 只包含运行包。当前暂不发布 `py.typed`。
 - 文档保留少量关键英文术语，如 CLI、provider、release、baseline、cache、artifacts、workflow。可执行流程、目录、校验和指标描述尽量用中文，避免临时翻译造成歧义。
 
+## 2026-09-29 ST 事件日期审计基线
+
+共享代码质量基线的 `python_files` 从 452 调整到 454，`python_lines` 从 109311 调整到 109554。新增的模块与测试为带来源哈希的 ST 事件日期审计提供可重复执行的命令。`functions_over_100`、复杂度与长行基线没有增加。退出条件是将该审计合并进既有 ST 质量流水线时删除独立入口及对应冗余代码。在公告时刻可用性得到原始证据前，继续保留 `revision_safe=false`。
+
 ## 下一轮优先级
+
 
 1. 拆分 `tushare_a_share_mins.py::mirror_minute_bars` 的 daily executor 与
    checkpoint/receipt finalizer，继续降低剩余 C901、PLR0912、PLR0915。

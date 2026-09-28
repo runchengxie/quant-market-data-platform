@@ -12,6 +12,12 @@ def _handle_tushare_constraints(args: argparse.Namespace) -> int | None:
         return _handle_download(args)
     if args.tushare_command == "build-a-share-st-history":
         return _handle_st_build(args)
+    if args.tushare_command == "audit-a-share-st-event-timing":
+        from market_data_platform.providers.tushare_st_event_audit import audit_st_event_timing
+
+        return print_tushare_summary(
+            audit_st_event_timing(args.st_history, args.st_events, args.out_dir)
+        )
     if args.tushare_command == "publish-a-share-constraint-reference":
         return _handle_publish(args)
     return None
