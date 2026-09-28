@@ -175,6 +175,7 @@ class _BuildChecksRequest:
     trade_calendar_path: str | None
     trade_calendar_dates: set[str]
     max_warning_rate: float
+    st_source_error: str | None = None
 
 
 @dataclass(frozen=True)
@@ -189,6 +190,7 @@ class _ValidationReportRequest:
     policy: MemoryPolicy
     scanner: ParquetBatchScanner
     unreadable: list[dict[str, str]]
+    st_source_error: str | None = None
 
 
 def _normalize_fail_on_severity(value: str) -> str:

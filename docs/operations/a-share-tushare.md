@@ -437,7 +437,7 @@ partition，写入临时暂存目录，再用 streaming Parquet writer compact �
 `validate-a-share-daily-clean` 使用列投影和 Parquet batch scan，不会逐文件做 pandas 整块读取。
 `baseline` profile 是当前数据刷新发布前的阻塞门禁，覆盖 manifest 对账、字段类型、唯一键、
 OHLC、成交量和成交额。`research` profile 在此基础上增加估值、涨跌停、停牌、交易日历、上市天数、
-板块分类和 ST 来源校验。`--st-history-file` 指向由 `build-a-share-st-history` 生成的
+板块分类和 ST 来源校验。研究级检查还逐行核对 `is_st` 与定日 ST 历史，来源回执、哈希或日期覆盖不合格时失败。`--st-history-file` 指向由 `build-a-share-st-history` 生成的
 `st_history_reconstructed.parquet` 或已发布的 latest 资产，配套 receipt 必须为 `complete`
 且覆盖全部构建日期。
 `is_st` 按交易日匹配这份历史表。没有历史表时输出未知值，研究级校验拒绝该资产。
