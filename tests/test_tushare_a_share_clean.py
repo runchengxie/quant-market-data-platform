@@ -152,6 +152,29 @@ def _write_clean_manifest(  # noqa: PLR0913
     )
 
 
+def _write_st_history(tmp_path, rows):
+    import hashlib
+    import json
+
+    path = tmp_path / "st_history_reconstructed.parquet"
+    pd = __import__("pandas")
+    pd.DataFrame(rows, columns=pd.Index(["ts_code", "trade_date"])).to_parquet(path, index=False)
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    path.with_name("st_history_reconstructed.receipt.json").write_text(
+        json.dumps(
+            {
+                "quality_status": "complete",
+                "source_quality_status": "complete",
+                "history_sha256": digest,
+                "start_date": "20260522",
+                "end_date": "20260522",
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 def test_build_a_share_daily_clean_merges_adjustment_valuation_and_limit_status(tmp_path):
     pd = __import__("pandas")
     daily_dir = tmp_path / "raw_daily"
@@ -598,7 +621,8 @@ def test_validate_a_share_daily_clean_warning_rate_is_configurable(tmp_path):
         ]
     ).to_parquet(data_dir / "600519.SH.parquet", index=False)
     pd.DataFrame({"cal_date": ["20260522"], "is_open": [1]}).to_parquet(trade_cal, index=False)
-    _write_clean_manifest(root, rows=1, symbols=1, files=1, st_history_file="fixture")
+    st_history = _write_st_history(tmp_path, [])
+    _write_clean_manifest(root, rows=1, symbols=1, files=1, st_history_file=str(st_history))
 
     rejected = validate_a_share_daily_clean(
         daily_clean_dir=root,
@@ -618,3 +642,59 @@ def test_validate_a_share_daily_clean_warning_rate_is_configurable(tmp_path):
     assert rejected["status"] == "failed"
     assert "pct_chg_consistency" in rejected["quality_verdict"]["failing_checks"]
     assert tolerated["status"] == "passed"
+
+
+def test_research_validation_rejects_st_flag_disagreeing_with_dated_history(tmp_path):
+    pd = __import__("pandas")
+    root = tmp_path / "daily_clean"
+    data_dir = root / "data"
+    data_dir.mkdir(parents=True)
+    row = _baseline_row(
+        pe_ttm=25.0,
+        pb=9.0,
+        total_mv=2000000.0,
+        turnover_rate=1.2,
+        up_limit=110.0,
+        down_limit=90.0,
+        board="MAIN",
+        listed_days=9000,
+    )
+    daily = data_dir / "600519.SH.parquet"
+    pd.DataFrame([row]).to_parquet(daily, index=False)
+    trade_cal = tmp_path / "trade_cal.parquet"
+    pd.DataFrame({"cal_date": ["20260522"], "is_open": [1]}).to_parquet(trade_cal, index=False)
+    st_history = _write_st_history(tmp_path, [{"ts_code": "600519.SH", "trade_date": "20260522"}])
+    _write_clean_manifest(root, rows=1, symbols=1, files=1, st_history_file=str(st_history))
+
+    rejected = validate_a_share_daily_clean(
+        daily_clean_dir=root,
+        profile="research",
+        trade_cal_file=trade_cal,
+    )
+    check = {item["check"]: item for item in rejected["checks"]}["st_flag_consistency"]
+    assert rejected["status"] == "failed"
+    assert check["affected_rows"] == 1
+    assert check["sample_rows"][0]["symbol"] == "600519.SH"
+
+    pd.DataFrame([dict(row, is_st=True)]).to_parquet(daily, index=False)
+    accepted = validate_a_share_daily_clean(
+        daily_clean_dir=root,
+        profile="research",
+        trade_cal_file=trade_cal,
+    )
+    assert accepted["status"] == "passed"
+
+    receipt = st_history.with_name("st_history_reconstructed.receipt.json")
+    receipt.write_text(
+        receipt.read_text(encoding="utf-8").replace(
+            '"history_sha256": "', '"history_sha256": "bad-'
+        ),
+        encoding="utf-8",
+    )
+    invalid = validate_a_share_daily_clean(
+        daily_clean_dir=root,
+        profile="research",
+        trade_cal_file=trade_cal,
+    )
+    assert invalid["status"] == "failed"
+    assert invalid["lineage"]["st_provenance"] == "invalid_dated_history"

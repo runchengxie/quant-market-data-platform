@@ -165,7 +165,8 @@ marketdata contract inspect \
 
 `daily_clean.is_st` 仅在构建时提供已验证且覆盖全区间的 `st_history_reconstructed`
 资产后才有布尔值。未提供时为未知值，不能将最新 instruments 名称回填为历史 ST 状态。
-构建清单记录 `st_history_file` 来源，研究级质量检查要求这项来源存在。
+构建清单记录 `st_history_file` 来源。研究级质量检查核验来源回执、文件哈希和日期覆盖，
+并逐行比较 `is_st` 与已发布的定日 ST 历史。历史来源的 `revision_safe=false` 仍表示它不能证明原始公告时刻可用。
 
 DailyWatch20 的 `ths_hot_strict_v2` 与 `ths_hot_strict_v3` 快照都保留 TuShare 原始排名，
 不补号。历史兼容策略 v2 要求前 20 名完整，生产策略 v3 要求 rank 1 存在，并允许整张

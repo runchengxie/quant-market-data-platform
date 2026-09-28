@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import pyarrow.parquet as pq
 
 from market_data_platform.parquet_scanning import ParquetBatchScanner
@@ -21,6 +23,7 @@ from market_data_platform.providers.tushare_a_share_quality_part01 import (
     _normalize_fail_on_severity,
     _record_common_checks,
     _record_research_checks,
+    _safe_bool,
     _ValidationReportRequest,
 )
 from market_data_platform.runtime_memory import (
@@ -28,6 +31,42 @@ from market_data_platform.runtime_memory import (
 )
 
 from .tushare_a_share_daily_schema import PRICE_COLUMNS
+
+
+def _load_st_keys(
+    manifest: dict[str, Any] | None,
+) -> tuple[set[tuple[str, str]] | None, str | None]:
+    source = (manifest or {}).get("inputs", {}).get("st_history_file")
+    if not source:
+        return None, "dated ST history source is missing"
+    try:
+        path = Path(source).expanduser().resolve()
+        receipt_path = path.with_name("st_history_reconstructed.receipt.json")
+        if not receipt_path.is_file():
+            receipt_path = path.with_suffix(".receipt.json")
+        if not path.is_file() or not receipt_path.is_file():
+            raise ValueError("dated ST history source or receipt is missing")
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        if (
+            receipt.get("quality_status") != "complete"
+            or receipt.get("source_quality_status", "complete") != "complete"
+        ):
+            raise ValueError("dated ST history receipt is not quality complete")
+        with path.open("rb") as source_file:
+            digest = hashlib.file_digest(source_file, "sha256").hexdigest()
+        if receipt.get("history_sha256", receipt.get("sha256")) != digest:
+            raise ValueError("dated ST history receipt hash does not match")
+        query = (manifest or {}).get("query", {})
+        if str(query.get("start_date", "99999999")) < receipt.get("start_date", "99999999") or str(
+            query.get("end_date", "00000000")
+        ) > receipt.get("end_date", "00000000"):
+            raise ValueError("dated ST history receipt does not cover daily_clean dates")
+        history = pd.read_parquet(path, columns=["ts_code", "trade_date"])
+        if history.duplicated(["ts_code", "trade_date"]).any():
+            raise ValueError("dated ST history has duplicate symbol/date keys")
+    except (OSError, ValueError, KeyError, pd.errors.ParserError) as error:
+        return None, f"dated ST history could not be read: {error}"
+    return set(zip(history.ts_code.astype(str), history.trade_date.astype(str), strict=True)), None
 
 
 def _build_checks(request: _BuildChecksRequest) -> list[dict[str, Any]]:
@@ -136,11 +175,23 @@ def _build_checks(request: _BuildChecksRequest) -> list[dict[str, Any]]:
             {
                 "check": "st_provenance",
                 "severity": "error",
-                "status": "passed" if st_history_file else "failed",
-                "message": "Research-profile is_st requires validated dated ST history.",
-                "affected_rows": 0 if st_history_file else accumulator.rows,
+                "status": "passed" if st_history_file and not request.st_source_error else "failed",
+                "message": request.st_source_error
+                or ("Research-profile is_st requires validated dated ST history."),
+                "affected_rows": (
+                    0 if st_history_file and not request.st_source_error else accumulator.rows
+                ),
                 "sample_rows": [],
             }
+        )
+        checks.append(
+            _check_row(
+                check="st_flag_consistency",
+                severity="error",
+                message="daily_clean is_st disagrees with its dated ST source.",
+                affected=counts.get("st_flag_consistency", 0),
+                samples=accumulator.samples,
+            )
         )
     return checks
 
@@ -271,10 +322,27 @@ def _scan_validation_frames(
     scanner: ParquetBatchScanner,
     accumulator: _Accumulator,
     readable_files: list[Path],
+    st_keys: set[tuple[str, str]] | None,
 ) -> None:
     for path, frame in scanner.iter_frames(readable_files):
         _record_common_checks(accumulator, frame, path=path)
         if options.profile == RESEARCH_PROFILE:
+            if st_keys is not None and {"symbol", "trade_date", "is_st"} <= set(frame):
+                expected = pd.Series(
+                    [
+                        (symbol, day) in st_keys
+                        for symbol, day in zip(
+                            frame.symbol.astype(str), frame.trade_date.astype(str), strict=True
+                        )
+                    ],
+                    index=frame.index,
+                )
+                accumulator.increment(
+                    "st_flag_consistency",
+                    _safe_bool(frame, "is_st").ne(expected),
+                    frame,
+                    sample_columns=("symbol", "trade_date", "is_st"),
+                )
             _record_research_checks(
                 accumulator,
                 frame,
@@ -371,9 +439,13 @@ def _validation_report(request: _ValidationReportRequest) -> dict[str, Any]:
             "manifest": str(request.manifest_path),
             "trade_cal_file": request.trade_calendar_path,
             "st_provenance": (
-                "validated_historical_effective_date"
-                if st_history_file
-                else "unknown_no_dated_history"
+                "invalid_dated_history"
+                if st_history_file and request.st_source_error
+                else (
+                    "validated_historical_effective_date"
+                    if st_history_file
+                    else "unknown_no_dated_history"
+                )
             ),
             "daily_basic_provenance": "daily_valuation_overlay_not_pit_fundamentals",
         },
@@ -420,11 +492,15 @@ def _execute_validation(options: DailyCleanValidationOptions) -> dict[str, Any]:
         files=files,
         accumulator=accumulator,
     )
+    st_keys, st_source_error = (
+        _load_st_keys(manifest) if options.profile == RESEARCH_PROFILE else (None, None)
+    )
     _scan_validation_frames(
         options=options,
         scanner=scanner,
         accumulator=accumulator,
         readable_files=readable_files,
+        st_keys=st_keys,
     )
     checks = _build_checks(
         _BuildChecksRequest(
@@ -435,6 +511,7 @@ def _execute_validation(options: DailyCleanValidationOptions) -> dict[str, Any]:
             trade_calendar_path=trade_calendar_path,
             trade_calendar_dates=trade_calendar_dates,
             max_warning_rate=options.max_warning_rate,
+            st_source_error=st_source_error,
         )
     )
     report = _validation_report(
@@ -449,6 +526,7 @@ def _execute_validation(options: DailyCleanValidationOptions) -> dict[str, Any]:
             policy=policy,
             scanner=scanner,
             unreadable=unreadable,
+            st_source_error=st_source_error,
         )
     )
     if options.out is not None:

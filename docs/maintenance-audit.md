@@ -143,6 +143,13 @@ uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseli
 后续合并发布入口的重复选择逻辑时，应减少实际代码行数，并同步下调该基线。退出条件是
 完整测试及 `research-code-quality --ratchet` 均通过。
 
+## 2026-09-28 ST 一致性校验基线调整
+
+共享代码质量基线的 `python_lines` 从 109151 调整到 109311。新增的 160 行用于研究级
+`daily_clean` 校验中的 ST 来源回执与哈希核验、逐行 `is_st` 对账和合成回归测试。
+`python_files`、长行、复杂函数与大文件数量均未增加。当前已发布清洗资产的
+11,775,852 行扫描中，ST 不一致行数为 0，原有 1 行涨跌幅警告保持不变。
+
 ## 兼容层决策
 
 `hkdata` console script、`hk_data_platform.*` Python 包名兼容层、`rqdata-hk-depth`、`rqdata-tick`、`rqdata-hk-assets`、`marketdata migration status`、`marketdata migration sync-hk-links` 和 `marketdata migration import-cross-artifacts` 已从活跃包移除。
