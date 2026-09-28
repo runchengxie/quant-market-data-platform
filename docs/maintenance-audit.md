@@ -180,7 +180,7 @@ uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseli
 
 ## 2026-09-29 ST 事件日期审计基线
 
-共享代码质量基线的 `python_files` 从 452 调整到 454，`python_lines` 从 109311 调整到 109554。新增的模块与测试为带来源哈希的 ST 事件日期审计提供可重复执行的命令。`functions_over_100`、复杂度与长行基线没有增加。退出条件是将该审计合并进既有 ST 质量流水线时删除独立入口及对应冗余代码。在公告时刻可用性得到原始证据前，继续保留 `revision_safe=false`。
+共享代码质量基线的 `python_files` 从 452 调整到 454，`python_lines` 从 109311 调整到 109565。新增的模块与测试为带来源哈希的 ST 事件日期审计和原始参考数据回执提供可重复执行的命令。`functions_over_100`、复杂度与长行基线没有增加。退出条件是将这些审计合并进既有 ST 质量流水线时删除独立入口及对应冗余代码。在公告时刻可用性得到原始证据前，继续保留 `revision_safe=false`。
 
 ## 下一轮优先级
 
