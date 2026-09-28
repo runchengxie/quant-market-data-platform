@@ -47,6 +47,14 @@ def add_tushare_constraint_parsers(subparsers: argparse._SubParsersAction) -> No
     build.add_argument("--min-precision", type=float, default=0.90)
     build.add_argument("--min-recall", type=float, default=0.90)
 
+    audit = subparsers.add_parser(
+        "audit-a-share-st-event-timing",
+        help="Compare same-day reconstructed ST announcements with dated ST events.",
+    )
+    audit.add_argument("--st-history", required=True)
+    audit.add_argument("--st-events", required=True)
+    audit.add_argument("--out-dir", required=True)
+
     publish = subparsers.add_parser(
         "publish-a-share-constraint-reference",
         help="Publish constraint sources and reconstructed ST assets into the asset tree.",

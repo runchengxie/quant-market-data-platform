@@ -168,6 +168,8 @@ marketdata contract inspect \
 构建清单记录 `st_history_file` 来源。研究级质量检查核验来源回执、文件哈希和日期覆盖，
 并逐行比较 `is_st` 与已发布的定日 ST 历史。历史来源的 `revision_safe=false` 仍表示它不能证明原始公告时刻可用。
 
+`audit-a-share-st-event-timing` 读取带下载回执的 `st` 事件源及重建 ST 历史，审计 `ann_date=trade_date` 的行。输出 `st_event_timing_audit.parquet` 和哈希回执。状态为 `prior_dated_st_event`、`same_day_time_unknown`、`later_event_date_conflict` 或 `no_active_prior_event`。冲突候选仅限同一股票、之后 10 个自然日内生效的 ST 事件，仍需人工核对。该审计只比较日期，不修改已发布的 `is_st`，也不将 `st` 事件视为完整的每日 ST 状态。
+
 DailyWatch20 的 `ths_hot_strict_v2` 与 `ths_hot_strict_v3` 快照都保留 TuShare 原始排名，
 不补号。历史兼容策略 v2 要求前 20 名完整，生产策略 v3 要求 rank 1 存在，并允许整张
 快照最多缺 2 个其他排名。存在缺口时回执记录 `rank_coverage_status=degraded`、原始

@@ -52,6 +52,7 @@
 - `marketdata tushare build-a-share-fund-top10-portfolio-features`
 - `marketdata tushare validate-a-share-fund-top10-portfolio-features`
 - `marketdata tushare build-a-share-daily-clean --st-history-file ...`
+- `marketdata tushare audit-a-share-st-event-timing --st-history <已发布 ST 历史 parquet> --st-events <st 下载 parquet> --out-dir <审计输出目录>`：核对 ST 历史中公告日等于交易日的行，输出逐行日期证据和哈希回执。`prior_dated_st_event` 表示此前已有生效的 ST 事件。`same_day_time_unknown` 不能证明盘前可用。`later_event_date_conflict` 表示事件公布及实施日期均晚于历史行。所有结果均不证明日内公告时刻，`revision_safe=false`。
 - `.venv/bin/python scripts/operations/cutover_a_share_minute.py`
 - `marketdata backup-data`
 - `marketdata tushare ...`
