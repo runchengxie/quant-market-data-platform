@@ -727,6 +727,15 @@ marketdata tushare publish-a-share-constraint-reference \
 发布默认拒绝缺失资产或未通过阈值的 ST 重建。产物固定标注
 `pit_class=reconstructed_pit`、`revision_safe=false`。它可以修复历史 ST 过滤，但不能被描述为
 当时实时可见且版本安全的 PIT。`--allow-partial` 只用于诊断性发布，不应进入正式 current。
+只需发布已完成且有收据的历史更名源时，可使用 `--datasets namechange`。此参数仅选择要发布的
+数据集，不放宽该数据集的质量和来源收据检查：
+
+```bash
+marketdata tushare publish-a-share-constraint-reference \
+  --artifacts-root "$DATA_PLATFORM_ROOT" \
+  --source-dir "$CONSTRAINT_STAGING" \
+  --target-date 20260802 --datasets namechange
+```
 
 资金流特征先走 `moneyflow` raw 加日频成交额、市值 overlay。`daily.amount` 是千元口径，构建器会除以
 10 转成与 `moneyflow` 金额字段一致的万元口径。`daily_basic.circ_mv` 也是万元口径。

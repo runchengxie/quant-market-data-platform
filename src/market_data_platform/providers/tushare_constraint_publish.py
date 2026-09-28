@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -29,9 +30,10 @@ def _validated_source_receipts(
     source_root: Path,
     *,
     allow_partial: bool,
+    datasets: tuple[str, ...],
 ) -> dict[str, tuple[Path, dict[str, Any]]]:
     receipts: dict[str, tuple[Path, dict[str, Any]]] = {}
-    for dataset in CONSTRAINT_PUBLISH_DATASETS:
+    for dataset in datasets:
         source_path = source_root / f"{dataset}.parquet"
         if not source_path.is_file():
             continue
@@ -79,6 +81,7 @@ def publish_constraint_assets(
     target_date: str,
     *,
     allow_partial: bool = False,
+    datasets: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     """Publish immutable versions of constraint sources and reconstructed ST outputs."""
     from market_data_platform.paths import candidate_asset_paths
@@ -87,21 +90,26 @@ def publish_constraint_assets(
     )
 
     source_root = Path(source_dir).expanduser().resolve()
+    selected = tuple(
+        dict.fromkeys(datasets if datasets is not None else CONSTRAINT_PUBLISH_DATASETS)
+    )
+    unknown = set(selected) - set(CONSTRAINT_PUBLISH_DATASETS)
+    if not selected or unknown:
+        raise ValueError(f"invalid constraint publish datasets: {sorted(unknown)}")
     paths = candidate_asset_paths(artifacts_root)
     missing = [
-        dataset
-        for dataset in CONSTRAINT_PUBLISH_DATASETS
-        if not (source_root / f"{dataset}.parquet").is_file()
+        dataset for dataset in selected if not (source_root / f"{dataset}.parquet").is_file()
     ]
     if missing and not allow_partial:
         raise FileNotFoundError("missing constraint assets: " + ", ".join(missing))
     source_receipts = _validated_source_receipts(
         source_root,
         allow_partial=allow_partial,
+        datasets=selected,
     )
 
     published: list[dict[str, Any]] = []
-    for dataset in CONSTRAINT_PUBLISH_DATASETS:
+    for dataset in selected:
         source_path = source_root / f"{dataset}.parquet"
         if not source_path.is_file():
             continue

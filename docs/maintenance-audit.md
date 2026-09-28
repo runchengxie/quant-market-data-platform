@@ -135,6 +135,14 @@ uv run --extra dev python scripts/dev/maintainability_metrics.py --check-baselin
 uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseline --check-ratchet
 ```
 
+## 2026-09-28 约束数据定向发布基线调整
+
+共享代码质量基线的 `python_lines` 从 109101 调整到 109151。新增的 50 行用于按数据集
+发布约束参考资产，验证所选数据集的来源收据，并覆盖命令行和错误路径。其他指标不变。
+这使完整的 `namechange` 资产能够单独发布，避免把尚未重新验证的其他约束资产一起切换。
+后续合并发布入口的重复选择逻辑时，应减少实际代码行数，并同步下调该基线。退出条件是
+完整测试及 `research-code-quality --ratchet` 均通过。
+
 ## 兼容层决策
 
 `hkdata` console script、`hk_data_platform.*` Python 包名兼容层、`rqdata-hk-depth`、`rqdata-tick`、`rqdata-hk-assets`、`marketdata migration status`、`marketdata migration sync-hk-links` 和 `marketdata migration import-cross-artifacts` 已从活跃包移除。

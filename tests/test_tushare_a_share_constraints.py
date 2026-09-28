@@ -439,3 +439,33 @@ def test_publish_constraint_assets_writes_immutable_versions(tmp_path: Path) -> 
     )
     with pytest.raises(FileExistsError, match="immutable reference version"):
         constraints.publish_constraint_assets(tmp_path / "lake", source, "20260802")
+
+
+def test_publish_constraint_assets_selects_only_audited_namechange(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    source.mkdir()
+    namechange = source / "namechange.parquet"
+    pd.DataFrame([{"ts_code": "000001.SZ", "name": "退市样例"}]).to_parquet(namechange, index=False)
+    (source / "namechange.receipt.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "source.v1",
+                "quality_status": "complete",
+                "sha256": hashlib.sha256(namechange.read_bytes()).hexdigest(),
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    summary = constraints.publish_constraint_assets(
+        tmp_path / "lake", source, "20260802", datasets=("namechange",)
+    )
+    assert [item["dataset"] for item in summary["published"]] == ["namechange"]
+    assert summary["missing"] == []
+    assert summary["published"][0]["source_quality_status"] == "complete"
+    with pytest.raises(ValueError, match="invalid constraint publish datasets"):
+        constraints.publish_constraint_assets(
+            tmp_path / "lake", source, "20260803", datasets=("unknown",)
+        )
+    with pytest.raises(ValueError, match="invalid constraint publish datasets"):
+        constraints.publish_constraint_assets(tmp_path / "lake", source, "20260803", datasets=())

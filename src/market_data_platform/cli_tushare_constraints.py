@@ -72,6 +72,7 @@ def _handle_publish(args: argparse.Namespace) -> int:
         args.source_dir,
         args.target_date,
         allow_partial=args.allow_partial,
+        datasets=args.datasets,
     )
     return print_tushare_summary(summary)
 
