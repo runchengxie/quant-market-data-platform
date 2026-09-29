@@ -8,7 +8,7 @@
 
 当前 Qlib 接入只提供已发布数据资产的只读 DataLoader 适配器。常规开发门禁只安装 `dev` extra。安装选项和接入限制见[下游接入说明](docs/integrations.md)。
 
-[GitHub Pages 在线说明文档](https://runchengxie.github.io/quant-market-data-platform/)由本仓库 `docs/` 中的源文件通过 MkDocs 构建并发布。可以在线浏览，也可以直接阅读仓库内的 `docs/`；文档修改以仓库内的源文件为准。
+[GitHub Pages 在线说明文档](https://runchengxie.github.io/quant-market-data-platform/)由本仓库 `docs/` 中的源文件通过 MkDocs 构建并发布。可以在线浏览，也可以直接阅读仓库内的 `docs/`，文档修改以仓库内的源文件为准。
 
 ## 开始使用
 
