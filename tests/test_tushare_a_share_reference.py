@@ -44,6 +44,9 @@ def test_stock_company_download_uses_all_exchanges(monkeypatch, tmp_path: Path) 
     frame = pd.read_parquet(summary["path"])
     assert summary["rows"] == 3
     assert set(frame["exchange"]) == {"SSE", "SZSE", "BSE"}
+    receipt = json.loads(Path(summary["receipt_path"]).read_text(encoding="utf-8"))
+    assert receipt["schema_version"] == reference.RAW_REFERENCE_RECEIPT_SCHEMA_VERSION
+    assert receipt["sha256"] == hashlib.sha256(Path(summary["path"]).read_bytes()).hexdigest()
 
 
 def test_index_weight_daily_expands_latest_snapshot_over_open_dates(tmp_path: Path) -> None:

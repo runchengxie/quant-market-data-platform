@@ -29,6 +29,7 @@ DEFAULT_INDEX_CODES = (
 )
 DEFAULT_EXCHANGES = ("SSE", "SZSE", "BSE")
 REFERENCE_RECEIPT_SCHEMA_VERSION = "market-data-platform.tushare-reference.v1"
+RAW_REFERENCE_RECEIPT_SCHEMA_VERSION = "market-data-platform.tushare-reference-source.v1"
 
 
 @dataclass(frozen=True)
@@ -401,16 +402,23 @@ def download_raw_reference(options: RawReferenceDownloadOptions) -> dict[str, An
         if "_source_truncated" in frame
         else 0
     )
-    return {
+    receipt = {
+        "schema_version": RAW_REFERENCE_RECEIPT_SCHEMA_VERSION,
         "dataset": options.dataset,
         "path": str(out_path),
+        "retrieved_at": datetime.now(UTC).isoformat(),
         "rows": int(len(frame)),
         "columns": list(frame.columns),
         "start_date": options.start_date,
         "end_date": options.end_date,
+        "api_url": options.api_url,
+        "sha256": _file_sha256(out_path),
         "quality_status": "partial" if truncated_rows else "complete",
         "truncated_rows": truncated_rows,
     }
+    receipt_path = out_path.with_suffix(".receipt.json")
+    _atomic_json(receipt_path, receipt)
+    return {**receipt, "receipt_path": str(receipt_path)}
 
 
 def _open_calendar(path: Path, *, start_date: str, end_date: str) -> Any:
