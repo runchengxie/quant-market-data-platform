@@ -45,7 +45,7 @@ paths:
 
 GitHub Release 只发布脱敏的当前资产清单，不承载生产 Parquet、凭证或硬盘盒路径。当前清单可从
 [`data-cn-a-share-current-20260928`](https://github.com/runchengxie/quant-market-data-platform/releases/tag/data-cn-a-share-current-20260928)
-下载；它只用于发现版本、覆盖区间、行数和可用性。
+下载，它只用于发现版本、覆盖区间、行数和可用性。
 
 下游仍必须以 `DATA_PLATFORM_ROOT/metadata/current_assets/<market>_current.json` 和资产自身的
 `manifest.yml` 为数据源。Release 清单与本地 current contract 不一致时，停止消费并重新生成
