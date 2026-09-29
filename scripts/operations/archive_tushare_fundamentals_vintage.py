@@ -31,8 +31,7 @@ from market_data_platform.providers.tushare_common import write_manifest
 
 DEFAULT_DATASETS = ("income", "balancesheet", "cashflow", "fina_indicator")
 DEFAULT_FIELD_MAPPINGS = (
-    "revenue=revenue",
-    "total_revenue=total_revenue",
+    "revenue=revenue", "total_revenue=total_revenue", "rd_exp=rd_exp",
     "operate_profit=operate_profit",
     "total_profit=total_profit",
     "n_income=n_income",
