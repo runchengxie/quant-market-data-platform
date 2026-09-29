@@ -120,7 +120,7 @@ max-complexity = 14
   "src/market_data_platform/tushare_refresh.py" = ["F401"]
 
 [tool.uv.sources]
-research-code-quality = { git = "https://github.com/runchengxie/quant-code-quality.git", rev = "1c754c3" }
+research-code-quality = { git = "https://github.com/runchengxie/quant-code-quality.git", rev = "6daeeca7a3d405f23c8ad49c8364bfdc8e9bb661" }
 
 [tool.ty.src]
 include = ["src", "scripts", "tests"]

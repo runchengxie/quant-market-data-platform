@@ -2563,7 +2563,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6" },
     { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1" },
     { name = "pyyaml", specifier = ">=6.0" },
-    { name = "research-code-quality", git = "https://github.com/runchengxie/quant-code-quality.git?rev=1c754c3" },
+    { name = "research-code-quality", git = "https://github.com/runchengxie/quant-code-quality.git?rev=6daeeca7a3d405f23c8ad49c8364bfdc8e9bb661" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.16.2" },
     { name = "tushare", marker = "extra == 'tushare'", specifier = ">=1.4" },
     { name = "ty", marker = "extra == 'dev'", specifier = ">=0.0.69" },
@@ -4594,7 +4594,7 @@ wheels = [
 [[package]]
 name = "research-code-quality"
 version = "0.2.0"
-source = { git = "https://github.com/runchengxie/quant-code-quality.git?rev=1c754c3#1c754c307610ac61a289d728ea79df82677c1034" }
+source = { git = "https://github.com/runchengxie/quant-code-quality.git?rev=6daeeca7a3d405f23c8ad49c8364bfdc8e9bb661#6daeeca7a3d405f23c8ad49c8364bfdc8e9bb661" }
 
 [[package]]
 name = "rfc3339-validator"
