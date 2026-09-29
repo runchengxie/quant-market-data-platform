@@ -7,7 +7,7 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
-  language: zh
+  language: en
   font: false
   icon:
     logo: material/chart-line
@@ -54,43 +54,43 @@ markdown_extensions:
       permalink: true
 
 nav:
-  - 首页: index.md
-  - 架构与边界:
-      - 数据平台概览: architecture/quant-repo-boundaries.md
-      - 数据生命周期: data-lifecycle-architecture.md
-      - 数据所有权迁移: ownership-migration.md
-      - 集成边界: integrations.md
-  - 数据契约:
-      - 契约总览: contracts.md
-      - 数据仓库: data-warehouse.md
-      - 研究数据接口: research-data-interface.md
-      - 研究完整性: research-integrity.md
-  - 数据源与操作:
-      - 操作总览: operations.md
-      - A 股 TuShare: operations/a-share-tushare.md
-      - A 股分钟数据: operations/a-share-minutes.md
-      - ETF 分钟数据: operations/etf-minutes.md
-      - 凭证与配置: operations/credentials.md
-      - 备份与开发: operations/backup-and-dev.md
-  - 质量与治理:
-      - 数据治理: data-governance.md
-      - L2 接入门禁: l2-ingestion-gate.md
-      - 质量治理: quality-governance.md
-      - 测试: operations/testing.md
-      - 维护性审计: maintenance-audit.md
-  - 开发参考:
-      - 兼容层: compatibility.md
-      - 发布与打包: operations/package-publishing.md
-      - 测试入口: testing.md
-      - 文档规范: documentation-style.md
-      - 研究数据 IO: research-parquet-io.md
-      - 配额渲染: quota-rendering.md
-      - AFML 研究特征: afml-research-features.md
-      - A 股研究画像: a-share-research-profile.md
-      - A 股基本面: a-share-fundamentals.md
-      - A 股资金与持仓特征: a-share-flow-ownership-features.md
-      - 基金十大持仓特征: a-share-fund-top10-ownership-features.md
-      - L2 特殊事件语义: l2-special-event-semantics.md
+  - Overview: index.md
+  - Architecture and boundaries:
+      - Platform overview: architecture/quant-repo-boundaries.md
+      - Data lifecycle: data-lifecycle-architecture.md
+      - Data ownership migration: ownership-migration.md
+      - Integration boundaries: integrations.md
+  - Data contracts:
+      - Contract overview: contracts.md
+      - Data warehouse: data-warehouse.md
+      - Research data interface: research-data-interface.md
+      - Research integrity: research-integrity.md
+  - Sources and operations:
+      - Operations overview: operations.md
+      - A-share TuShare: operations/a-share-tushare.md
+      - A-share minute data: operations/a-share-minutes.md
+      - ETF minute data: operations/etf-minutes.md
+      - Credentials and configuration: operations/credentials.md
+      - Backup and development: operations/backup-and-dev.md
+  - Quality and governance:
+      - Data governance: data-governance.md
+      - L2 ingestion gate: l2-ingestion-gate.md
+      - Quality governance: quality-governance.md
+      - Testing: operations/testing.md
+      - Maintainability audit: maintenance-audit.md
+  - Developer reference:
+      - Compatibility layer: compatibility.md
+      - Publishing and packaging: operations/package-publishing.md
+      - Test entry points: testing.md
+      - Documentation style: documentation-style.md
+      - Research data IO: research-parquet-io.md
+      - Quota rendering: quota-rendering.md
+      - AFML research features: afml-research-features.md
+      - A-share research profile: a-share-research-profile.md
+      - A-share fundamentals: a-share-fundamentals.md
+      - A-share flow and ownership features: a-share-flow-ownership-features.md
+      - Fund top-10 ownership features: a-share-fund-top10-ownership-features.md
+      - L2 special-event semantics: l2-special-event-semantics.md
   - 迁移与专题:
       - 历史行业标签: concepts/historical-industry-labels.md
       - 当前资产消费审计: migration/current-assets-consumer-audit.md
