@@ -68,6 +68,7 @@ marketdata tushare build-a-share-fundamentals-pit \
   --normalized-dir <normalized-balancesheet-dir> \
   --normalized-dir <normalized-cashflow-dir> \
   --field-map revenue=revenue \
+  --field-map rd_exp=rd_exp \
   --field-map total_assets=total_assets \
   --field-map n_cashflow_act=n_cashflow_act \
   --available-delay-days 1 \

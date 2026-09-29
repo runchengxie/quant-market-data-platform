@@ -33,6 +33,10 @@ DEFAULT_DATASETS = ("income", "balancesheet", "cashflow", "fina_indicator")
 DEFAULT_FIELD_MAPPINGS = (
     "revenue=revenue",
     "total_revenue=total_revenue",
+    # Keep R&D available in the PIT asset for research factors such as
+    # R&D-to-market-cap.  It remains a research field and does not change the
+    # production selection policy by itself.
+    "rd_exp=rd_exp",
     "operate_profit=operate_profit",
     "total_profit=total_profit",
     "n_income=n_income",

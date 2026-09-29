@@ -63,6 +63,7 @@ def test_archive_requires_explicit_api_url_and_keeps_daily_core_pit_defaults() -
     assert args.end_date == "20260802"
     assert args.observation_frequency == "daily"
     assert "roe=roe" in args.field_mappings
+    assert "rd_exp=rd_exp" in args.field_mappings
     assert "n_cashflow_act=n_cashflow_act" in args.field_mappings
     assert "grossprofit_margin=grossprofit_margin" in args.field_mappings
     assert "netprofit_yoy=netprofit_yoy" in args.field_mappings
