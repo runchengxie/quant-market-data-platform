@@ -4,8 +4,8 @@ import argparse
 from pathlib import Path
 from typing import cast
 
-import market_data_platform.cli as cli
-import market_data_platform.providers.public_etf_minute as provider
+import quant_market_data_platform.cli as cli
+import quant_market_data_platform.providers.public_etf_minute as provider
 
 
 def test_public_etf_minute_cli_parser_exposes_platform_command() -> None:

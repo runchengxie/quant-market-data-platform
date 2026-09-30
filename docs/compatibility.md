@@ -1,7 +1,7 @@
 # 兼容层与清理计划
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > audience: human and agent
 > last_verified: 2026-09-06
 > source_of_truth: yes
@@ -32,7 +32,7 @@
 `hkdata` console script、`hk_data_platform.*` Python 包名兼容层、
 `rqdata-hk-depth` / `rqdata-tick` 和 `rqdata-hk-assets` 已在
 2026-06-13 从活跃包移除。历史复现应使用 `hk-freeze-20260613` 标签或私有归档仓库。
-新脚本只应使用 `marketdata` 和 `market_data_platform.*`。
+新脚本只应使用 `marketdata` 和 `quant_market_data_platform.*`。
 
 下游研究仓库的数据目录与本地快照 wrapper 也已从活跃入口移除。标准层 catalog、
 materialize、query 和数据快照统一使用 `marketdata data ...` 与
@@ -44,8 +44,8 @@ materialize、query 和数据快照统一使用 `marketdata data ...` 与
 
 ## 维护规则
 
-1. 新代码使用 `marketdata`、`market_data_platform` 和
-   `market_data_platform.providers.*`。
+1. 新代码使用 `marketdata`、`quant_market_data_platform` 和
+   `quant_market_data_platform.providers.*`。
 1. 新增兼容层时必须写入本表，说明用途和清理条件。
 1. 迁移类命令不应继续承载新的业务能力。新能力应进入平台原生工作流。
 1. 删除兼容项前先做 repo-local `rg` 审计，并确认下游脚本已经切换。

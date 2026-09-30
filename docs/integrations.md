@@ -1,7 +1,7 @@
 # 系统集成
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > audience: human and agent
 > last_verified: 2026-09-06
 > source_of_truth: yes
@@ -75,14 +75,14 @@ uv sync --locked --extra qlib
 同一交易日，不做向前填充：
 
 ```python
-from market_data_platform import (
+from quant_market_data_platform import (
     PITUniverseMapping,
     ParquetFrameMapping,
     PublishedAssetContract,
     PublishedFramePlan,
     TradingCalendarMapping,
 )
-from market_data_platform.integrations.qlib import QlibPublishedAssetAdapter
+from quant_market_data_platform.integrations.qlib import QlibPublishedAssetAdapter
 
 contract = PublishedAssetContract.load_current(
     "/data/market-data-platform",

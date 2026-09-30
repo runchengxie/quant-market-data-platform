@@ -19,7 +19,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, BinaryIO
 
-from market_data_platform.dataset_lock import DatasetLockError, exclusive_file_lock
+from quant_market_data_platform.dataset_lock import DatasetLockError, exclusive_file_lock
 
 MANIFEST_SCHEMA = "guan.mobile_archive.v2"
 SOURCE_INVENTORY_SCHEMA = "full-stat.v1"

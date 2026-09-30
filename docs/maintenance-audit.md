@@ -1,7 +1,7 @@
 # 维护性审计快照
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > audience: human and agent
 > last_verified: 2026-09-25
 > source_of_truth: yes
@@ -30,9 +30,9 @@
 
 | 范围 | 分类 | 维护决策 |
 | --- | --- | --- |
-| `src/market_data_platform/contract.py`, `paths.py`, `manifest.py`, `registry.py`, `data_provider_contracts.py` | active | 平台核心边界，保持 Ruff 和 `ty` 覆盖 |
-| `src/market_data_platform/providers/*`, `tushare_cli.py` | active | provider adapter 与 CLI parser，继续扩大类型覆盖 |
-| `src/market_data_platform/cold_storage.py` | migration-only; removed | 已于 2026-07-26 随 RQData 退役，命令与文件已删除 |
+| `src/quant_market_data_platform/contract.py`, `paths.py`, `manifest.py`, `registry.py`, `data_provider_contracts.py` | active | 平台核心边界，保持 Ruff 和 `ty` 覆盖 |
+| `src/quant_market_data_platform/providers/*`, `tushare_cli.py` | active | provider adapter 与 CLI parser，继续扩大类型覆盖 |
+| `src/quant_market_data_platform/cold_storage.py` | migration-only; removed | 已于 2026-07-26 随 RQData 退役，命令与文件已删除 |
 | `scripts/dev/*` | active governance | 本地门禁使用的治理脚本，变更需配套测试 |
 | `artifacts/`, `reports/`, `.pytest_cache/`, `.ruff_cache/`, `*.egg-info` | generated/cache | 不属于源码维护面，不提交 Git |
 
@@ -41,12 +41,12 @@
 港股 provider 生产目录移除后，Ruff 和 `ty` 的目录级 exclude 已收窄到非源码路径。核心重构面不再保留大文件级
 exclude（`data_providers.py` 和 `data_warehouse.py` 已收敛为薄入口 + 细分实现）。
 
-`src/market_data_platform/data_warehouse.py` 与 `src/market_data_platform/data_providers.py` 现在为聚合入口，实际实现位于各自子模块，便于分步增加类型标注。
+`src/quant_market_data_platform/data_warehouse.py` 与 `src/quant_market_data_platform/data_providers.py` 现在为聚合入口，实际实现位于各自子模块，便于分步增加类型标注。
 
 （RQData 运行时 `rqdata_runtime.py` 等文件已于 2026-07-26 随 RQData 完全退役并删除。）
 
-`src/market_data_platform/artifacts.py` 是 artifacts root 解析的权威实现。
-`src/market_data_platform/paths.py` 保留路径契约和旧调用入口。默认 artifacts root 顺序为显式参数、
+`src/quant_market_data_platform/artifacts.py` 是 artifacts root 解析的权威实现。
+`src/quant_market_data_platform/paths.py` 保留路径契约和旧调用入口。默认 artifacts root 顺序为显式参数、
 `DATA_PLATFORM_ROOT`、`artifacts/`。catalog 与 warehouse 数据库可分别通过
 `DATA_PLATFORM_METADATA_DB_PATH`、`DATA_PLATFORM_WAREHOUSE_DB_PATH` 覆盖。（`HK_DATA_PLATFORM_ROOT` 等港股兼容变量已随港股支持于 2026-07-26 移除。）
 
@@ -111,7 +111,7 @@ uv run --extra dev python scripts/dev/architecture_governance.py --check
 
 `config/code-quality-baseline.json` 的 `python_files` 从 449 调整到 452，`python_lines` 从
 108564 调整到 109101。本次增加的 3 个 Python 文件和 537 行分别是
-`src/market_data_platform/knowledge_index.py`、`scripts/dev/knowledge_index.py` 和
+`src/quant_market_data_platform/knowledge_index.py`、`scripts/dev/knowledge_index.py` 和
 `tests/test_knowledge_index.py`。它们提供 Knowledge v2 数据集试点的严格解析、开发校验器和
 合成契约测试。额外 24 行用于拆分解析和清单校验函数，保持既有复杂度门禁通过。
 这是已批准的试点范围，其他共享指标保持原基线。
@@ -124,6 +124,13 @@ uv run --extra dev python scripts/dev/architecture_governance.py --check
 66549/66549 行，排除 0 个文件和 0 行。
 `maintainability_metrics.py --json --limit 30` 报告 452 个 Python 文件、109101 行、
 38 个超过 100 行的函数、1 个超过 250 行的函数，最大文件 2045 行、最大函数 309 行。
+
+## 2026-09-30 canonical package rename
+
+将 distribution/import 从 `market-data-platform` / `market_data_platform` 改为
+`quant-market-data-platform` / `quant_market_data_platform` 后，较长的绝对导入由 formatter 拆行，
+`config/code-quality-baseline.json` 的 `python_lines` 因此从 109565 调整为 109626。文件数和其余
+质量指标保持不变。此基线在内部导入改为相对路径或下一次明确的源码布局调整时重新评估。
 这些热点指标没有随本次试点增加。
 
 后续收紧时，优先在知识索引的解析、清单加载和 CLI 中移除重复逻辑，保持测试覆盖。
@@ -171,7 +178,7 @@ uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseli
 
 根 README、`AGENTS.md` 和 `docs/*.md` 已同步当前状态：
 
-- 当前入口使用 `marketdata` 和 `market_data_platform`。
+- 当前入口使用 `marketdata` 和 `quant_market_data_platform`。
 - 归档和下游兼容面集中记录在 `docs/compatibility.md`。
 - 港股恢复专用操作已随 RQData 退役，历史复现见 `hk-freeze-20260613` 标签或私有归档仓库。
 - 本地治理命令与 GitHub Actions 共同构成质量门禁。`quality.yml` 覆盖边界检查、共享维护性 ratchet、Ruff、pytest 和依赖审计，`docs.yml` 负责 strict 文档构建。
@@ -191,5 +198,5 @@ uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseli
 1. 持续缩短 `_build_fused_minute_dataset`、`materialize_standardized`、
    `build_a_share_daily_clean` 和 TuShare provider 长函数。
 1. `data_providers_client.py::fetch_daily` 已拆成缓存计划、range 读取、symbol 增量补数、merge/write/slice helper。下一轮继续拆分 provider SDK adapters 与 frame pipeline，逐步恢复更严格类型覆盖。
-1. 继续拆 `src/market_data_platform/data_warehouse_*` 子模块中的 pandas-heavy 步骤，评估 per-module strict 覆盖。
+1. 继续拆 `src/quant_market_data_platform/data_warehouse_*` 子模块中的 pandas-heavy 步骤，评估 per-module strict 覆盖。
 1. RQData 与港股恢复控制面已在 2026-07-26 完全退役，无需恢复演练。

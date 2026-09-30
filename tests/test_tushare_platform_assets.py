@@ -1,6 +1,6 @@
 import pandas as pd
 
-from market_data_platform.data_providers_public_api import fetch_daily, load_basic
+from quant_market_data_platform.data_providers_public_api import fetch_daily, load_basic
 
 
 def test_fetch_daily_reads_tushare_local_asset_without_online_provider(tmp_path, monkeypatch):

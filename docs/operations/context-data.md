@@ -197,7 +197,7 @@ marketdata context publish \
 发布后可使用通用 `PublishedAssetContract`：
 
 ```python
-from market_data_platform import PublishedAssetContract
+from quant_market_data_platform import PublishedAssetContract
 
 contract = PublishedAssetContract.load_current(
     "/data/market-data-platform",

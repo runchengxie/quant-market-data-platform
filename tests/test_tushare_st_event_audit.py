@@ -8,9 +8,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from market_data_platform.cli import main
-from market_data_platform.providers.tushare_constraint_io import sha256
-from market_data_platform.providers.tushare_st_event_audit import audit_st_event_timing
+from quant_market_data_platform.cli import main
+from quant_market_data_platform.providers.tushare_constraint_io import sha256
+from quant_market_data_platform.providers.tushare_st_event_audit import audit_st_event_timing
 
 
 def _sources(tmp_path: Path) -> tuple[Path, Path]:

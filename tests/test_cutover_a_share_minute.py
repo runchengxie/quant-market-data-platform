@@ -15,8 +15,8 @@ from typing import Any
 
 import pytest
 
-from market_data_platform.dataset_lock import DatasetLockError
-from market_data_platform.providers.a_share_minute_price_flow import tushare_price_flow_policy
+from quant_market_data_platform.dataset_lock import DatasetLockError
+from quant_market_data_platform.providers.a_share_minute_price_flow import tushare_price_flow_policy
 
 
 def _load_script() -> ModuleType:

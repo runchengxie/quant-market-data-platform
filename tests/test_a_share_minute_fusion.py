@@ -8,7 +8,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from market_data_platform.providers.a_share_minute_fusion import (
+from quant_market_data_platform.providers.a_share_minute_fusion import (
     CANONICAL_MINUTE_COLUMNS,
     CANONICAL_MINUTE_SCHEMA,
     LEGACY_GUAN_CANONICAL_UNITS,
@@ -298,7 +298,7 @@ def test_atomic_write_preserves_existing_partition_on_failure(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from market_data_platform.providers import a_share_minute_fusion as fusion
+    from quant_market_data_platform.providers import a_share_minute_fusion as fusion
 
     output_path = tmp_path / "part.parquet"
     old = pd.DataFrame([_minute_row(close=7.0)])
@@ -341,7 +341,7 @@ def test_deal_engine_auto_falls_back_and_explicit_polars_has_clear_error(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from market_data_platform.providers import a_share_minute_fusion as fusion
+    from quant_market_data_platform.providers import a_share_minute_fusion as fusion
 
     source = tmp_path / "deal_20260706.parquet"
     pd.DataFrame(

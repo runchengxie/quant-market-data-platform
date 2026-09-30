@@ -6,13 +6,13 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from market_data_platform import tushare_minute_backfill as backfill
-from market_data_platform.cli import build_parser
-from market_data_platform.providers.tushare_a_share_mins import (
+from quant_market_data_platform import tushare_minute_backfill as backfill
+from quant_market_data_platform.cli import build_parser
+from quant_market_data_platform.providers.tushare_a_share_mins import (
     MinsMirrorOptions,
     MinuteMirrorIncompleteDatesError,
 )
-from market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
+from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
 
 
 def _write_sources(

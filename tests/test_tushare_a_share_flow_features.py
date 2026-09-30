@@ -4,10 +4,10 @@ from typing import Any, cast
 
 import pytest
 
-from market_data_platform.providers.tushare_a_share_flow_features import (
+from quant_market_data_platform.providers.tushare_a_share_flow_features import (
     build_a_share_flow_ownership_features,
 )
-from market_data_platform.providers.tushare_a_share_flow_validation import (
+from quant_market_data_platform.providers.tushare_a_share_flow_validation import (
     validate_a_share_flow_ownership_features,
 )
 

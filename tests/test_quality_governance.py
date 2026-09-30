@@ -155,7 +155,7 @@ def test_quality_ruff_debt_scan_fails_closed_on_tool_error(monkeypatch) -> None:
 def test_quality_baseline_flags_ruff_only_protected_excludes() -> None:
     report = quality_debt._coverage_report()
     baseline = json.loads(json.dumps(report))
-    protected = "src/market_data_platform/data_providers.py"
+    protected = "src/quant_market_data_platform/data_providers.py"
     report["tools"]["ruff"]["excluded_patterns"].append(protected)
     baseline["tools"]["ruff"]["excluded_patterns"].append(protected)
 
@@ -273,10 +273,10 @@ def test_architecture_governance_current_boundaries() -> None:
 
 
 def test_architecture_governance_flags_standardize_to_provider_import(tmp_path: Path) -> None:
-    standardize_root = tmp_path / "src" / "market_data_platform" / "standardize"
+    standardize_root = tmp_path / "src" / "quant_market_data_platform" / "standardize"
     standardize_root.mkdir(parents=True)
     (standardize_root / "bad.py").write_text(
-        "from market_data_platform.providers.demo import fetch_raw\n",
+        "from quant_market_data_platform.providers.demo import fetch_raw\n",
         encoding="utf-8",
     )
 
@@ -284,7 +284,8 @@ def test_architecture_governance_flags_standardize_to_provider_import(tmp_path: 
 
     assert issues
     assert issues[0].message == (
-        "standardize layer imports provider implementation: market_data_platform.providers.demo"
+        "standardize layer imports provider implementation: "
+        "quant_market_data_platform.providers.demo"
     )
 
 
@@ -292,7 +293,7 @@ def test_architecture_governance_flags_private_test_facade_import(tmp_path: Path
     tests_root = tmp_path / "tests"
     tests_root.mkdir()
     (tests_root / "test_bad.py").write_text(
-        "from market_data_platform.hk_assets import _private_helper\n",
+        "from quant_market_data_platform.hk_assets import _private_helper\n",
         encoding="utf-8",
     )
 
@@ -312,22 +313,22 @@ def test_architecture_governance_flags_a_share_to_hk_import(tmp_path: Path) -> N
                 "core_a_share_import_freeze": {
                     "core_modules": [],
                     "a_share_modules": [
-                        "src/market_data_platform/providers/tushare_a_share.py",
+                        "src/quant_market_data_platform/providers/tushare_a_share.py",
                     ],
                     "forbidden_prefixes": [
-                        "market_data_platform.hk_assets",
-                        "market_data_platform.hk_depth",
+                        "quant_market_data_platform.hk_assets",
+                        "quant_market_data_platform.hk_depth",
                     ],
                 },
                 "hk_extraction_roots": [],
-                "internal_hk_prefixes": ["market_data_platform.hk_assets"],
-                "platform_seam_prefixes": ["market_data_platform.artifacts"],
+                "internal_hk_prefixes": ["quant_market_data_platform.hk_assets"],
+                "platform_seam_prefixes": ["quant_market_data_platform.artifacts"],
                 "tracked_hk_platform_dependencies": [],
             }
         ),
         encoding="utf-8",
     )
-    provider_path = tmp_path / "src" / "market_data_platform" / "providers"
+    provider_path = tmp_path / "src" / "quant_market_data_platform" / "providers"
     provider_path.mkdir(parents=True)
     (provider_path / "tushare_a_share.py").write_text(
         "from ..hk_assets import mirror_hk_daily\n",
@@ -351,19 +352,19 @@ def test_architecture_governance_requires_hk_dependency_inventory(tmp_path: Path
                     "core_modules": [],
                     "a_share_modules": [],
                     "forbidden_prefixes": [
-                        "market_data_platform.hk_assets",
-                        "market_data_platform.hk_depth",
+                        "quant_market_data_platform.hk_assets",
+                        "quant_market_data_platform.hk_depth",
                     ],
                 },
-                "hk_extraction_roots": ["src/market_data_platform/hk_assets"],
-                "internal_hk_prefixes": ["market_data_platform.hk_assets"],
-                "platform_seam_prefixes": ["market_data_platform.artifacts"],
+                "hk_extraction_roots": ["src/quant_market_data_platform/hk_assets"],
+                "internal_hk_prefixes": ["quant_market_data_platform.hk_assets"],
+                "platform_seam_prefixes": ["quant_market_data_platform.artifacts"],
                 "tracked_hk_platform_dependencies": [],
             }
         ),
         encoding="utf-8",
     )
-    hk_root = tmp_path / "src" / "market_data_platform" / "hk_assets"
+    hk_root = tmp_path / "src" / "quant_market_data_platform" / "hk_assets"
     hk_root.mkdir(parents=True)
     (hk_root / "demo.py").write_text(
         "from ..symbols import ensure_symbol_columns\n",
@@ -373,7 +374,9 @@ def test_architecture_governance_requires_hk_dependency_inventory(tmp_path: Path
     issues = architecture_governance.check_hk_split_boundaries(tmp_path)
 
     assert issues
-    assert issues[0].message == "HK split dependency not tracked: market_data_platform.symbols"
+    assert (
+        issues[0].message == "HK split dependency not tracked: quant_market_data_platform.symbols"
+    )
 
 
 def test_docs_link_maintenance_audit_and_avoid_style_regressions() -> None:
@@ -424,7 +427,7 @@ def test_current_entry_docs_have_lifecycle_metadata() -> None:
     )
     required = (
         "> status: active",
-        "> owner: market-data-platform",
+        "> owner: quant-market-data-platform",
         "> audience: human and agent",
         "> superseded_by: n/a",
     )
@@ -508,7 +511,7 @@ def test_ty_is_the_only_configured_type_checker() -> None:
 
 
 def test_public_marketdata_cli_commands_are_documented() -> None:
-    from market_data_platform.cli import build_parser
+    from quant_market_data_platform.cli import build_parser
 
     docs_text = "\n".join(
         path.read_text(encoding="utf-8") for path in _active_markdown_docs(Path("."))

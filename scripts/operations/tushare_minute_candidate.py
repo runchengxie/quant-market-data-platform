@@ -7,9 +7,9 @@ import argparse
 from collections.abc import Sequence
 from pathlib import Path
 
-from market_data_platform.minute_candidate import build_candidate_inventory
-from market_data_platform.minute_candidate_audit import audit_candidate_semantics
-from market_data_platform.minute_candidate_publish import publish_candidate
+from quant_market_data_platform.minute_candidate import build_candidate_inventory
+from quant_market_data_platform.minute_candidate_audit import audit_candidate_semantics
+from quant_market_data_platform.minute_candidate_publish import publish_candidate
 
 
 def _path(value: str) -> Path:

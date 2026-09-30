@@ -6,8 +6,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from market_data_platform.cli import main
-from market_data_platform.research_features import (
+from quant_market_data_platform.cli import main
+from quant_market_data_platform.research_features import (
     BarBuildConfig,
     build_activity_bars,
     build_daily_microstructure_features,

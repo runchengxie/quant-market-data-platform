@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from market_data_platform.tushare_etf_history import (
+from quant_market_data_platform.tushare_etf_history import (
     build_etf_daily_forward_adjusted,
     etf_join_code,
     validate_etf_daily_pair,

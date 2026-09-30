@@ -1,6 +1,6 @@
-from market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
-from market_data_platform.tushare_minute_backfill_part01 import _policy_payload
-from market_data_platform.tushare_minute_reverse_backfill import (
+from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
+from quant_market_data_platform.tushare_minute_backfill_part01 import _policy_payload
+from quant_market_data_platform.tushare_minute_reverse_backfill import (
     _resume_paths,
     _scheduler_plan_stem,
     _select_reverse_dates,

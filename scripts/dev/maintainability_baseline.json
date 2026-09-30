@@ -54,12 +54,12 @@
       {
         "lines": 893,
         "long_lines_over_100": 0,
-        "path": "src/market_data_platform/providers/tushare_a_share_fundamentals_part03.py"
+        "path": "src/quant_market_data_platform/providers/tushare_a_share_fundamentals_part03.py"
       },
       {
         "lines": 877,
         "long_lines_over_100": 0,
-        "path": "src/market_data_platform/providers/public_etf_minute.py"
+        "path": "src/quant_market_data_platform/providers/public_etf_minute.py"
       },
       {
         "lines": 859,
@@ -96,7 +96,7 @@
         "end_line": 305,
         "lines": 196,
         "name": "_aggregate_polars_deal_batch",
-        "path": "src/market_data_platform/standardize/fusion/a_share_minute/fusion.py",
+        "path": "src/quant_market_data_platform/standardize/fusion/a_share_minute/fusion.py",
         "start_line": 110
       },
       {
@@ -120,7 +120,7 @@
         "end_line": 485,
         "lines": 171,
         "name": "_build_fused_minute_dataset",
-        "path": "src/market_data_platform/standardize/materialize/a_share_minute/build.py",
+        "path": "src/quant_market_data_platform/standardize/materialize/a_share_minute/build.py",
         "start_line": 315
       },
       {
@@ -128,7 +128,7 @@
         "end_line": 229,
         "lines": 169,
         "name": "_audit_partition",
-        "path": "src/market_data_platform/providers/_coverage_materialize_part03.py",
+        "path": "src/quant_market_data_platform/providers/_coverage_materialize_part03.py",
         "start_line": 61
       },
       {
@@ -144,7 +144,7 @@
         "end_line": 213,
         "lines": 162,
         "name": "build_announcement_event_pit",
-        "path": "src/market_data_platform/providers/tushare_a_share_announcement_event_pit.py",
+        "path": "src/quant_market_data_platform/providers/tushare_a_share_announcement_event_pit.py",
         "start_line": 52
       },
       {
@@ -176,7 +176,7 @@
         "end_line": 184,
         "lines": 151,
         "name": "_copy_source_to_raw_staging",
-        "path": "src/market_data_platform/providers/guan_annual_minbar_part02.py",
+        "path": "src/quant_market_data_platform/providers/guan_annual_minbar_part02.py",
         "start_line": 34
       },
       {
@@ -184,7 +184,7 @@
         "end_line": 197,
         "lines": 147,
         "name": "build_minute_backfill_plan",
-        "path": "src/market_data_platform/tushare_minute_backfill_part02.py",
+        "path": "src/quant_market_data_platform/tushare_minute_backfill_part02.py",
         "start_line": 51
       },
       {
@@ -200,7 +200,7 @@
         "end_line": 210,
         "lines": 143,
         "name": "evaluate_l2_quality",
-        "path": "src/market_data_platform/l2_quality_gate.py",
+        "path": "src/quant_market_data_platform/l2_quality_gate.py",
         "start_line": 68
       }
     ],
@@ -209,7 +209,7 @@
     "max_function_lines": 309,
     "public_facade": {
       "exports": 0,
-      "path": "src/market_data_platform/__init__.py",
+      "path": "src/quant_market_data_platform/__init__.py",
       "private_exports": 0
     },
     "python_files": 421,

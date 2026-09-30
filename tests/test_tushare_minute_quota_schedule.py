@@ -111,7 +111,7 @@ def test_coordinator_is_idempotent_and_state_is_token_safe(
 def test_coordinator_defers_an_immutable_same_day_policy_mismatch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from market_data_platform.tushare_minute_quota import MinuteQuotaConfigurationError
+    from quant_market_data_platform.tushare_minute_quota import MinuteQuotaConfigurationError
 
     args = _quota_args(tmp_path)
     monkeypatch.setattr(schedule, "_quota_date", lambda _timezone: "20260719")

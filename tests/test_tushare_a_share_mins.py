@@ -12,19 +12,19 @@ from typing import Any, cast
 import pandas as pd
 import pytest
 
-from market_data_platform.cli import build_parser
-from market_data_platform.cli_tushare_core import (
+from quant_market_data_platform.cli import build_parser
+from quant_market_data_platform.cli_tushare_core import (
     _handle_minute_quota_status,
     _handle_mirror_mins,
 )
-from market_data_platform.providers import _a_share_mins_universe as _universe
-from market_data_platform.providers import tushare_a_share_mins as mins
-from market_data_platform.providers._bse_code_mapping import (
+from quant_market_data_platform.providers import _a_share_mins_universe as _universe
+from quant_market_data_platform.providers import tushare_a_share_mins as mins
+from quant_market_data_platform.providers._bse_code_mapping import (
     BSE_HISTORICAL_BY_920,
     bse_minute_request_symbol,
 )
-from market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
-from market_data_platform.tushare_minute_quota import (
+from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
+from quant_market_data_platform.tushare_minute_quota import (
     MinuteQuotaConfig,
     MinuteQuotaExceeded,
     MinuteQuotaLedger,
@@ -105,7 +105,7 @@ def _install_fake_api(
         return tushare_module.pro_bar(**kwargs)
 
     cast(Any, pro).stk_mins = stk_mins
-    from market_data_platform.providers import tushare_a_share
+    from quant_market_data_platform.providers import tushare_a_share
 
     def get_client(**kwargs: Any) -> Any:
         if client_calls is not None:
@@ -1416,7 +1416,7 @@ def test_minute_quota_status_cli_prints_token_safe_json(
 def test_minute_cli_loads_repository_env_before_token_precheck(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    from market_data_platform.providers import tushare_a_share
+    from quant_market_data_platform.providers import tushare_a_share
 
     parser = build_parser()
     parsed = parser.parse_args(
@@ -1646,7 +1646,7 @@ def test_explicit_daily_request_exhaustion_closes_pool_without_retry(
 def test_daily_request_exhaustion_closes_the_reservation_day_across_midnight(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from market_data_platform import _tushare_minute_quota_holds as quota_holds
+    from quant_market_data_platform import _tushare_minute_quota_holds as quota_holds
 
     before_midnight = datetime(2026, 7, 17, 15, 59, 59, tzinfo=UTC)
     after_midnight = datetime(2026, 7, 17, 16, 0, 1, tzinfo=UTC)

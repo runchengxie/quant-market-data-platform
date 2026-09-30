@@ -4,8 +4,8 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
-from market_data_platform.context.build import RELEASE_CALENDAR_COLUMNS, build_context_frames
-from market_data_platform.context.snapshots import seal_context_snapshot
+from quant_market_data_platform.context.build import RELEASE_CALENDAR_COLUMNS, build_context_frames
+from quant_market_data_platform.context.snapshots import seal_context_snapshot
 
 _FIXTURE = Path(__file__).parent / "fixtures" / "context" / "nea_electricity_release.html"
 

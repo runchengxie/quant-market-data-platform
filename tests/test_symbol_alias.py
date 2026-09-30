@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from market_data_platform.symbols import (
+from quant_market_data_platform.symbols import (
     canonicalize_symbol_columns,
     drop_legacy_symbol_columns,
     ensure_symbol_columns,

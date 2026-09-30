@@ -18,14 +18,14 @@ DEFAULT_RUFF_SELECT = "E,F,I,UP,B,C4,RET,RUF100"
 COMPLEXITY_RUFF_SELECT = "C90,PLR0911,PLR0912,PLR0913,PLR0915"
 BASELINE_VERSION = 2
 TY_PROTECTED_INCLUDED_PATHS = (
-    "src/market_data_platform/data_provider_contracts.py",
-    "src/market_data_platform/symbols.py",
+    "src/quant_market_data_platform/data_provider_contracts.py",
+    "src/quant_market_data_platform/symbols.py",
 )
 RUFF_PROTECTED_INCLUDED_PATHS = (
     *TY_PROTECTED_INCLUDED_PATHS,
-    "src/market_data_platform/data_providers.py",
-    "src/market_data_platform/data_warehouse.py",
-    "src/market_data_platform/rqdata_runtime.py",
+    "src/quant_market_data_platform/data_providers.py",
+    "src/quant_market_data_platform/data_warehouse.py",
+    "src/quant_market_data_platform/rqdata_runtime.py",
 )
 PROTECTED_INCLUDED_PATHS_BY_TOOL = {
     "ruff": RUFF_PROTECTED_INCLUDED_PATHS,

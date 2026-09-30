@@ -9,8 +9,8 @@ import pandas as pd
 import pyarrow.parquet as pq
 import pytest
 
-from market_data_platform.providers import tushare_a_share_mins as mins
-from market_data_platform.providers.a_share_minute_bj_overlay import (
+from quant_market_data_platform.providers import tushare_a_share_mins as mins
+from quant_market_data_platform.providers.a_share_minute_bj_overlay import (
     BJ_OVERLAY_PLAN_SCHEMA,
     BJ_OVERLAY_RECEIPT_SCHEMA,
     BJ_UNIVERSE_RULE,
@@ -18,7 +18,7 @@ from market_data_platform.providers.a_share_minute_bj_overlay import (
     load_bj_overlay_plan,
     materialize_tushare_bj_overlay,
 )
-from market_data_platform.providers.a_share_minute_coverage import (
+from quant_market_data_platform.providers.a_share_minute_coverage import (
     ANNUAL_FULL_SH_SZ,
     DEAL_FULL_SH_SZ,
     CoverageRequirements,
@@ -26,11 +26,11 @@ from market_data_platform.providers.a_share_minute_coverage import (
     audit_minute_coverage,
     classify_minute_coverage,
 )
-from market_data_platform.providers.a_share_minute_fusion import (
+from quant_market_data_platform.providers.a_share_minute_fusion import (
     CANONICAL_MINUTE_SCHEMA,
     write_canonical_minute_partition,
 )
-from market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
+from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
 
 
 def _bar(

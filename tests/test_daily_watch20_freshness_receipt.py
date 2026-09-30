@@ -4,8 +4,8 @@ import hashlib
 import json
 from pathlib import Path
 
-from market_data_platform.research_views.daily_watch20_data import DailyWatch20Assets
-from market_data_platform.research_views.daily_watch20_freshness_receipt import (
+from quant_market_data_platform.research_views.daily_watch20_data import DailyWatch20Assets
+from quant_market_data_platform.research_views.daily_watch20_freshness_receipt import (
     canonical_unavailability_reason,
 )
 

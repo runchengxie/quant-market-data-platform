@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from market_data_platform.current_path_audit import audit_current_contract_paths
+from quant_market_data_platform.current_path_audit import audit_current_contract_paths
 
 
 def _entry(path: Path, *, end_date: str = "20260713") -> dict:

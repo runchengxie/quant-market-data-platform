@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from market_data_platform.industry_history import expand_effective_industry_to_panel_dates
+from quant_market_data_platform.industry_history import expand_effective_industry_to_panel_dates
 
 
 def test_expand_effective_industry_to_panel_dates_respects_validity_window() -> None:

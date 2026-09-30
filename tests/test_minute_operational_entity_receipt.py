@@ -4,10 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.minute_candidate import MinuteCandidateError
-from market_data_platform.tushare_minute_operational import OPERATIONAL_VERSION_SCHEMA
-from market_data_platform.tushare_minute_operational_daily import _base_receipt, _paths
-from market_data_platform.tushare_minute_reverse_backfill import _current_min_date
+from quant_market_data_platform.minute_candidate import MinuteCandidateError
+from quant_market_data_platform.tushare_minute_operational import OPERATIONAL_VERSION_SCHEMA
+from quant_market_data_platform.tushare_minute_operational_daily import _base_receipt, _paths
+from quant_market_data_platform.tushare_minute_reverse_backfill import _current_min_date
 
 
 @pytest.mark.parametrize("reader", ["daily", "reverse"])

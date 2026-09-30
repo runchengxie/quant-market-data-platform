@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 
-from market_data_platform import tushare_minute_replacement_campaign_reconcile as reconcile
-from market_data_platform import tushare_minute_replacement_campaign_runner as runner
+from quant_market_data_platform import tushare_minute_replacement_campaign_reconcile as reconcile
+from quant_market_data_platform import tushare_minute_replacement_campaign_runner as runner
 
 
 @pytest.fixture(autouse=True)

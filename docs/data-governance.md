@@ -1,7 +1,7 @@
 # 数据目录与生命周期治理
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > audience: human and agent
 > last_verified: 2026-09-06
 > source_of_truth: yes
@@ -17,7 +17,7 @@
 <artifacts_root>/metadata/lifecycle/inventory.json
 ```
 
-当前 schema 为 `market_data_platform.lifecycle_inventory.v1`。每个对象分别记录：
+当前 schema 为 `quant_market_data_platform.lifecycle_inventory.v1`。每个对象分别记录：
 
 - `tier`：`raw`、`derived`、`state`、`run` 或 `archive`。
 - `role`：current、rollback、pilot 等操作角色。
@@ -55,7 +55,7 @@ provider API
   -> published asset
 ```
 
-`market_data_platform.ingest` 负责 provider 接入、请求可靠性和 raw landing。`market_data_platform.standardize` 负责字段映射、类型转换、去重、排序、时间处理和来源融合。quality receipt 负责可用性判断。发布层负责版本、alias、manifest 和 provenance。模型 window、label、embedding 和训练样本不进入平台标准化层。
+`quant_market_data_platform.ingest` 负责 provider 接入、请求可靠性和 raw landing。`quant_market_data_platform.standardize` 负责字段映射、类型转换、去重、排序、时间处理和来源融合。quality receipt 负责可用性判断。发布层负责版本、alias、manifest 和 provenance。模型 window、label、embedding 和训练样本不进入平台标准化层。
 
 首批迁移把 TuShare A 股 `daily_clean` 的 build 实现和 daily schema 移到 `standardize`。旧 `providers.tushare_a_share_clean` 保留兼容入口。quality validation 继续由现有 quality 实现负责。`ingest.tushare.daily` 先提供稳定的新入口，底层 provider runtime 后续分批内迁。
 

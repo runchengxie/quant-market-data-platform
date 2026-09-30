@@ -37,9 +37,9 @@
 ### Task 2: Campaign configuration object
 
 **Files:**
-- Modify: `src/market_data_platform/_campaign_run.py`
-- Modify: `src/market_data_platform/_campaign_supervisor.py`
-- Modify: `src/market_data_platform/_tushare_minute_quota_config.py`
+- Modify: `src/quant_market_data_platform/_campaign_run.py`
+- Modify: `src/quant_market_data_platform/_campaign_supervisor.py`
+- Modify: `src/quant_market_data_platform/_tushare_minute_quota_config.py`
 - Test: `tests/test_tushare_minute_replacement_campaign.py`
 - Test: `tests/test_tushare_minute_quota.py`
 

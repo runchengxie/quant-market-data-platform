@@ -7,9 +7,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from market_data_platform.context.publish import publish_context_assets
-from market_data_platform.context.snapshots import seal_context_snapshot
-from market_data_platform.published_assets import PublishedAssetContract
+from quant_market_data_platform.context.publish import publish_context_assets
+from quant_market_data_platform.context.snapshots import seal_context_snapshot
+from quant_market_data_platform.published_assets import PublishedAssetContract
 
 
 def test_seal_context_snapshot_is_immutable_and_hashed(tmp_path: Path):

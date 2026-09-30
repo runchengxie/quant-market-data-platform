@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
-from market_data_platform.providers.tushare_a_share_fundamentals import (
+from quant_market_data_platform.providers.tushare_a_share_fundamentals import (
     PitBuildOptions,
     RawFundamentalsDownloadOptions,
     build_normalized_fundamentals,
@@ -22,16 +22,18 @@ from market_data_platform.providers.tushare_a_share_fundamentals import (
     validate_normalized_fundamentals,
     validate_pit_fundamentals,
 )
-from market_data_platform.providers.tushare_a_share_fundamentals_support import (
+from quant_market_data_platform.providers.tushare_a_share_fundamentals_support import (
     asset_manifest_payload,
     file_sha256,
     require_asset_integrity,
 )
-from market_data_platform.providers.tushare_common import write_manifest
+from quant_market_data_platform.providers.tushare_common import write_manifest
 
 DEFAULT_DATASETS = ("income", "balancesheet", "cashflow", "fina_indicator")
 DEFAULT_FIELD_MAPPINGS = (
-    "revenue=revenue", "total_revenue=total_revenue", "rd_exp=rd_exp",
+    "revenue=revenue",
+    "total_revenue=total_revenue",
+    "rd_exp=rd_exp",
     "operate_profit=operate_profit",
     "total_profit=total_profit",
     "n_income=n_income",

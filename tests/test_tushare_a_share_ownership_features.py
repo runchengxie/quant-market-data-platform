@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from market_data_platform.providers.tushare_a_share_ownership_features import (
+from quant_market_data_platform.providers.tushare_a_share_ownership_features import (
     build_a_share_fund_portfolio_features,
     build_a_share_holder_structure_features,
     build_a_share_holdertrade_events,

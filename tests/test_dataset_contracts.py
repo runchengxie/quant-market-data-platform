@@ -1,6 +1,6 @@
 import pytest
 
-from market_data_platform.dataset_contracts import DatasetContract, validate_dataset_contract
+from quant_market_data_platform.dataset_contracts import DatasetContract, validate_dataset_contract
 
 
 def test_dataset_contract_payload_preserves_data_semantics() -> None:

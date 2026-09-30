@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.tushare_refresh_part02 import _publish_file_alias
+from quant_market_data_platform.tushare_refresh_part02 import _publish_file_alias
 
 
 def test_published_universe_alias_replaces_stale_manifest(tmp_path: Path) -> None:

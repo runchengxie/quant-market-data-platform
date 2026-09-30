@@ -641,7 +641,7 @@ marketdata tushare publish-a-share-reference \
 原子替换的 `latest.parquet` 和 `.receipt.json`（schema、SHA-256、行数、质量状态）。
 `share_float` 按公告日使用 `limit + offset` 分页，转发端单次容量不会被误当成公告日总量。
 如果任何数据集达到配置的 `max_pages`，下载会明确失败并要求缩小窗口。跨仓消费方
-（如 market-data-platform）只读已发布资产并校验 receipt。
+（如 quant-market-data-platform）只读已发布资产并校验 receipt。
 
 ### 历史交易约束与 ST 重建
 

@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.context.source_payload import SourcePayload
-from market_data_platform.providers.nea_context import (
+from quant_market_data_platform.context.source_payload import SourcePayload
+from quant_market_data_platform.providers.nea_context import (
     NEAContextSchemaError,
     parse_nea_electricity_release,
 )

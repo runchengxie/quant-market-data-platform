@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from market_data_platform.contract import path_kind
+from quant_market_data_platform.contract import path_kind
 
 
 def test_path_kind_reports_file_directory_and_missing(tmp_path: Path) -> None:

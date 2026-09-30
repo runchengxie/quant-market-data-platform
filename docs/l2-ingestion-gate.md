@@ -4,7 +4,7 @@ Level-2 原始文件保持不可变。新增分区先经过画像分析、分类
 
 ## 数据集契约
 
-使用 `market_data_platform.dataset_contract.v1` 记录仅凭 Parquet 类型无法安全推断的语义，包括数据集和供应商身份、资产 schema 版本、主键、时区和时间含义、单位、空值和哨兵值含义、频率、PIT 政策、事件顺序以及数据集专用质量政策。
+使用 `quant_market_data_platform.dataset_contract.v1` 记录仅凭 Parquet 类型无法安全推断的语义，包括数据集和供应商身份、资产 schema 版本、主键、时区和时间含义、单位、空值和哨兵值含义、频率、PIT 政策、事件顺序以及数据集专用质量政策。
 
 交易所事件数据集必须明确记录排序规则。例如：
 
@@ -79,7 +79,7 @@ marketdata quality gate \
 
 如果数据语义有充分理由，数据集契约可以收紧或放宽单项检查的严重级别。DQ 回执会同时保留每项检查的默认 `severity` 和由契约解析出的 `effective_severity`，确保例外仍可审计。
 
-输出使用 `market_data_platform.dq_receipt.v1`，包含输入摘要、检查结果、血缘、状态、准入结论和耗时。下游系统应直接使用 `eligibility` 字段，不要对同一组结构性问题另行解释。
+输出使用 `quant_market_data_platform.dq_receipt.v1`，包含输入摘要、检查结果、血缘、状态、准入结论和耗时。下游系统应直接使用 `eligibility` 字段，不要对同一组结构性问题另行解释。
 
 ## 与其他质量工具的关系
 

@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from market_data_platform.knowledge_index import (
+from quant_market_data_platform.knowledge_index import (
     build_knowledge_index,
     load_manifest_documents,
     validate_knowledge_documents,

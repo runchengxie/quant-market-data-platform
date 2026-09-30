@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from market_data_platform.audit_tushare_minute_availability import (
+from quant_market_data_platform.audit_tushare_minute_availability import (
     probe_symbol_frame,
     summarize_probe,
 )

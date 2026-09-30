@@ -1,7 +1,7 @@
 # 测试脚本说明
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > audience: human and agent
 > last_verified: 2026-09-06
 > source_of_truth: yes
@@ -29,7 +29,7 @@ uv run --extra dev ty check --error-on-warning
 
 ```bash
 uv run --extra dev python -m pytest tests/<file>.py \
-  --cov=market_data_platform --cov-report=term-missing
+  --cov=quant_market_data_platform --cov-report=term-missing
 ```
 
 依赖审计和静态安全扫描按仓库运行：
@@ -122,7 +122,7 @@ uv sync --extra dev --extra tushare
 
 - `docs/README.md` 链接到 `maintenance-audit.md`、`operations.md` 和 `archive/README.md`。
 - 文档中不出现绕弯的对比式表达。
-- `market_data_platform.cli.build_parser()` 可达的公开叶子命令都在活跃文档中出现。
+- `quant_market_data_platform.cli.build_parser()` 可达的公开叶子命令都在活跃文档中出现。
 - `marketdata tushare download-a-share-industry-membership` 有明确文档入口。
 - `docs/compatibility.md` 覆盖 active、compatibility、migration-only、deprecated、archival 和 internal-only 生命周期分类。
 

@@ -1,7 +1,7 @@
 # 数据代码生命周期分层
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > audience: human and agent
 > last_verified: 2026-09-06
 > source_of_truth: yes
@@ -22,9 +22,9 @@ provider API
 
 ## 层次职责
 
-`market_data_platform.ingest` 负责 provider 接入、请求可靠性、配额和 raw landing。当前首批入口位于 `ingest.tushare.daily`，底层 provider runtime 会在后续迁移中分批移入该层。
+`quant_market_data_platform.ingest` 负责 provider 接入、请求可靠性、配额和 raw landing。当前首批入口位于 `ingest.tushare.daily`，底层 provider runtime 会在后续迁移中分批移入该层。
 
-`market_data_platform.standardize` 负责字段映射、类型转换、去重、排序、时间处理、来源融合和标准化数据集物化。它只消费已经落盘的 raw asset，不回依赖 `providers` 或 `ingest` 实现。
+`quant_market_data_platform.standardize` 负责字段映射、类型转换、去重、排序、时间处理、来源融合和标准化数据集物化。它只消费已经落盘的 raw asset，不回依赖 `providers` 或 `ingest` 实现。
 
 quality 负责可用性判断和 receipt。publish 负责版本、alias、manifest 与 provenance。warehouse 负责查询和物化。
 
@@ -52,7 +52,7 @@ standardize.materialize.a_share_minute
 
 `standardize.materialize.a_share_minute` 拥有 build options、source inventory、resumable checkpoint、partition workers、dataset lock 和 build orchestration。最终 dataset acceptance 调用独立的分钟 quality API，durable manifest JSON 通过 publish 层持久化。deal checkpoint 继续属于 materialization execution state。
 
-仓库当前已有顶层 `market_data_platform.quality.py` 模块，因此分钟质量实现暂放在 `market_data_platform.quality_a_share_minute`，避免同时创建同名 `quality/` package。后续如整体迁移 quality package，再统一收敛该模块。
+仓库当前已有顶层 `quant_market_data_platform.quality.py` 模块，因此分钟质量实现暂放在 `quant_market_data_platform.quality_a_share_minute`，避免同时创建同名 `quality/` package。后续如整体迁移 quality package，再统一收敛该模块。
 
 旧 `providers.a_share_minute_fusion` 和 `providers.a_share_minute_build` 保持兼容入口。历史 `a_share_minute_*_partNN` 文件只保留兼容转发，不再拥有分钟 transformation、validation、checkpoint 或 manifest 业务实现。
 

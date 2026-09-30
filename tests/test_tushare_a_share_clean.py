@@ -6,15 +6,15 @@ import json
 import pandas as pd
 import yaml
 
-from market_data_platform.providers import tushare_a_share_clean, tushare_a_share_quality
-from market_data_platform.providers.tushare_a_share_clean import (
+from quant_market_data_platform.providers import tushare_a_share_clean, tushare_a_share_quality
+from quant_market_data_platform.providers.tushare_a_share_clean import (
     build_a_share_daily_clean,
     validate_a_share_daily_clean,
 )
-from market_data_platform.standardize.tushare.a_share_daily import (
+from quant_market_data_platform.standardize.tushare.a_share_daily import (
     build_a_share_daily_clean as standardized_build_a_share_daily_clean,
 )
-from market_data_platform.standardize.tushare.a_share_daily_part01 import _derive_st_flag
+from quant_market_data_platform.standardize.tushare.a_share_daily_part01 import _derive_st_flag
 
 
 def test_legacy_daily_clean_build_is_a_compatibility_facade() -> None:

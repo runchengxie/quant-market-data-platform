@@ -6,10 +6,10 @@ from typing import Any
 
 import pytest
 
-from market_data_platform import tushare_minute_chunk as chunk
-from market_data_platform.cli import build_parser
-from market_data_platform.dataset_lock import DatasetLockError, exclusive_file_lock
-from market_data_platform.providers.tushare_a_share_mins import MinsMirrorOptions
+from quant_market_data_platform import tushare_minute_chunk as chunk
+from quant_market_data_platform.cli import build_parser
+from quant_market_data_platform.dataset_lock import DatasetLockError, exclusive_file_lock
+from quant_market_data_platform.providers.tushare_a_share_mins import MinsMirrorOptions
 
 DATES = ["20240102", "20240103", "20240104", "20240105"]
 

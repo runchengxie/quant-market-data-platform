@@ -12,8 +12,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from market_data_platform.providers import guan_annual_minbar as annual
-from market_data_platform.providers.guan_annual_minbar import (
+from quant_market_data_platform.providers import guan_annual_minbar as annual
+from quant_market_data_platform.providers.guan_annual_minbar import (
     CANONICAL_MINUTE_COLUMNS,
     CANONICAL_MINUTE_SCHEMA,
     AnnualMinbarBuildError,
@@ -21,7 +21,7 @@ from market_data_platform.providers.guan_annual_minbar import (
     AnnualMinbarValidationError,
     build_guan_annual_minbar,
 )
-from market_data_platform.runtime_memory import MemorySnapshot
+from quant_market_data_platform.runtime_memory import MemorySnapshot
 
 
 def _wall_epoch(value: str) -> int:

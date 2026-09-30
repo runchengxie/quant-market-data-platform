@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from market_data_platform.providers import tushare_a_share_reference as reference
+from quant_market_data_platform.providers import tushare_a_share_reference as reference
 
 
 class FakeReferenceClient:

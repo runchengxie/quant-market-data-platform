@@ -27,13 +27,13 @@ for _path in (_REPOSITORY_ROOT, _SOURCE_ROOT):
     if str(_path) not in sys.path:
         sys.path.insert(0, str(_path))
 
-import market_data_platform.tushare_minute_replacement_campaign_reconcile as reconcile_module  # noqa: E402
-import market_data_platform.tushare_minute_replacement_campaign_runner as campaign_runner  # noqa: E402
-from market_data_platform.providers.tushare_a_share_mins import (  # noqa: E402
+import quant_market_data_platform.tushare_minute_replacement_campaign_reconcile as reconcile_module  # noqa: E402
+import quant_market_data_platform.tushare_minute_replacement_campaign_runner as campaign_runner  # noqa: E402
+from quant_market_data_platform.providers.tushare_a_share_mins import (  # noqa: E402
     COMPLETENESS_FILENAME,
     validate_complete_minute_partition,
 )
-from market_data_platform.tushare_minute_replacement_campaign_defaults import (  # noqa: E402
+from quant_market_data_platform.tushare_minute_replacement_campaign_defaults import (  # noqa: E402
     DEFAULT_BLOCKERS,
 )
 

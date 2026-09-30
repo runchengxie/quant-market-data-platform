@@ -1,7 +1,7 @@
 # 量化仓库职责边界
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > audience: human and agent
 > last_verified: 2026-09-06
 > source_of_truth: yes
@@ -9,10 +9,10 @@
 
 ## 总体关系
 
-`market-data-platform` 是独立的数据平台项目。它负责生产、治理和发布市场数据资产，向下游提供稳定的数据契约、清单和质量回执。
+`quant-market-data-platform` 是独立的数据平台项目。它负责生产、治理和发布市场数据资产，向下游提供稳定的数据契约、清单和质量回执。
 
 ```text
-market-data-platform
+quant-market-data-platform
 数据接入、生产、PIT、质量治理、版本和发布
              |
              | published asset、manifest、receipt、schema
@@ -27,13 +27,13 @@ quant-research
              |
              | versioned artifact
              v
-market-data-platform
+quant-market-data-platform
 报告、看板、消息交付和运营入口
 ```
 
 `research-workspace` 进入 sunset 过渡期，继续维护历史工作区、版本组合、跨仓库检查和迁移导航。它不再作为新的业务实现位置。
 
-## market-data-platform 的职责
+## quant-market-data-platform 的职责
 
 - provider 接入、请求可靠性和配额管理。
 - raw、standardized 和 canonical 数据资产的构建。
@@ -48,7 +48,7 @@ market-data-platform
 
 - 通用回测、组合构造、风险、成本、容量和执行模拟。
 - 与策略无关的研究接口、artifact envelope 和公共 contracts。
-- 消费 `market-data-platform` 发布的数据资产。
+- 消费 `quant-market-data-platform` 发布的数据资产。
 
 平台代码不得依赖 provider SDK、真实策略数据、策略专属参数或私有研究模块。
 

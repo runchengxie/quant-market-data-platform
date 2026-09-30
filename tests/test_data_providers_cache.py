@@ -1,8 +1,8 @@
 import pandas as pd
 
-from market_data_platform import data_providers_client
-from market_data_platform.data_providers_public_api import fetch_daily, load_basic
-from market_data_platform.providers import tushare_a_share
+from quant_market_data_platform import data_providers_client
+from quant_market_data_platform.data_providers_public_api import fetch_daily, load_basic
+from quant_market_data_platform.providers import tushare_a_share
 
 
 def test_provider_modules_are_owned_by_provider_namespace():

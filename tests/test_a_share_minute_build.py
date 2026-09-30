@@ -9,13 +9,13 @@ import pandas as pd
 import pyarrow.parquet as pq
 import pytest
 
-from market_data_platform.providers import a_share_minute_build
-from market_data_platform.providers.a_share_minute_build import (
+from quant_market_data_platform.providers import a_share_minute_build
+from quant_market_data_platform.providers.a_share_minute_build import (
     MinuteFusionBuildOptions,
     build_fused_minute_dataset,
     validate_fused_minute_dataset,
 )
-from market_data_platform.providers.a_share_minute_fusion import (
+from quant_market_data_platform.providers.a_share_minute_fusion import (
     CANONICAL_MINUTE_COLUMNS,
     CANONICAL_MINUTE_SCHEMA,
     write_canonical_minute_partition,
@@ -86,11 +86,13 @@ def test_materialization_worker_preserves_checkpoint_and_override_behavior(
     tmp_path: Path,
     override: bool,
 ) -> None:
-    from market_data_platform.standardize.fusion.a_share_minute import aggregate_guan_deal_file
-    from market_data_platform.standardize.materialize.a_share_minute.inventory import (
+    from quant_market_data_platform.standardize.fusion.a_share_minute import (
+        aggregate_guan_deal_file,
+    )
+    from quant_market_data_platform.standardize.materialize.a_share_minute.inventory import (
         _MinuteSourceInventory,
     )
-    from market_data_platform.standardize.materialize.a_share_minute.workers import (
+    from quant_market_data_platform.standardize.materialize.a_share_minute.workers import (
         _merge_deal_inputs,
     )
 
@@ -154,11 +156,13 @@ def test_materialization_worker_preserves_original_source_priority(
     expected_close: float,
     priority: list[str],
 ) -> None:
-    from market_data_platform.standardize.fusion.a_share_minute import aggregate_guan_deal_file
-    from market_data_platform.standardize.materialize.a_share_minute.inventory import (
+    from quant_market_data_platform.standardize.fusion.a_share_minute import (
+        aggregate_guan_deal_file,
+    )
+    from quant_market_data_platform.standardize.materialize.a_share_minute.inventory import (
         _MinuteSourceInventory,
     )
-    from market_data_platform.standardize.materialize.a_share_minute.workers import (
+    from quant_market_data_platform.standardize.materialize.a_share_minute.workers import (
         _merge_deal_inputs,
     )
 

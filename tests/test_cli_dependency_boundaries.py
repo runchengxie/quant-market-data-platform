@@ -4,11 +4,13 @@ import builtins
 import importlib
 import sys
 from collections.abc import Callable
+from importlib.metadata import PackageNotFoundError, version
+from importlib.util import find_spec
 from types import ModuleType
 
 import pytest
 
-from market_data_platform import cli
+from quant_market_data_platform import cli
 
 OPTIONAL_IMPORT_NAMES = {
     "duckdb",
@@ -17,18 +19,26 @@ OPTIONAL_IMPORT_NAMES = {
     "tushare",
 }
 OPTIONAL_PLATFORM_MODULES = {
-    "market_data_platform.backup_data",
-    "market_data_platform.data_warehouse",
-    "market_data_platform.providers.tushare_a_share_clean",
-    "market_data_platform.providers.tushare_a_share_fundamentals",
-    "market_data_platform.providers.tushare_a_share_research",
-    "market_data_platform.providers.tushare_a_share_universe",
+    "quant_market_data_platform.backup_data",
+    "quant_market_data_platform.data_warehouse",
+    "quant_market_data_platform.providers.tushare_a_share_clean",
+    "quant_market_data_platform.providers.tushare_a_share_fundamentals",
+    "quant_market_data_platform.providers.tushare_a_share_research",
+    "quant_market_data_platform.providers.tushare_a_share_universe",
 }
 RELOAD_FOR_CLI_IMPORT = {
-    "market_data_platform.cli",
-    "market_data_platform.tushare_cli",
+    "quant_market_data_platform.cli",
+    "quant_market_data_platform.tushare_cli",
     *OPTIONAL_PLATFORM_MODULES,
 }
+
+
+def test_distribution_and_import_namespace_have_no_legacy_alias() -> None:
+    assert version("quant-market-data-platform") == "0.2.0"
+    assert find_spec("quant_market_data_platform") is not None
+    assert find_spec("market_data_platform") is None
+    with pytest.raises(PackageNotFoundError):
+        version("market-data-platform")
 
 
 def _guard_optional_imports(
@@ -59,7 +69,7 @@ def _guard_optional_imports(
 def test_build_parser_does_not_import_optional_provider_stacks(monkeypatch):
     imported = _guard_optional_imports(monkeypatch)
 
-    cli = importlib.import_module("market_data_platform.cli")
+    cli = importlib.import_module("quant_market_data_platform.cli")
     cli.build_parser()
 
     assert imported == []
@@ -68,7 +78,7 @@ def test_build_parser_does_not_import_optional_provider_stacks(monkeypatch):
 def test_paths_command_does_not_import_optional_provider_stacks(monkeypatch, capsys):
     imported = _guard_optional_imports(monkeypatch)
 
-    cli = importlib.import_module("market_data_platform.cli")
+    cli = importlib.import_module("quant_market_data_platform.cli")
     assert cli.main(["paths", "--json"]) == 0
 
     output = capsys.readouterr().out
@@ -81,7 +91,7 @@ def test_missing_optional_provider_dependency_reports_actionable_extra(
     tmp_path,
     capsys,
 ):
-    from market_data_platform import cli
+    from quant_market_data_platform import cli
 
     real_import: Callable = builtins.__import__
 
@@ -92,7 +102,7 @@ def test_missing_optional_provider_dependency_reports_actionable_extra(
         fromlist=(),
         level: int = 0,
     ) -> ModuleType:
-        if name == "market_data_platform.providers.tushare_a_share_research":
+        if name == "quant_market_data_platform.providers.tushare_a_share_research":
             raise ModuleNotFoundError("No module named 'pyarrow'", name="pyarrow")
         return real_import(name, globals, locals, fromlist, level)
 

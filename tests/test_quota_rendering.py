@@ -1,4 +1,4 @@
-from market_data_platform.quota_rendering import (
+from quant_market_data_platform.quota_rendering import (
     augment_quota_payload,
     format_quota_pretty,
 )

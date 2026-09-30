@@ -5,8 +5,8 @@ from datetime import UTC, datetime
 
 import pytest
 
-from market_data_platform.context.source_payload import SourcePayload
-from market_data_platform.providers.nbs_context import (
+from quant_market_data_platform.context.source_payload import SourcePayload
+from quant_market_data_platform.providers.nbs_context import (
     NBS_CONTEXT_SERIES,
     NBSContextSchemaError,
     fetch_nbs_payload,

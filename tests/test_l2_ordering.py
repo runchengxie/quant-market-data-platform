@@ -1,4 +1,4 @@
-from market_data_platform.l2_ordering import SequenceQualityState, detect_ordering_columns
+from quant_market_data_platform.l2_ordering import SequenceQualityState, detect_ordering_columns
 
 
 def test_detects_exchange_ordering_aliases() -> None:

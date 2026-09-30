@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform import cli
+from quant_market_data_platform import cli
 
 
 def _write_json(path: Path, payload: object) -> None:

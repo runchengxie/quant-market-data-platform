@@ -1,4 +1,4 @@
-from market_data_platform.l2_quality_gate import evaluate_l2_quality
+from quant_market_data_platform.l2_quality_gate import evaluate_l2_quality
 
 
 def _scan_report(**updates):

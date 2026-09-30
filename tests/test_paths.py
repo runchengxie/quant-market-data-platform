@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import json
 
-from market_data_platform.cli import main
-from market_data_platform.contract import build_current_contract, write_current_contract
-from market_data_platform.paths import (
+from quant_market_data_platform.cli import main
+from quant_market_data_platform.contract import build_current_contract, write_current_contract
+from quant_market_data_platform.paths import (
     candidate_asset_paths,
     current_contract_path,
     dataset_registry_path,
     resolve_artifacts_root,
 )
-from market_data_platform.published_assets import PublishedAssetContract
-from market_data_platform.registry import (
+from quant_market_data_platform.published_assets import PublishedAssetContract
+from quant_market_data_platform.registry import (
     build_combined_dataset_registry_rows,
     build_dataset_registry_rows,
     render_combined_dataset_registry_csv,

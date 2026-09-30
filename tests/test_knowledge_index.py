@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.knowledge_index import (
+from quant_market_data_platform.knowledge_index import (
     build_knowledge_index,
     load_manifest_documents,
     validate_knowledge_documents,

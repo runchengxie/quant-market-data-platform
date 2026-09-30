@@ -3,8 +3,8 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-import market_data_platform.research_data_interface as module
-from market_data_platform.research_data_interface import ResearchDataInterface
+import quant_market_data_platform.research_data_interface as module
+from quant_market_data_platform.research_data_interface import ResearchDataInterface
 
 
 @pytest.mark.parametrize(

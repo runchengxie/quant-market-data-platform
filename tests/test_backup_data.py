@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from market_data_platform import backup_data, cli
+from quant_market_data_platform import backup_data, cli
 
 
 def test_backup_data_copies_selected_paths_and_writes_manifest(tmp_path, monkeypatch):

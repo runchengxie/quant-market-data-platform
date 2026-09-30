@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from market_data_platform.execution_fields import ensure_execution_daily_fields
+from quant_market_data_platform.execution_fields import ensure_execution_daily_fields
 
 
 def test_ensure_execution_daily_fields_adds_rqdata_fields() -> None:

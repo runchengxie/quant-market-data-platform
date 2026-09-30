@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform import _campaign_readiness as readiness
+from quant_market_data_platform import _campaign_readiness as readiness
 
 
 def _write_policy(path: Path, *, allow_exclusion: bool = False) -> None:

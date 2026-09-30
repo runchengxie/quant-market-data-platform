@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from market_data_platform.providers import tushare_a_share_constraints as constraints
+from quant_market_data_platform.providers import tushare_a_share_constraints as constraints
 
 
 def _write_st_namechange_fixture(tmp_path: Path) -> Path:

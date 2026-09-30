@@ -1,7 +1,7 @@
 # 质量治理与维护债务
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > audience: human and agent
 > last_verified: 2026-09-25
 > source_of_truth: yes
@@ -60,7 +60,7 @@ marketdata quality integrity \
 ```
 
 The reusable opening-auction accounting core is available as
-`market_data_platform.quality_opening`. It consumes explicit orders, trades, and cancels,
+`quant_market_data_platform.quality_opening`. It consumes explicit orders, trades, and cancels,
 reconstructs remaining bid/ask levels, and reports unknown identities and overdrawn volume.
 Raw-file discovery, event cutoffs, exchange-specific lag, and snapshot alignment remain in
 downstream research projects because those rules are market- and experiment-specific.
@@ -204,6 +204,6 @@ uv run --extra dev python scripts/dev/maintainability_metrics.py --check-baselin
 
 ### CLI 文档同步规则
 
-`market_data_platform.cli.build_parser()` 可达的所有公开叶子命令都会被治理测试扫描。
+`quant_market_data_platform.cli.build_parser()` 可达的所有公开叶子命令都会被治理测试扫描。
 新增、移除或重命名 `marketdata` 命令时，必须同步更新 `docs/` 下用户可见文档（包含命令示例或
 `--help` 文本片段），否则 `test_public_marketdata_cli_commands_are_documented` 将阻塞本地 full gate。

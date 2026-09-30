@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from market_data_platform.cli import build_parser
-from market_data_platform.providers.tushare_a_share_ownership_features import (
+from quant_market_data_platform.cli import build_parser
+from quant_market_data_platform.providers.tushare_a_share_ownership_features import (
     build_a_share_fund_top10_portfolio_features,
     validate_a_share_fund_top10_portfolio_features,
 )

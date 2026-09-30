@@ -1,6 +1,6 @@
 # Research Parquet 文件读取
 
-`market_data_platform.standardize.parquet` 提供研究数据文件的通用读取能力：
+`quant_market_data_platform.standardize.parquet` 提供研究数据文件的通用读取能力：
 
 - 检查 Parquet 和 CSV 的列名
 - 识别 Hive 分区目录中的字段和值

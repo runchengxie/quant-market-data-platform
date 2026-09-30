@@ -8,7 +8,7 @@ import json
 from collections.abc import Sequence
 from pathlib import Path
 
-from market_data_platform.tushare_minute_operational_daily import (
+from quant_market_data_platform.tushare_minute_operational_daily import (
     OperationalDailyOptions,
     run_operational_daily,
 )

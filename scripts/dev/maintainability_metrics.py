@@ -4,7 +4,7 @@
 This script is now a thin wrapper around ``research-code-quality``. The
 cross-repo-identical scan algorithm (file discovery, line counts, function-length
 counting, C901 per-file-ignore counting) lives in that shared package; this file
-keeps only market-data-platform's local concerns:
+keeps only quant-market-data-platform's local concerns:
 
 - ``functions_with_10_plus_args`` / ``max_argument_count`` (mdp ratchet tracks
   parameter-count, which the shared scan does not)
@@ -39,7 +39,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BASELINE_PATH = REPO_ROOT / "scripts" / "dev" / "maintainability_baseline.json"
 DEFAULT_ROOTS = ("src", "scripts", "tests")
 DEFAULT_LIMIT = 15
-PUBLIC_EXPORTS_PATH = Path("src/market_data_platform/__init__.py")
+PUBLIC_EXPORTS_PATH = Path("src/quant_market_data_platform/__init__.py")
 BASELINE_VERSION = 1
 BASELINE_METRIC_KEYS = (
     "functions_over_100",

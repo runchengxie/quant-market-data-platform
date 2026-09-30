@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform import dataset_lock
-from market_data_platform.dataset_lock import (
+from quant_market_data_platform import dataset_lock
+from quant_market_data_platform.dataset_lock import (
     LOCK_PROTOCOL,
     DatasetLockError,
     exclusive_file_lock,
@@ -92,7 +92,7 @@ def test_flock_excludes_a_separate_process(tmp_path: Path) -> None:
     lock_path = tmp_path / "dataset.lock"
     program = """
 import sys
-from market_data_platform.dataset_lock import exclusive_file_lock
+from quant_market_data_platform.dataset_lock import exclusive_file_lock
 with exclusive_file_lock(sys.argv[1], operation="child"):
     print("ready", flush=True)
     sys.stdin.readline()

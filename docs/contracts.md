@@ -1,7 +1,7 @@
 # 共享数据契约
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > audience: human and agent
 > last_verified: 2026-09-06
 > source_of_truth: yes
@@ -21,12 +21,12 @@ export DATA_PLATFORM_ROOT=/data/market-data-platform
 下游系统的运行记录、缓存和报告由各自仓库管理，不通过市场数据平台的路径变量配置。
 
 研究运行需要核对输入是否属于当前契约时，可使用
-`market_data_platform.contract.match_current_contract_entry` 按 alias 路径或最终解析路径匹配资产。
-读取契约内容可使用 `market_data_platform.contract.load_current_contract`。这些函数只读取契约，
+`quant_market_data_platform.contract.match_current_contract_entry` 按 alias 路径或最终解析路径匹配资产。
+读取契约内容可使用 `quant_market_data_platform.contract.load_current_contract`。这些函数只读取契约，
 不刷新数据，也不发布新的平台资产。路径存在性分类可使用
-`market_data_platform.contract.path_kind`。
+`quant_market_data_platform.contract.path_kind`。
 输入路径的解析结果和 manifest、current contract 关联信息可使用
-`market_data_platform.contract.describe_input_path`，适合由下游运行记录直接保存。
+`quant_market_data_platform.contract.describe_input_path`，适合由下游运行记录直接保存。
 
 历史港股运行记录仍可通过 `current_contract_path(..., market="hk")` 定位
 `metadata/current_assets/hk_current.json`。这项支持只保留路径兼容，平台暂未恢复港股数据生产。
@@ -228,7 +228,7 @@ marketdata registry build \
 磁盘上的完整 manifest：
 
 ```python
-from market_data_platform import PublishedAssetContract
+from quant_market_data_platform import PublishedAssetContract
 
 contract = PublishedAssetContract.load_current(
     "/data/market-data-platform",

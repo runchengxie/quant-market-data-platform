@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 import yaml
 
-from market_data_platform import artifacts, data_warehouse, warehouse_query
-from market_data_platform.cli import build_parser
+from quant_market_data_platform import artifacts, data_warehouse, warehouse_query
+from quant_market_data_platform.cli import build_parser
 
 
 def _write_yaml(path: Path, payload: dict) -> None:

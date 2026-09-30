@@ -7,7 +7,7 @@ import argparse
 from collections.abc import Sequence
 from pathlib import Path
 
-from market_data_platform.tushare_minute_operational import (
+from quant_market_data_platform.tushare_minute_operational import (
     OperationalAssembly,
     assemble_operational_version,
     promote_operational_alias,

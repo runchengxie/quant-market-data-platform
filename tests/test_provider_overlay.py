@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from market_data_platform.provider_overlay import select_daily_clean_overlay_columns
+from quant_market_data_platform.provider_overlay import select_daily_clean_overlay_columns
 
 
 def test_select_daily_clean_overlay_columns_keeps_configured_values() -> None:

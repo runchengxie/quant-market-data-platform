@@ -5,7 +5,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from market_data_platform.quality import profile_parquet
+from quant_market_data_platform.quality import profile_parquet
 
 
 def test_trade_files_accept_deal_time_alias(tmp_path: Path) -> None:

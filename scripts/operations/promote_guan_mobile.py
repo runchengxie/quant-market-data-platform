@@ -8,7 +8,7 @@ import json
 import sys
 from collections.abc import Sequence
 
-from market_data_platform.guan_mobile_raw import (
+from quant_market_data_platform.guan_mobile_raw import (
     GuanMobilePromotionError,
     PromotionOptions,
     promote_guan_mobile,
