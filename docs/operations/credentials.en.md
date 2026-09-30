@@ -20,7 +20,7 @@ uv sync --extra dev
 Store TuShare and other provider credentials in the user-private configuration file:
 
 ```text
-~/.config/market-data-platform/config.env
+~/.config/richard/projects/quant/quant-market-data-platform/config.env
 ```
 
 The file uses `KEY=VALUE` entries, for example `TUSHARE_TOKEN=...`. Restrict its permissions so other users cannot read it. CI and deployment environments should inject credentials through their secret-management facility. `.env.local` and `.env` remain supported for compatibility, but new environments do not need to create them.

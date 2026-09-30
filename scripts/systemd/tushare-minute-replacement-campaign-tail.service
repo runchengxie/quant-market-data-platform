@@ -10,7 +10,7 @@ OnFailure=tushare-minute-replacement-campaign-status.service
 [Service]
 Type=oneshot
 WorkingDirectory=@MDP_DIR@
-EnvironmentFile=-@HOME@/.config/quant-market-data-platform/config.env
+EnvironmentFile=-@HOME@/.config/richard/projects/quant/quant-market-data-platform/config.env
 # Refuse a same-day catch-up after a policy migration. An existing rows-gated
 # pool is immutable until the next Asia/Shanghai quota date.
 ExecCondition=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_quota_schedule.py status --manifest @CAMPAIGN_MANIFEST@ --minute-quota-db @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/minute_quota.sqlite3 --state-root @DATA_PLATFORM_ROOT@/metadata/tushare/minute_quota/schedule --allow-burst --minute-quota-limit-requests 10000 --minute-quota-burst-limit-requests 20000 --minute-quota-safety-requests 500 --minute-quota-limit-rows 160000000 --minute-quota-safety-rows 4000000
