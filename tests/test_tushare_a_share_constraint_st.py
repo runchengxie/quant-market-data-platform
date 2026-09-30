@@ -106,6 +106,7 @@ def test_build_reconstructed_st_history_matches_dated_stock_st(tmp_path: Path) -
     )
 
     history = pd.read_parquet(summary["history_path"])
+    assert summary["schema_version"] == "market-data-platform.reconstructed-st-history.v2"
     assert summary["status"] == "passed"
     assert summary["quality_status"] == "complete"
     assert summary["pit_class"] == "reconstructed_pit"
@@ -114,6 +115,82 @@ def test_build_reconstructed_st_history_matches_dated_stock_st(tmp_path: Path) -
     assert set(history["ts_code"]) == {"000001.SZ", "000002.SZ", "000004.SZ"}
     assert summary["cross_validation"]["precision"] == 1.0
     assert summary["cross_validation"]["recall"] == 1.0
+
+
+def test_reconstructed_history_tracks_conservative_st_availability(tmp_path: Path) -> None:
+    namechange = tmp_path / "namechange.parquet"
+    pd.DataFrame(
+        [
+            {
+                "ts_code": "000001.SZ",
+                "name": "*ST甲",
+                "start_date": "20240102",
+                "end_date": None,
+                "ann_date": "20240102",
+            },
+            {
+                "ts_code": "000002.SZ",
+                "name": "*ST乙",
+                "start_date": "20240103",
+                "end_date": None,
+                "ann_date": "20240102",
+            },
+            {
+                "ts_code": "000003.SZ",
+                "name": "*ST丙",
+                "start_date": "20240103",
+                "end_date": None,
+                "ann_date": "20240105",
+            },
+            {
+                "ts_code": "000004.SZ",
+                "name": "*ST丁",
+                "start_date": "20240102",
+                "end_date": None,
+                "ann_date": None,
+            },
+            {
+                "ts_code": "000005.SZ",
+                "name": "*ST戊",
+                "start_date": "20240102",
+                "end_date": None,
+                "ann_date": "invalid",
+            },
+        ]
+    ).to_parquet(namechange, index=False)
+    trade_cal = tmp_path / "trade_cal.parquet"
+    pd.DataFrame(
+        {
+            "cal_date": ["20240102", "20240103", "20240104", "20240105", "20240108"],
+            "is_open": [1] * 5,
+        }
+    ).to_parquet(trade_cal, index=False)
+    instruments = tmp_path / "instruments.parquet"
+    pd.DataFrame(
+        [
+            {"ts_code": f"00000{index}.SZ", "list_date": "20200101", "delist_date": None}
+            for index in range(1, 6)
+        ]
+    ).to_parquet(instruments, index=False)
+
+    summary = constraints.build_reconstructed_st_history(
+        constraints.ReconstructedSTOptions(
+            namechange_path=namechange,
+            trade_cal_path=trade_cal,
+            instruments_path=instruments,
+            out_dir=tmp_path / "built",
+            start_date="20240102",
+            end_date="20240105",
+        )
+    )
+
+    history = pd.read_parquet(summary["history_path"])
+    availability = history.drop_duplicates("ts_code").set_index("ts_code")["available_from"]
+    assert availability["000001.SZ"] == "20240103"
+    assert availability["000002.SZ"] == "20240103"
+    assert availability["000003.SZ"] == "20240108"
+    assert pd.isna(availability["000004.SZ"])
+    assert pd.isna(availability["000005.SZ"])
 
 
 def test_st_cross_validation_canonicalizes_historical_bse_codes(tmp_path: Path) -> None:
