@@ -19,7 +19,7 @@ def test_mkdocs_uses_english_and_translated_pages_link_both_ways() -> None:
 
     pairs = (
         ("architecture/quant-repo-boundaries.en.md", "architecture/quant-repo-boundaries.md"),
-        ("data-lifecycle-architecture.en.md", "data-lifecycle-architecture.md"),
+        ("data-lifecycle-architecture.md", "data-lifecycle-architecture.zh-CN.md"),
         ("ownership-migration.en.md", "ownership-migration.md"),
         ("research-data-interface.en.md", "research-data-interface.md"),
         ("research-integrity.en.md", "research-integrity.md"),
@@ -95,10 +95,13 @@ def test_currently_translated_navigation_entries_use_english_pages() -> None:
             return [node]
         return []
 
-    assert all(path == "index.md" or path.endswith(".en.md") for path in page_paths(nav))
+    assert all(
+        path == "index.md" or path.endswith(".en.md") or path == "data-lifecycle-architecture.md"
+        for path in page_paths(nav)
+    )
     for path in (
         "architecture/quant-repo-boundaries.en.md",
-        "data-lifecycle-architecture.en.md",
+        "data-lifecycle-architecture.md",
         "ownership-migration.en.md",
         "research-data-interface.en.md",
         "research-integrity.en.md",
