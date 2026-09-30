@@ -41,7 +41,7 @@ The checked-in `scripts/dev/quality_baseline.json` was generated on 2026-09-05 a
 
 The maintainability baseline was also generated on 2026-09-05. At that snapshot it recorded 421 Python files, 105,016 lines, 38 functions over 100 lines, one over 250 lines, none over 500 lines, and 10 functions with at least 10 arguments. Its largest function was the 309-line `_fixture` in `tests/test_cutover_a_share_minute.py`. Read `scripts/dev/maintainability_baseline.json` for its complete dated inventory; do not copy old hotspot paths into new guidance.
 
-At the 2026-09-30 audit, the current maintainability script reported 455 Python files and 109,661 lines, 38 functions over 100 lines, one over 250 lines, none over 500 lines, 10 functions with at least 10 arguments, a 2,045-line largest file, and a 309-line largest function. These live metrics are generated output, not a checked-in baseline.
+At the 2026-09-30 audit, the current maintainability script reported 455 Python files and 109,774 lines, 38 functions over 100 lines, one over 250 lines, none over 500 lines, 10 functions with at least 10 arguments, a 2,045-line largest file, and a 309-line largest function. These live metrics are generated output, not a checked-in baseline.
 
 Routine gates:
 
@@ -67,6 +67,8 @@ The current complexity ratchet honors registered inline `noqa` suppressions. The
 ## Dated baseline changes
 
 On 2026-09-27, the shared code-quality baseline was adjusted for the Knowledge v2 dataset pilot: `knowledge_index.py`, its development validator, and contract tests added strict parsing and synthetic coverage. Later 2026-09-28 updates added dataset-targeted constraint-reference publication and research-grade ST receipt/hash/row-consistency checks. On 2026-09-29, an ST event-date audit and raw reference receipt added repeatable commands; the recorded exit condition is to consolidate these checks into the existing ST quality pipeline and remove redundant standalone code. Until announcement-time evidence exists, `revision_safe=false` remains required for reconstructed data.
+
+On 2026-09-30, bilingual documentation regression coverage added one Python file and 148 lines. It checks that README and MkDocs pages use English canonical pages, Chinese companions link back, and configured navigation targets remain English. The shared code-quality baseline increased from 454 files / 109,626 lines to 455 files / 109,774 lines. Complexity and long-function budgets did not increase. Keep this test while pages are maintained as file pairs. If the repository adopts a centralized i18n route map, fold these assertions into that contract test and recalculate the baseline.
 
 See the dated Chinese audit record for the exact historical line-count changes. Those figures describe specific commits and are not current size targets.
 
