@@ -1,7 +1,5 @@
 # quant-market-data-platform
 
-# quant-market-data-platform
-
 [中文 README](README.zh-CN.md)
 
 `quant-market-data-platform` ingests, standardizes, validates, versions, and publishes market-data assets for quantitative research. It is maintained independently from related research, consumer, and delivery repositories and integrates with them through published interfaces.
