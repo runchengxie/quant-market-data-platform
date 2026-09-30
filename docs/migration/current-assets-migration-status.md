@@ -1,5 +1,7 @@
 # current_assets 迁移状态
 
+[English page](current-assets-migration-status.en.md)
+
 更新时间：2026 年 9 月 18 日
 
 ## 已完成

@@ -1,5 +1,7 @@
 # AFML 研究数据特征
 
+[English page](afml-research-features.en.md)
+
 本页记录数据平台新增的 activity bars 和低频微观结构特征。数据平台只发布带版本、血缘和质量证据的资产，不评价策略 Sharpe、CPCV 或晋升状态。
 
 ## 安装

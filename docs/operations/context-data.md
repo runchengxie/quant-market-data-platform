@@ -1,5 +1,7 @@
 # 中国宏观与产业情境数据
 
+[English page](context-data.en.md)
+
 `cn_context` 是独立于 A 股行情契约的组合数据域，用于保存宏观、利率、信用、价格、产业与能源等研究情境数据。
 
 它不会改变 `a_share_current.json` 的 `market=a_share`、`provider=tushare` 语义。当前情境数据契约位于：

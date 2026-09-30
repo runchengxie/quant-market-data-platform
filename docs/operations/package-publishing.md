@@ -1,6 +1,8 @@
 # Python 包发布
 
-范围：说明如何把 `quant-market-data-platform` 构建为可发布的 Python 包，供
+[English page](package-publishing.en.md)
+
+范围：说明如何把 `market-data-platform` 构建为可发布的 Python 包，供
 `strategy-pipeline` 等下游仓库按版本安装。数据资产发布仍使用数据平台
 资产发布流程，不通过 Python 包直接分发平台数据资产。
 

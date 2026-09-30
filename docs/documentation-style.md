@@ -1,5 +1,7 @@
 # 文档写作与生命周期规则
 
+[English page](documentation-style.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent

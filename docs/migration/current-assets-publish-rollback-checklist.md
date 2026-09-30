@@ -1,5 +1,7 @@
 # current_assets 发布与回滚检查清单
 
+[English page](current-assets-publish-rollback-checklist.en.md)
+
 ## 发布前
 
 1. 确认目标数据目录包含 `manifest.yml`。

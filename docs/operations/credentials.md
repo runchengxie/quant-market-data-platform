@@ -1,5 +1,7 @@
 # 凭证和环境变量
 
+[English page](credentials.en.md)
+
 ## 共享数据根目录
 
 推荐统一配置共享数据根目录：

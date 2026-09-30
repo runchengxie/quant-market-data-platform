@@ -1,5 +1,7 @@
 # L2 特殊事件语义
 
+[English page](l2-special-event-semantics.en.md)
+
 本文记录 105 GiB pilot 中 `Price <= 0` 行的首日处理决定。这是分类决定，
 供应商编码仍需后续证据才能完成唯一解释。
 

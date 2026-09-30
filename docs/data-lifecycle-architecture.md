@@ -1,5 +1,7 @@
 # 数据代码生命周期分层
 
+[English page](data-lifecycle-architecture.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent

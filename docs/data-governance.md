@@ -1,5 +1,7 @@
 # 数据目录与生命周期治理
 
+[English page](data-governance.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent

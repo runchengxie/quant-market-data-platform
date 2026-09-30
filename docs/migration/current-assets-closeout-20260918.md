@@ -1,5 +1,7 @@
 # current_assets 清理收尾记录
 
+[English page](current-assets-closeout-20260918.en.md)
+
 更新时间：2026 年 9 月 18 日
 
 ## 结论

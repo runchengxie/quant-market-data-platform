@@ -1,5 +1,7 @@
 # A 股资金流和持仓类特征
 
+[English page](a-share-flow-ownership-features.en.md)
+
 本文记录中国大陆市场 A 股资金流、机构持仓和股东结构数据的接入边界。平台侧负责下载、
 清洗、PIT 化和发布资产。研究仓库只读消费发布后的 feature parquet。
 

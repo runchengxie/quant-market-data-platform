@@ -1,5 +1,7 @@
 # 操作手册
 
+[English page](operations.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent

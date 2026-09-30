@@ -1,5 +1,7 @@
 # A 股基本面 raw-to-PIT 运维
 
+[English page](a-share-fundamentals.en.md)
+
 本页说明 TuShare A 股基本面如何进入平台原生资产链路。`daily_basic` 的 PE、PB、市值和换手率
 只提供逐日估值 overlay。财务报表 PIT fundamentals 必须经过披露日语义校验。
 

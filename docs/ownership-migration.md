@@ -1,5 +1,7 @@
 # DailyWatch20 数据归属
 
+[English page](ownership-migration.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent

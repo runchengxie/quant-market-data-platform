@@ -1,5 +1,7 @@
 # 系统集成
 
+[English page](integrations.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent
