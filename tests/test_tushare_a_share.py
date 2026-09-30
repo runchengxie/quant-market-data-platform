@@ -1931,7 +1931,7 @@ def test_endpoint_failover_rotates_only_transport_failures() -> None:
 
         def daily(self) -> str:
             self.urls.append(self._DataApi__http_url)
-            if self._DataApi__http_url.endswith("proxy-a.example.com"):
+            if self._DataApi__http_url == "https://proxy-a.example.com":
                 raise TimeoutError("endpoint timed out")
             return "ok"
 
