@@ -1,6 +1,6 @@
 # Knowledge v2 数据集试点契约
 
-`docs/knowledge/pilot.yml` 列出本仓库纳入检索的两份 A 股数据集说明。每条记录的 `asset_key` 对应[数据契约](contracts.md)中的稳定键名，`document` 是仓库相对路径。只有清单列出的页面进入索引。
+`docs/knowledge/pilot.yml` 列出本仓库纳入检索的 A 股数据集说明。每条记录的 `asset_key` 对应[数据契约](contracts.md)中的稳定键名，`document` 是仓库相对路径。只有清单列出的页面进入索引。每个 canonical 页面以英文撰写，中文 companion 不单独进入索引。
 
 页面使用单个 YAML frontmatter 对象，字段固定为 `schema_version`、`id`、`type`、`owner`、`status`、`last_verified`、`source_of_truth`、`authority_ref`、`relations` 和 `asset_key`。当前试点仅接受 `knowledge/v2`、`dataset`、`quant-market-data-platform`、`active`、`false`，以及 `quant-market-data-platform.dataset.a_share.<asset_key>` 形式的 ID。`authority_ref` 使用 `asset:quant-market-data-platform:a_share:<asset_key>`。`last_verified` 为 ISO 日期，`relations` 为字符串列表。
 

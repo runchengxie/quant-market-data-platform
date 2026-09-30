@@ -1,5 +1,7 @@
 schema_version: knowledge-pilot/v2
 datasets:
+  - asset_key: pit_fundamentals
+    document: docs/knowledge/datasets/a-share-pit-fundamentals.md
   - asset_key: daily_clean
     document: docs/knowledge/datasets/a-share-daily-clean.md
   - asset_key: limit_status
