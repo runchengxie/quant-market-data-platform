@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from market_data_platform.contract import load_current_contract
+from quant_market_data_platform.contract import load_current_contract
 
 
 def test_load_current_contract_reads_mapping_payload(tmp_path: Path) -> None:

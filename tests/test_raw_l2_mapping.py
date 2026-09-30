@@ -5,7 +5,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from market_data_platform.quality import profile_parquet
+from quant_market_data_platform.quality import profile_parquet
 
 
 def test_profile_accepts_raw_l2_aliases_and_reports_resolution(tmp_path: Path) -> None:

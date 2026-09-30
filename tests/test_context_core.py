@@ -5,9 +5,13 @@ from datetime import UTC, datetime
 import pandas as pd
 import pytest
 
-from market_data_platform.context.models import validate_context_observations
-from market_data_platform.context.pit import select_context_as_of
-from market_data_platform.paths import current_contract_path, normalize_market, normalize_provider
+from quant_market_data_platform.context.models import validate_context_observations
+from quant_market_data_platform.context.pit import select_context_as_of
+from quant_market_data_platform.paths import (
+    current_contract_path,
+    normalize_market,
+    normalize_provider,
+)
 
 
 def _observations() -> pd.DataFrame:

@@ -9,7 +9,7 @@ from types import ModuleType
 import pandas as pd
 import pytest
 
-from market_data_platform.providers.a_share_minute_fusion import (
+from quant_market_data_platform.providers.a_share_minute_fusion import (
     write_canonical_minute_partition,
 )
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from market_data_platform.cli import build_parser
+from quant_market_data_platform.cli import build_parser
 
 
 def test_context_cli_registers_fetch_build_publish_and_inspect():

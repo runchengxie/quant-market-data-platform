@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.providers._minute_provider_exceptions import (
+from quant_market_data_platform.providers._minute_provider_exceptions import (
     ProviderNoDataExceptionError,
     load_provider_no_data_exclusions,
 )

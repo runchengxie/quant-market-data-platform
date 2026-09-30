@@ -6,16 +6,16 @@ import os
 import pytest
 import yaml
 
-from market_data_platform.cli import build_parser
-from market_data_platform.providers import tushare_a_share
-from market_data_platform.providers._client import _TushareEndpointFailover
-from market_data_platform.providers._env import resolve_tushare_api_urls
-from market_data_platform.tushare_backfill import (
+from quant_market_data_platform.cli import build_parser
+from quant_market_data_platform.providers import tushare_a_share
+from quant_market_data_platform.providers._client import _TushareEndpointFailover
+from quant_market_data_platform.providers._env import resolve_tushare_api_urls
+from quant_market_data_platform.tushare_backfill import (
     AShareHistoryBackfillOptions,
     build_a_share_backfill_plan,
     run_a_share_history_backfill,
 )
-from market_data_platform.tushare_refresh import (
+from quant_market_data_platform.tushare_refresh import (
     _replace_latest_symlink,
     build_a_share_current_refresh_plan,
     run_a_share_current_promotion,

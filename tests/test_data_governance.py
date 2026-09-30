@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.data_governance import (
+from quant_market_data_platform.data_governance import (
     ExplicitPathRule,
     JsonStatusRule,
     RetainNewestRule,

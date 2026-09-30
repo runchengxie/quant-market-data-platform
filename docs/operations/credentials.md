@@ -18,7 +18,7 @@ uv sync --extra dev
 TuShare 等服务凭证优先写入用户级私有配置文件：
 
 ```text
-~/.config/market-data-platform/config.env
+~/.config/quant-market-data-platform/config.env
 ```
 
 该文件采用 `KEY=VALUE` 格式，例如 `TUSHARE_TOKEN=...`。限制文件权限，避免其他用户读取。CI 和部署环境应使用对应平台的 secret 管理功能注入凭证。仓库仍兼容 `.env.local` 和 `.env`，但新环境不必创建这些文件。

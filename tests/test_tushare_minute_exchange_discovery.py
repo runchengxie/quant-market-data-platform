@@ -5,8 +5,8 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from market_data_platform.providers import tushare_a_share_mins as mins
-from market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
+from quant_market_data_platform.providers import tushare_a_share_mins as mins
+from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
 
 
 class DailyUniverse:

@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pandas as pd
 
-from market_data_platform.providers.tushare_context import (
+from quant_market_data_platform.providers.tushare_context import (
     TUSHARE_CONTEXT_ENDPOINTS,
     fetch_tushare_context_endpoint,
     normalize_tushare_context,

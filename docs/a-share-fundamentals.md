@@ -107,7 +107,7 @@ as-of view 使用 `available_date <= as_of_date`，所以周末可用的事件�
 再选择该报告期的最新修订，并返回字段级 revision provenance：
 
 ```python
-from market_data_platform.providers.tushare_a_share_fundamentals import (
+from quant_market_data_platform.providers.tushare_a_share_fundamentals import (
     load_pit_fundamentals_as_of_panel,
 )
 

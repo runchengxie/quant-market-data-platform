@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from market_data_platform.providers import _client
-from market_data_platform.providers.tushare_common import request_policy
+from quant_market_data_platform.providers import _client
+from quant_market_data_platform.providers.tushare_common import request_policy
 
 
 class _FakeClient:

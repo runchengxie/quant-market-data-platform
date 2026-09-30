@@ -5,13 +5,13 @@ import json
 import pytest
 import yaml
 
-from market_data_platform.cli import build_parser, main
-from market_data_platform.contract import build_current_contract, write_current_contract
-from market_data_platform.paths import (
+from quant_market_data_platform.cli import build_parser, main
+from quant_market_data_platform.contract import build_current_contract, write_current_contract
+from quant_market_data_platform.paths import (
     candidate_asset_paths,
     current_contract_path,
 )
-from market_data_platform.providers.tushare_a_share_research import (
+from quant_market_data_platform.providers.tushare_a_share_research import (
     IndustryChangesColumnMap,
     build_a_share_industry_changes,
     build_a_share_pit_fundamentals,
@@ -19,7 +19,7 @@ from market_data_platform.providers.tushare_a_share_research import (
     validate_a_share_industry_changes,
     validate_a_share_pit_fundamentals,
 )
-from market_data_platform.registry import build_dataset_registry_rows
+from quant_market_data_platform.registry import build_dataset_registry_rows
 
 
 def test_build_and_validate_a_share_pit_fundamentals_asset(tmp_path):

@@ -1,13 +1,13 @@
 # 市场数据平台文档
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > audience: human and agent
 > last_verified: 2026-09-06
 > source_of_truth: yes
 > superseded_by: n/a
 
-本目录记录 `market-data-platform` 的数据契约、操作方式和治理规则。
+本目录记录 `quant-market-data-platform` 的数据契约、操作方式和治理规则。
 
 RQData 已完全退役，HK 行情支持已移除。当前活跃主线是中国大陆市场数据，A 股以 TuShare 平台资产为主，Guan 分钟数据为辅。
 

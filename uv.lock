@@ -2476,104 +2476,6 @@ wheels = [
 ]
 
 [[package]]
-name = "market-data-platform"
-version = "0.2.0"
-source = { editable = "." }
-dependencies = [
-    { name = "numpy" },
-    { name = "pyyaml" },
-    { name = "research-code-quality" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "duckdb" },
-    { name = "pandas" },
-    { name = "pip-audit" },
-    { name = "polars" },
-    { name = "pyarrow" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "python-dotenv" },
-    { name = "ruff" },
-    { name = "ty" },
-]
-duckdb = [
-    { name = "duckdb" },
-]
-etf-minute-public = [
-    { name = "akshare" },
-    { name = "pandas" },
-    { name = "pyarrow" },
-]
-minute-fusion = [
-    { name = "duckdb" },
-    { name = "pandas" },
-    { name = "polars" },
-    { name = "pyarrow" },
-]
-qlib = [
-    { name = "pandas" },
-    { name = "pyarrow" },
-    { name = "pyqlib" },
-]
-quality = [
-    { name = "pyarrow" },
-]
-research-features = [
-    { name = "pandas" },
-    { name = "pyarrow" },
-]
-tushare = [
-    { name = "pandas" },
-    { name = "pyarrow" },
-    { name = "tushare" },
-]
-
-[package.dev-dependencies]
-docs = [
-    { name = "mkdocs-material" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "akshare", marker = "extra == 'etf-minute-public'", specifier = ">=1.18.94,<2" },
-    { name = "duckdb", marker = "extra == 'dev'", specifier = ">=1.5.5" },
-    { name = "duckdb", marker = "extra == 'duckdb'", specifier = ">=1.5.5" },
-    { name = "duckdb", marker = "extra == 'minute-fusion'", specifier = ">=1.5.5" },
-    { name = "numpy", specifier = ">=1.23,<3" },
-    { name = "pandas", marker = "extra == 'dev'", specifier = ">=2.2" },
-    { name = "pandas", marker = "extra == 'etf-minute-public'", specifier = ">=2.2" },
-    { name = "pandas", marker = "extra == 'minute-fusion'", specifier = ">=2.2" },
-    { name = "pandas", marker = "extra == 'qlib'", specifier = ">=2.2" },
-    { name = "pandas", marker = "extra == 'research-features'", specifier = ">=2.2" },
-    { name = "pandas", marker = "extra == 'tushare'", specifier = ">=2" },
-    { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.7" },
-    { name = "polars", marker = "extra == 'dev'", specifier = ">=1.43.2,<2" },
-    { name = "polars", marker = "extra == 'minute-fusion'", specifier = ">=1.43.2,<2" },
-    { name = "pyarrow", marker = "extra == 'dev'", specifier = ">=25.0.0" },
-    { name = "pyarrow", marker = "extra == 'etf-minute-public'", specifier = ">=25.0.0" },
-    { name = "pyarrow", marker = "extra == 'minute-fusion'", specifier = ">=25.0.0" },
-    { name = "pyarrow", marker = "extra == 'qlib'", specifier = ">=25.0.0" },
-    { name = "pyarrow", marker = "extra == 'quality'", specifier = ">=25.0.0" },
-    { name = "pyarrow", marker = "extra == 'research-features'", specifier = ">=25.0.0" },
-    { name = "pyarrow", marker = "extra == 'tushare'", specifier = ">=25.0.0" },
-    { name = "pyqlib", marker = "extra == 'qlib'", specifier = ">=0.9.7" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.1" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6" },
-    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "research-code-quality", git = "https://github.com/runchengxie/quant-code-quality.git?rev=6daeeca7a3d405f23c8ad49c8364bfdc8e9bb661" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.16.2" },
-    { name = "tushare", marker = "extra == 'tushare'", specifier = ">=1.4" },
-    { name = "ty", marker = "extra == 'dev'", specifier = ">=0.0.69" },
-]
-provides-extras = ["dev", "research-features", "quality", "duckdb", "minute-fusion", "qlib", "tushare", "etf-minute-public"]
-
-[package.metadata.requires-dev]
-docs = [{ name = "mkdocs-material", specifier = ">=9.6,<10" }]
-
-[[package]]
 name = "markupsafe"
 version = "3.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -4549,6 +4451,104 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/7a/33/89ca4741cb651385a12600c0e93d24ad20eef5a954bb2b7ddc596442fc8c/qdldl-0.1.9.post1-cp314-cp314t-win_amd64.whl", hash = "sha256:213f6125564f61d9597d5d36c5556d4c898225bc31a99f8c87fd549b2e65b60a", size = 117569, upload-time = "2026-02-19T16:48:21.459Z" },
     { url = "https://files.pythonhosted.org/packages/63/48/34fa827457aa0e373fb50dab4490757350076f9afcf7eb749a71926023af/qdldl-0.1.9.post1-cp314-cp314t-win_arm64.whl", hash = "sha256:fcc2184cac1e502ed624efe7f00c1c215b95cfd324a8cacf7f0053c00fa524f5", size = 107844, upload-time = "2026-02-19T16:48:22.899Z" },
 ]
+
+[[package]]
+name = "quant-market-data-platform"
+version = "0.2.0"
+source = { editable = "." }
+dependencies = [
+    { name = "numpy" },
+    { name = "pyyaml" },
+    { name = "research-code-quality" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "duckdb" },
+    { name = "pandas" },
+    { name = "pip-audit" },
+    { name = "polars" },
+    { name = "pyarrow" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "python-dotenv" },
+    { name = "ruff" },
+    { name = "ty" },
+]
+duckdb = [
+    { name = "duckdb" },
+]
+etf-minute-public = [
+    { name = "akshare" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+]
+minute-fusion = [
+    { name = "duckdb" },
+    { name = "pandas" },
+    { name = "polars" },
+    { name = "pyarrow" },
+]
+qlib = [
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "pyqlib" },
+]
+quality = [
+    { name = "pyarrow" },
+]
+research-features = [
+    { name = "pandas" },
+    { name = "pyarrow" },
+]
+tushare = [
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "tushare" },
+]
+
+[package.dev-dependencies]
+docs = [
+    { name = "mkdocs-material" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "akshare", marker = "extra == 'etf-minute-public'", specifier = ">=1.18.94,<2" },
+    { name = "duckdb", marker = "extra == 'dev'", specifier = ">=1.5.5" },
+    { name = "duckdb", marker = "extra == 'duckdb'", specifier = ">=1.5.5" },
+    { name = "duckdb", marker = "extra == 'minute-fusion'", specifier = ">=1.5.5" },
+    { name = "numpy", specifier = ">=1.23,<3" },
+    { name = "pandas", marker = "extra == 'dev'", specifier = ">=2.2" },
+    { name = "pandas", marker = "extra == 'etf-minute-public'", specifier = ">=2.2" },
+    { name = "pandas", marker = "extra == 'minute-fusion'", specifier = ">=2.2" },
+    { name = "pandas", marker = "extra == 'qlib'", specifier = ">=2.2" },
+    { name = "pandas", marker = "extra == 'research-features'", specifier = ">=2.2" },
+    { name = "pandas", marker = "extra == 'tushare'", specifier = ">=2" },
+    { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.7" },
+    { name = "polars", marker = "extra == 'dev'", specifier = ">=1.43.2,<2" },
+    { name = "polars", marker = "extra == 'minute-fusion'", specifier = ">=1.43.2,<2" },
+    { name = "pyarrow", marker = "extra == 'dev'", specifier = ">=25.0.0" },
+    { name = "pyarrow", marker = "extra == 'etf-minute-public'", specifier = ">=25.0.0" },
+    { name = "pyarrow", marker = "extra == 'minute-fusion'", specifier = ">=25.0.0" },
+    { name = "pyarrow", marker = "extra == 'qlib'", specifier = ">=25.0.0" },
+    { name = "pyarrow", marker = "extra == 'quality'", specifier = ">=25.0.0" },
+    { name = "pyarrow", marker = "extra == 'research-features'", specifier = ">=25.0.0" },
+    { name = "pyarrow", marker = "extra == 'tushare'", specifier = ">=25.0.0" },
+    { name = "pyqlib", marker = "extra == 'qlib'", specifier = ">=0.9.7" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.1.1" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6" },
+    { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "research-code-quality", git = "https://github.com/runchengxie/quant-code-quality.git?rev=6daeeca7a3d405f23c8ad49c8364bfdc8e9bb661" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.16.2" },
+    { name = "tushare", marker = "extra == 'tushare'", specifier = ">=1.4" },
+    { name = "ty", marker = "extra == 'dev'", specifier = ">=0.0.69" },
+]
+provides-extras = ["dev", "research-features", "quality", "duckdb", "minute-fusion", "qlib", "tushare", "etf-minute-public"]
+
+[package.metadata.requires-dev]
+docs = [{ name = "mkdocs-material", specifier = ">=9.6,<10" }]
 
 [[package]]
 name = "redis"

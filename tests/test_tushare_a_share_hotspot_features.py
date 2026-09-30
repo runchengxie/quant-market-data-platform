@@ -4,7 +4,7 @@ from typing import Any, cast
 
 import pytest
 
-from market_data_platform.providers.tushare_a_share_hotspot_features import (
+from quant_market_data_platform.providers.tushare_a_share_hotspot_features import (
     build_a_share_hotspot_features,
     validate_a_share_hotspot_features,
 )

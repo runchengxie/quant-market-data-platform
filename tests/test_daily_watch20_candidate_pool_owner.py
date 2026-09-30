@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from market_data_platform.research_views.daily_watch20_candidate_pool import (
+from quant_market_data_platform.research_views.daily_watch20_candidate_pool import (
     THS_HOT_V2_MAX_MISSING_RANKS,
     THS_HOT_V3_MAX_MISSING_RANKS,
     DailyWatch20CandidatePool,
@@ -14,7 +14,7 @@ from market_data_platform.research_views.daily_watch20_candidate_pool import (
     load_daily_watch20_candidate_pool,
     restrict_daily_watch20_candidates,
 )
-from market_data_platform.research_views.daily_watch20_candidate_pool_dc_concept import (
+from quant_market_data_platform.research_views.daily_watch20_candidate_pool_dc_concept import (
     load_dc_concept_strict_v1,
 )
 

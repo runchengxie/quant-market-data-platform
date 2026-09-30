@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.artifacts import (
+from quant_market_data_platform.artifacts import (
     configured_data_platform_root,
     resolve_artifacts_root,
     resolve_configured_artifacts_root,
@@ -11,7 +11,7 @@ from market_data_platform.artifacts import (
     resolve_repo_path,
     resolve_warehouse_db_path,
 )
-from market_data_platform.paths import resolve_artifacts_root as resolve_paths_artifacts_root
+from quant_market_data_platform.paths import resolve_artifacts_root as resolve_paths_artifacts_root
 
 
 def test_resolve_repo_path_handles_relative_and_absolute_inputs(tmp_path, monkeypatch):

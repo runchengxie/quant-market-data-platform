@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.providers._io import _prepare_output_dir
+from quant_market_data_platform.providers._io import _prepare_output_dir
 
 
 def test_prepare_output_dir_rejects_existing_parquet(tmp_path: Path) -> None:

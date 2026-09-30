@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from market_data_platform.research_views.daily_watch20_data import (
+from quant_market_data_platform.research_views.daily_watch20_data import (
     next_open_trade_date,
     resolve_daily_watch20_assets,
 )

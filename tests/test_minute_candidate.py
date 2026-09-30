@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from market_data_platform import (
+from quant_market_data_platform import (
     minute_candidate,
     minute_candidate_audit,
     minute_candidate_publish,

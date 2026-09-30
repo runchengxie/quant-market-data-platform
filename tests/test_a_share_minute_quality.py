@@ -5,8 +5,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from market_data_platform.quality_a_share_minute import validate_fused_minute_dataset
-from market_data_platform.standardize.fusion.a_share_minute import (
+from quant_market_data_platform.quality_a_share_minute import validate_fused_minute_dataset
+from quant_market_data_platform.standardize.fusion.a_share_minute import (
     write_canonical_minute_partition,
 )
 

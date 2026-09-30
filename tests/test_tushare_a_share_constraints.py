@@ -9,8 +9,8 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from market_data_platform.providers import tushare_a_share_constraints as constraints
-from market_data_platform.providers import tushare_constraint_download as constraint_download
+from quant_market_data_platform.providers import tushare_a_share_constraints as constraints
+from quant_market_data_platform.providers import tushare_constraint_download as constraint_download
 
 
 class FakeNamechangeClient:
@@ -270,7 +270,7 @@ def test_constraint_download_retries_transient_transport_failure(
     client.namechange = flaky_namechange
     monkeypatch.setattr(constraint_download, "get_tushare_client", lambda **_kwargs: client)
     monkeypatch.setattr(
-        "market_data_platform.providers.tushare_constraint_io.time.sleep", lambda _: None
+        "quant_market_data_platform.providers.tushare_constraint_io.time.sleep", lambda _: None
     )
 
     summary = constraints.download_constraint_reference(_download_options(tmp_path, "namechange"))

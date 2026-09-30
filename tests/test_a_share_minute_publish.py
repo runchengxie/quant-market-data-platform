@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.publish import json_manifest
+from quant_market_data_platform.publish import json_manifest
 
 
 def test_write_json_manifest_is_utf8_json_and_atomic(tmp_path: Path) -> None:

@@ -4,8 +4,8 @@ from typing import Any, cast
 
 import pytest
 
-from market_data_platform.parquet_scanning import ParquetBatchScanner
-from market_data_platform.runtime_memory import MemoryPolicy, MemorySnapshot
+from quant_market_data_platform.parquet_scanning import ParquetBatchScanner
+from quant_market_data_platform.runtime_memory import MemoryPolicy, MemorySnapshot
 
 
 def test_scanner_projects_columns_and_reads_multiple_batches(tmp_path):

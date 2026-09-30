@@ -8,8 +8,8 @@ import pandas as pd
 import pyarrow.parquet as pq
 import pytest
 
-from market_data_platform.providers import tushare_a_share_mins as mins
-from market_data_platform.providers.a_share_minute_coverage import (
+from quant_market_data_platform.providers import tushare_a_share_mins as mins
+from quant_market_data_platform.providers.a_share_minute_coverage import (
     ANNUAL_FULL_SH_SZ,
     DEAL_FULL_SH_SZ,
     GUAN_PARTIAL_SESSION,
@@ -35,11 +35,11 @@ from market_data_platform.providers.a_share_minute_coverage import (
     materialize_tushare_partial_dates,
     validate_overlap_audit,
 )
-from market_data_platform.providers.a_share_minute_fusion import (
+from quant_market_data_platform.providers.a_share_minute_fusion import (
     CANONICAL_MINUTE_SCHEMA,
     write_canonical_minute_partition,
 )
-from market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
+from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
 
 
 def _row(

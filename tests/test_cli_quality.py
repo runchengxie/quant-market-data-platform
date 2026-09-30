@@ -6,7 +6,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from market_data_platform import cli
+from quant_market_data_platform import cli
 
 
 def test_quality_profile_cli_writes_report(tmp_path: Path) -> None:

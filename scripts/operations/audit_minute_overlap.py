@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
-from market_data_platform.providers.a_share_minute_fusion import (
+from quant_market_data_platform.providers.a_share_minute_fusion import (
     CANONICAL_MINUTE_COLUMNS,
     MINUTE_KEY_COLUMNS,
     normalize_tushare_partition,

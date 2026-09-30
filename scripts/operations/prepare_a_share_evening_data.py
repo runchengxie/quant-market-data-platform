@@ -1,4 +1,4 @@
-"""Prepare the TuShare inputs consumed by the market-data-platform evening report."""
+"""Prepare the TuShare inputs consumed by the quant-market-data-platform evening report."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from market_data_platform.contract import load_current_contract
-from market_data_platform.providers._env import _load_tushare_env_files
+from quant_market_data_platform.contract import load_current_contract
+from quant_market_data_platform.providers._env import _load_tushare_env_files
 
 DATASETS = (
     ("daily", "mirror-a-share-daily", "daily/a_share_all_daily_latest", True),
@@ -124,7 +124,7 @@ def _run(
         [
             sys.executable,
             "-m",
-            "market_data_platform.cli",
+            "quant_market_data_platform.cli",
             "tushare",
             command,
             "--start-date",
@@ -148,7 +148,7 @@ def _run_index(out_dir: Path, date: str, token_env: str) -> subprocess.Completed
         [
             sys.executable,
             "-m",
-            "market_data_platform.cli",
+            "quant_market_data_platform.cli",
             "tushare",
             "mirror-a-share-index-daily",
             "--start-date",
@@ -211,7 +211,7 @@ def prepare(date: str, data_root: Path, token_env: str, premium: bool) -> tuple[
         "schema_version": "market_data_platform.a_share_evening_data.v1",
         "trade_date": date,
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "producer": "market-data-platform",
+        "producer": "quant-market-data-platform",
         "premium_enabled": premium,
         "datasets": rows,
     }

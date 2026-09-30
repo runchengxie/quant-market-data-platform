@@ -1,4 +1,4 @@
-from market_data_platform.dq_receipts import build_dq_receipt, worst_eligibility
+from quant_market_data_platform.dq_receipts import build_dq_receipt, worst_eligibility
 
 
 def test_dq_receipt_has_stable_envelope() -> None:

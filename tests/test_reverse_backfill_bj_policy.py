@@ -6,10 +6,13 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from market_data_platform.providers._a_share_mins_constants import _MinuteProgress
-from market_data_platform.providers._a_share_mins_partition import _persist_progress
-from market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
-from market_data_platform.tushare_minute_reverse_backfill import _complete_dates, _resume_paths
+from quant_market_data_platform.providers._a_share_mins_constants import _MinuteProgress
+from quant_market_data_platform.providers._a_share_mins_partition import _persist_progress
+from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
+from quant_market_data_platform.tushare_minute_reverse_backfill import (
+    _complete_dates,
+    _resume_paths,
+)
 
 
 def _partial(root: Path, missing: str = "920001.BJ", issue: str = "missing from response") -> Path:
@@ -80,7 +83,7 @@ def test_resume_skips_settled_partial_day(tmp_path: Path) -> None:
 def test_scheduler_reports_bj_gap_and_preserves_raw_partial_receipt(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, policy: str, status: str
 ) -> None:
-    from market_data_platform import tushare_minute_reverse_backfill as scheduler
+    from quant_market_data_platform import tushare_minute_reverse_backfill as scheduler
 
     metadata = tmp_path / "metadata/minute_backfill/reverse_scheduler"
     plan = metadata / "plans/reverse_20220705_20220705.plan.json"
@@ -130,7 +133,7 @@ def test_mixed_plan_is_replanned_instead_of_retrying_accepted_day(tmp_path: Path
 
 
 def test_replanning_same_date_bounds_preserves_old_plan(tmp_path: Path, monkeypatch) -> None:
-    from market_data_platform import tushare_minute_reverse_backfill as scheduler
+    from quant_market_data_platform import tushare_minute_reverse_backfill as scheduler
 
     _partial(tmp_path / "staging/tushare_minute_backfill_reverse")
     metadata = tmp_path / "metadata/minute_backfill/reverse_scheduler"

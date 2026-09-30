@@ -6,7 +6,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from market_data_platform.quality_pilot import L2PilotOptions, run_l2_pilot
+from quant_market_data_platform.quality_pilot import L2PilotOptions, run_l2_pilot
 
 
 def test_pilot_writes_canonical_rows_and_sparse_labels(tmp_path: Path) -> None:

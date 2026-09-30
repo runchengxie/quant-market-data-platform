@@ -3,9 +3,9 @@ from __future__ import annotations
 import pytest
 import yaml
 
-from market_data_platform.cli import build_parser
-from market_data_platform.providers import tushare_a_share
-from market_data_platform.providers.tushare_a_share_dc_concept_cons import (
+from quant_market_data_platform.cli import build_parser
+from quant_market_data_platform.providers import tushare_a_share
+from quant_market_data_platform.providers.tushare_a_share_dc_concept_cons import (
     fetch_dc_concept_cons_pages,
 )
 

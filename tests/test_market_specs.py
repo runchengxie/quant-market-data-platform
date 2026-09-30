@@ -1,7 +1,7 @@
 import pytest
 
-from market_data_platform.data_provider_contracts import require_supported_market
-from market_data_platform.symbols import (
+from quant_market_data_platform.data_provider_contracts import require_supported_market
+from quant_market_data_platform.symbols import (
     normalize_historical_hk_symbol,
     normalize_symbol_for_market,
 )

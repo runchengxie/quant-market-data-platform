@@ -3,7 +3,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from market_data_platform.l2_views import (
+from quant_market_data_platform.l2_views import (
     canonical_columns,
     iter_l2_batches,
 )

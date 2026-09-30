@@ -6,7 +6,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from market_data_platform.quality_scan import QualityScanOptions, scan_parquet_tree
+from quant_market_data_platform.quality_scan import QualityScanOptions, scan_parquet_tree
 
 
 def _write(path: Path, rows: list[dict]) -> None:

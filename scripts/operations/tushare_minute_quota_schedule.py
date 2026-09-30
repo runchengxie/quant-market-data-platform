@@ -108,13 +108,13 @@ def _manifest_token_env(path: Path) -> str:
 
 def _load_tushare_environment() -> None:
     # Keep credential loading identical to the downloader without persisting it.
-    from market_data_platform.providers.tushare_a_share import _load_tushare_env_files
+    from quant_market_data_platform.providers.tushare_a_share import _load_tushare_env_files
 
     _load_tushare_env_files()
 
 
 def _build_ledger(args: argparse.Namespace, *, allow_burst: bool = False) -> Any:
-    from market_data_platform.tushare_minute_quota import (
+    from quant_market_data_platform.tushare_minute_quota import (
         MinuteQuotaLedger,
         MinuteQuotaRequestOverrides,
     )
@@ -249,7 +249,7 @@ def coordinate(
     quota_date = _quota_date(args.quota_timezone)
     lock_path = args.state_root / quota_date / ".schedule.lock"
     with _exclusive_lock(lock_path):
-        from market_data_platform.tushare_minute_quota import MinuteQuotaConfigurationError
+        from quant_market_data_platform.tushare_minute_quota import MinuteQuotaConfigurationError
 
         try:
             status = ledger.status(quota_date=quota_date)
@@ -374,7 +374,7 @@ def schedule_status(
     *,
     ledger_factory: Callable[..., Any] = _build_ledger,
 ) -> int:
-    from market_data_platform.tushare_minute_quota import MinuteQuotaConfigurationError
+    from quant_market_data_platform.tushare_minute_quota import MinuteQuotaConfigurationError
 
     ledger = ledger_factory(args, allow_burst=bool(args.allow_burst))
     quota_date = _quota_date(args.quota_timezone)

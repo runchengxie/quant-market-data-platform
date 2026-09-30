@@ -2,7 +2,7 @@
 
 ## 迁移通知
 
-`research-workspace` 处于 sunset 过渡期。`market-data-platform` 保持独立，继续负责数据接入、生产、质量治理、版本和 published asset。通用回测、组合、风险和执行模拟进入 `quant-platform`，策略专属派生进入 `quant-research`。
+`research-workspace` 处于 sunset 过渡期。`quant-market-data-platform` 保持独立，继续负责数据接入、生产、质量治理、版本和 published asset。通用回测、组合、风险和执行模拟进入 `quant-platform`，策略专属派生进入 `quant-research`。
 
 ## 并行开发流程
 
@@ -16,7 +16,7 @@
 
 不要让多个 agent 直接修改同一个工作树，也不要在 `main` 上直接提交。跨仓库改动先完成 owner 仓库的 PR，再更新上游仓库中的 gitlink 或迁移说明。
 
-本文件说明 `market-data-platform` 的协作边界。
+本文件说明 `quant-market-data-platform` 的协作边界。
 
 ## 仓库职责
 
@@ -35,7 +35,7 @@
 
 ## 外部框架边界
 
-Qlib 当前只通过 `market_data_platform.integrations.qlib` 提供条件化只读 DataLoader
+Qlib 当前只通过 `quant_market_data_platform.integrations.qlib` 提供条件化只读 DataLoader
 适配器。常规开发依赖和标准门禁不安装 `pyqlib`。核心数据契约、生产命令和发布链路应保持
 可独立导入和运行。
 
@@ -77,7 +77,7 @@ uv sync --extra dev
 ```
 
 真实凭证优先放在用户目录下的私有配置文件
-`~/.config/market-data-platform/config.env`，并限制文件权限。CI 和部署环境按其凭证管理机制注入变量。
+`~/.config/quant-market-data-platform/config.env`，并限制文件权限。CI 和部署环境按其凭证管理机制注入变量。
 `.env.local`、`.env` 仍为本地兼容入口，但不作为新环境的默认配置方式。文档只记录变量名和配置方式。
 
 TuShare 凭证与自定义 API 地址的规则见 `docs/operations/credentials.md`。不要读取、打印或提交 token。

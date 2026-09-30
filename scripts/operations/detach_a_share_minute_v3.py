@@ -18,7 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from market_data_platform.dataset_lock import DatasetLockError, minute_dataset_lock
+from quant_market_data_platform.dataset_lock import DatasetLockError, minute_dataset_lock
 
 RECEIPT_SCHEMA = "a_share.minute_1m.hardlink_detach.v1"
 COPY_BUFFER_BYTES = 8 * 1024 * 1024

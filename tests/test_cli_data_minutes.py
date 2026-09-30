@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform import cli, cli_data
-from market_data_platform.providers import (
+from quant_market_data_platform import cli, cli_data
+from quant_market_data_platform.providers import (
     a_share_minute_bj_overlay,
     a_share_minute_build,
     a_share_minute_coverage,

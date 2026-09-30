@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "market-data-platform"
+name = "quant-market-data-platform"
 version = "0.2.0"
 description = "Shared multi-market research data control plane contracts and helpers."
 readme = "README.md"
@@ -65,7 +65,7 @@ docs = [
 ]
 
 [project.scripts]
-marketdata = "market_data_platform.cli:main"
+marketdata = "quant_market_data_platform.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -90,34 +90,34 @@ select = ["E", "F", "I", "UP", "B", "C4", "RET", "RUF100", "C90", "PLR0911", "PL
 max-complexity = 14
 
 [tool.ruff.lint.per-file-ignores]
-  "src/market_data_platform/cli_data.py" = ["F401"]
-  "src/market_data_platform/contract_health.py" = ["F401"]
-  "src/market_data_platform/data_governance.py" = ["F401"]
-  "src/market_data_platform/data_providers_core.py" = ["F401"]
-  "src/market_data_platform/data_warehouse_materialize.py" = ["F401"]
-  "src/market_data_platform/guan_mobile_raw.py" = ["F401"]
-  "src/market_data_platform/providers/_a_share_minute_coverage_audit.py" = ["F401"]
-  "src/market_data_platform/providers/_adapters.py" = ["F401"]
-  "src/market_data_platform/providers/_coverage_manifest.py" = ["F401"]
-  "src/market_data_platform/providers/_coverage_materialize.py" = ["F401"]
-  "src/market_data_platform/providers/a_share_minute_bj_overlay.py" = ["F401"]
-  "src/market_data_platform/providers/a_share_minute_fusion.py" = ["F401"]
-  "src/market_data_platform/providers/guan_annual_minbar.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share_clean.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share_flow_features.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share_fundamentals.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share_fundamentals_pit.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share_hotspot_features.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share_options.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share_ownership_features.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share_quality.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share_research.py" = ["F401"]
-  "src/market_data_platform/providers/tushare_a_share_universe.py" = ["F401"]
-  "src/market_data_platform/research_views/daily_watch20_candidate_pool.py" = ["F401"]
-  "src/market_data_platform/tushare_minute_backfill.py" = ["F401"]
-  "src/market_data_platform/tushare_minute_replacement_campaign_runner.py" = ["F401"]
-  "src/market_data_platform/tushare_refresh.py" = ["F401"]
+  "src/quant_market_data_platform/cli_data.py" = ["F401"]
+  "src/quant_market_data_platform/contract_health.py" = ["F401"]
+  "src/quant_market_data_platform/data_governance.py" = ["F401"]
+  "src/quant_market_data_platform/data_providers_core.py" = ["F401"]
+  "src/quant_market_data_platform/data_warehouse_materialize.py" = ["F401"]
+  "src/quant_market_data_platform/guan_mobile_raw.py" = ["F401"]
+  "src/quant_market_data_platform/providers/_a_share_minute_coverage_audit.py" = ["F401"]
+  "src/quant_market_data_platform/providers/_adapters.py" = ["F401"]
+  "src/quant_market_data_platform/providers/_coverage_manifest.py" = ["F401"]
+  "src/quant_market_data_platform/providers/_coverage_materialize.py" = ["F401"]
+  "src/quant_market_data_platform/providers/a_share_minute_bj_overlay.py" = ["F401"]
+  "src/quant_market_data_platform/providers/a_share_minute_fusion.py" = ["F401"]
+  "src/quant_market_data_platform/providers/guan_annual_minbar.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share_clean.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share_flow_features.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share_fundamentals.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share_fundamentals_pit.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share_hotspot_features.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share_options.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share_ownership_features.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share_quality.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share_research.py" = ["F401"]
+  "src/quant_market_data_platform/providers/tushare_a_share_universe.py" = ["F401"]
+  "src/quant_market_data_platform/research_views/daily_watch20_candidate_pool.py" = ["F401"]
+  "src/quant_market_data_platform/tushare_minute_backfill.py" = ["F401"]
+  "src/quant_market_data_platform/tushare_minute_replacement_campaign_runner.py" = ["F401"]
+  "src/quant_market_data_platform/tushare_refresh.py" = ["F401"]
 
 [tool.uv.sources]
 research-code-quality = { git = "https://github.com/runchengxie/quant-code-quality.git", rev = "6daeeca7a3d405f23c8ad49c8364bfdc8e9bb661" }
@@ -132,7 +132,7 @@ exclude = [
 ]
 
 [tool.coverage.run]
-source = ["src/market_data_platform"]
+source = ["src/quant_market_data_platform"]
 
 [tool.coverage.report]
 show_missing = true

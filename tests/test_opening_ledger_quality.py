@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from market_data_platform.quality_opening import (
+from quant_market_data_platform.quality_opening import (
     OpeningCancel,
     OpeningOrder,
     OpeningTrade,

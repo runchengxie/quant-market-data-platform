@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from market_data_platform.contract import describe_input_path, match_current_contract_entry
+from quant_market_data_platform.contract import describe_input_path, match_current_contract_entry
 
 
 def test_match_current_contract_entry_matches_alias_or_resolved_path() -> None:

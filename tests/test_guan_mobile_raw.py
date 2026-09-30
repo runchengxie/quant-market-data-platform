@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from market_data_platform.guan_mobile_raw import (
+from quant_market_data_platform.guan_mobile_raw import (
     GuanMobilePromotionConflict,
     GuanMobilePromotionError,
     GuanMobilePromotionVerificationError,
@@ -18,8 +18,8 @@ from market_data_platform.guan_mobile_raw import (
     promote_guan_mobile,
     verify_guan_mobile_promotion,
 )
-from market_data_platform.guan_mobile_raw_part01 import PromotionStrategy
-from market_data_platform.providers.a_share_minute_build_part01 import (
+from quant_market_data_platform.guan_mobile_raw_part01 import PromotionStrategy
+from quant_market_data_platform.providers.a_share_minute_build_part01 import (
     _discover_deal_files,
 )
 

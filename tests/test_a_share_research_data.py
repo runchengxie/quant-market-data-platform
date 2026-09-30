@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 
-from market_data_platform.research_views.a_share_research_data import (
+from quant_market_data_platform.research_views.a_share_research_data import (
     AShareResearchAssets,
     load_a_share_research_daily,
     load_a_share_research_instruments,
@@ -65,7 +65,7 @@ def test_resolve_a_share_research_assets_uses_current_contract(monkeypatch, tmp_
         return contract
 
     monkeypatch.setattr(
-        "market_data_platform.research_views.a_share_research_data.PublishedAssetContract.load_current",
+        "quant_market_data_platform.research_views.a_share_research_data.PublishedAssetContract.load_current",
         fake_load_current,
     )
 

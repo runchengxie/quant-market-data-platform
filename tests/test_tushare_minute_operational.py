@@ -8,15 +8,15 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from market_data_platform import tushare_minute_operational_daily
-from market_data_platform._tushare_minute_campaign_readiness import file_sha256
-from market_data_platform.minute_candidate import MinuteCandidateError
-from market_data_platform.tushare_minute_operational import (
+from quant_market_data_platform import tushare_minute_operational_daily
+from quant_market_data_platform._tushare_minute_campaign_readiness import file_sha256
+from quant_market_data_platform.minute_candidate import MinuteCandidateError
+from quant_market_data_platform.tushare_minute_operational import (
     OperationalAssembly,
     assemble_operational_version,
     promote_operational_alias,
 )
-from market_data_platform.tushare_minute_operational_daily import (
+from quant_market_data_platform.tushare_minute_operational_daily import (
     OperationalDailyOptions,
     run_operational_daily,
 )

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from market_data_platform.contract import describe_current_path
+from quant_market_data_platform.contract import describe_current_path
 
 
 def test_missing_current_asset_has_explicit_unavailable_state(tmp_path: Path) -> None:

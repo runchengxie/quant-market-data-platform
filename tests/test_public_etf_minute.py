@@ -13,7 +13,7 @@ import pandas as pd
 import pytest
 import yaml
 
-import market_data_platform.providers.public_etf_minute as provider
+import quant_market_data_platform.providers.public_etf_minute as provider
 
 
 def _fixture_frame(*trade_times: str) -> pd.DataFrame:
@@ -32,7 +32,7 @@ def _fixture_frame(*trade_times: str) -> pd.DataFrame:
 
 
 def test_public_etf_minute_contract_is_explicit() -> None:
-    from market_data_platform.providers.public_etf_minute import (
+    from quant_market_data_platform.providers.public_etf_minute import (
         ETF_MINUTE_COLUMNS,
         ETF_MINUTE_NETWORK_MODES,
         ETF_MINUTE_PERIODS,

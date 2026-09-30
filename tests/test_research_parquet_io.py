@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from market_data_platform.standardize.parquet import (
+from quant_market_data_platform.standardize.parquet import (
     csv_columns,
     hive_partition_columns,
     read_parquet_dataset_compat,

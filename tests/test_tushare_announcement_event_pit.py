@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from market_data_platform.cli import build_parser
-from market_data_platform.providers.tushare_a_share_fundamentals import (
+from quant_market_data_platform.cli import build_parser
+from quant_market_data_platform.providers.tushare_a_share_fundamentals import (
     AnnouncementEventPitOptions,
     build_announcement_event_pit,
     load_announcement_event_as_of_panel,

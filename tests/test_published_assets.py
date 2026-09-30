@@ -12,12 +12,12 @@ import pandas as pd
 import pytest
 import yaml
 
-from market_data_platform.integrations.qlib import QlibPublishedAssetAdapter
-from market_data_platform.published_assets import (
+from quant_market_data_platform.integrations.qlib import QlibPublishedAssetAdapter
+from quant_market_data_platform.published_assets import (
     PublishedAssetContract,
     PublishedAssetPathError,
 )
-from market_data_platform.published_frames import (
+from quant_market_data_platform.published_frames import (
     ParquetFrameMapping,
     PITUniverseMapping,
     PublishedFramePlan,
@@ -304,7 +304,7 @@ def test_synthetic_pit_calendar_and_qlib_adapter_frames_are_identical(tmp_path: 
 
     metadata = adapter.dataset_metadata
     assert metadata["backend"]["name"] == "qlib"
-    assert metadata["source_backend"]["name"] == "market_data_platform.published_parquet"
+    assert metadata["source_backend"]["name"] == "quant_market_data_platform.published_parquet"
     assert [source["asset_key"] for source in metadata["sources"]] == [
         "features",
         "trade_cal",
@@ -355,7 +355,7 @@ def test_lazy_runtime_wrapper_is_a_real_qlib_data_loader(
         "qlib.data.dataset.loader": qlib_loader,
     }.items():
         monkeypatch.setitem(sys.modules, name, module)
-    runtime_name = "market_data_platform.integrations._qlib_runtime"
+    runtime_name = "quant_market_data_platform.integrations._qlib_runtime"
     monkeypatch.delitem(sys.modules, runtime_name, raising=False)
 
     contract = _synthetic_contract(tmp_path / "market-data")
@@ -391,8 +391,8 @@ class BlockQlib(importlib.abc.MetaPathFinder):
         return None
 
 sys.meta_path.insert(0, BlockQlib())
-import market_data_platform
-from market_data_platform.integrations.qlib import (
+import quant_market_data_platform
+from quant_market_data_platform.integrations.qlib import (
     QlibIntegrationUnavailableError,
     QlibPublishedAssetAdapter,
 )

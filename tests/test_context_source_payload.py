@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from market_data_platform.context.source_payload import SourcePayload
+from quant_market_data_platform.context.source_payload import SourcePayload
 
 
 def test_source_payload_is_immutable_and_hashes_exact_bytes():

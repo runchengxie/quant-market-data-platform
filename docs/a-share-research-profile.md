@@ -1,7 +1,7 @@
 # A 股研究资产口径
 
 > status: active
-> owner: market-data-platform
+> owner: quant-market-data-platform
 > last_verified: 2026-07-20
 > source_of_truth: yes
 > superseded_by: n/a

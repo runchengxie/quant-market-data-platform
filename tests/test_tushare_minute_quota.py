@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.tushare_minute_quota import (
+from quant_market_data_platform.tushare_minute_quota import (
     DEFAULT_MINUTE_QUOTA_SAFETY_ROWS,
     MinuteQuotaConfig,
     MinuteQuotaConfigurationError,

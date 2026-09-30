@@ -6,12 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from market_data_platform.providers.tushare_a_share_fundamentals_support import (
+from quant_market_data_platform.providers.tushare_a_share_fundamentals_support import (
     PitProvenanceError,
     build_asset_integrity,
     seal_manifest,
 )
-from market_data_platform.providers.tushare_common import write_manifest
+from quant_market_data_platform.providers.tushare_common import write_manifest
 
 
 def _load_script():

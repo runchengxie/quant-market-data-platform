@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from market_data_platform import runtime_memory
-from market_data_platform.runtime_memory import MemorySnapshot, choose_memory_budget_mb
+from quant_market_data_platform import runtime_memory
+from quant_market_data_platform.runtime_memory import MemorySnapshot, choose_memory_budget_mb
 
 
 def test_auto_budget_for_32gb_machine_respects_available_memory() -> None:

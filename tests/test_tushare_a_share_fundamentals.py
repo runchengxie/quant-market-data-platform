@@ -8,18 +8,18 @@ from typing import Any
 import pytest
 import yaml
 
-from market_data_platform.cli import build_parser
-from market_data_platform.contract import build_current_contract, write_current_contract
-from market_data_platform.contract_health import (
+from quant_market_data_platform.cli import build_parser
+from quant_market_data_platform.contract import build_current_contract, write_current_contract
+from quant_market_data_platform.contract_health import (
     ContractInspectionOptions,
     inspect_current_contract,
 )
-from market_data_platform.paths import candidate_asset_paths, current_contract_path
-from market_data_platform.providers import (
+from quant_market_data_platform.paths import candidate_asset_paths, current_contract_path
+from quant_market_data_platform.providers import (
     tushare_a_share_fundamentals,
     tushare_a_share_fundamentals_part02,
 )
-from market_data_platform.providers.tushare_a_share_fundamentals import (
+from quant_market_data_platform.providers.tushare_a_share_fundamentals import (
     FUNDAMENTALS_DATASETS,
     FieldValidationError,
     PitBuildOptions,
@@ -41,7 +41,7 @@ from market_data_platform.providers.tushare_a_share_fundamentals import (
     validate_normalized_fundamentals,
     validate_pit_fundamentals,
 )
-from market_data_platform.providers.tushare_a_share_fundamentals_support import (
+from quant_market_data_platform.providers.tushare_a_share_fundamentals_support import (
     FundamentalsDownloadError,
     asset_integrity_checks,
     build_asset_integrity,

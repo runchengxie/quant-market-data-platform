@@ -13,12 +13,12 @@ uv sync --extra research-features
 并从显式模块导入：
 
 ```python
-from market_data_platform.research_features import build_daily_microstructure_features
+from quant_market_data_platform.research_features import build_daily_microstructure_features
 ```
 
 ## 日频 OHLCV 可支持的特征
 
-`market_data_platform.research_features.build_daily_microstructure_features` 只依赖当时可见的 OHLCV / amount 字段，生成：
+`quant_market_data_platform.research_features.build_daily_microstructure_features` 只依赖当时可见的 OHLCV / amount 字段，生成：
 
 - Parkinson high-low volatility
 - Corwin-Schultz effective spread estimate

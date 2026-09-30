@@ -19,8 +19,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from market_data_platform.dataset_lock import minute_dataset_lock
-from market_data_platform.providers.a_share_minute_price_flow import (
+from quant_market_data_platform.dataset_lock import minute_dataset_lock
+from quant_market_data_platform.providers.a_share_minute_price_flow import (
     NOTIONAL_HARD_GUARD_ISSUE,
     POSITIVE_VOLUME_ZERO_AMOUNT_ISSUE,
     VWAP_EXTREME_UNIT_SCALE_ISSUE,

@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from market_data_platform.research_views.daily_watch20_data import (
+from quant_market_data_platform.research_views.daily_watch20_data import (
     DailyWatch20Assets,
     load_daily_watch20_daily,
 )
@@ -99,7 +99,7 @@ def _patch_duckdb(monkeypatch, source: pd.DataFrame, *, selected_date: str) -> N
             return _FakeConnection()
 
     monkeypatch.setattr(
-        "market_data_platform.research_views.daily_watch20_data._duckdb",
+        "quant_market_data_platform.research_views.daily_watch20_data._duckdb",
         lambda: _FakeDuckDB(),
     )
 
@@ -121,7 +121,7 @@ def _patch_duckdb_result(monkeypatch, result: pd.DataFrame) -> None:
             return _FakeConnection()
 
     monkeypatch.setattr(
-        "market_data_platform.research_views.daily_watch20_data._duckdb",
+        "quant_market_data_platform.research_views.daily_watch20_data._duckdb",
         lambda: _FakeDuckDB(),
     )
 

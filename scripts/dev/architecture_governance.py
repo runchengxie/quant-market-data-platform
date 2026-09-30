@@ -16,37 +16,37 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CORE_MODULES = (
-    "src/market_data_platform/artifacts.py",
-    "src/market_data_platform/contract.py",
-    "src/market_data_platform/data_provider_contracts.py",
-    "src/market_data_platform/manifest.py",
-    "src/market_data_platform/paths.py",
-    "src/market_data_platform/registry.py",
-    "src/market_data_platform/repo_paths.py",
+    "src/quant_market_data_platform/artifacts.py",
+    "src/quant_market_data_platform/contract.py",
+    "src/quant_market_data_platform/data_provider_contracts.py",
+    "src/quant_market_data_platform/manifest.py",
+    "src/quant_market_data_platform/paths.py",
+    "src/quant_market_data_platform/registry.py",
+    "src/quant_market_data_platform/repo_paths.py",
 )
 A_SHARE_MODULES = (
-    "src/market_data_platform/providers/rqdata_a_share.py",
-    "src/market_data_platform/providers/tushare_a_share.py",
-    "src/market_data_platform/providers/tushare_a_share_clean.py",
-    "src/market_data_platform/providers/tushare_a_share_fundamentals.py",
-    "src/market_data_platform/providers/tushare_a_share_quality.py",
-    "src/market_data_platform/providers/tushare_a_share_research.py",
-    "src/market_data_platform/providers/tushare_a_share_universe.py",
-    "src/market_data_platform/tushare_backfill.py",
-    "src/market_data_platform/tushare_cli.py",
-    "src/market_data_platform/tushare_refresh.py",
+    "src/quant_market_data_platform/providers/rqdata_a_share.py",
+    "src/quant_market_data_platform/providers/tushare_a_share.py",
+    "src/quant_market_data_platform/providers/tushare_a_share_clean.py",
+    "src/quant_market_data_platform/providers/tushare_a_share_fundamentals.py",
+    "src/quant_market_data_platform/providers/tushare_a_share_quality.py",
+    "src/quant_market_data_platform/providers/tushare_a_share_research.py",
+    "src/quant_market_data_platform/providers/tushare_a_share_universe.py",
+    "src/quant_market_data_platform/tushare_backfill.py",
+    "src/quant_market_data_platform/tushare_cli.py",
+    "src/quant_market_data_platform/tushare_refresh.py",
 )
 BANNED_CORE_IMPORT_PREFIXES = (
-    "market_data_platform.cli",
-    "market_data_platform.hk_assets",
-    "market_data_platform.hk_depth",
-    "market_data_platform.hk_workflows",
-    "market_data_platform.providers",
-    "market_data_platform.release_tools",
-    "market_data_platform.rqdata_runtime",
+    "quant_market_data_platform.cli",
+    "quant_market_data_platform.hk_assets",
+    "quant_market_data_platform.hk_depth",
+    "quant_market_data_platform.hk_workflows",
+    "quant_market_data_platform.providers",
+    "quant_market_data_platform.release_tools",
+    "quant_market_data_platform.rqdata_runtime",
 )
-PUBLIC_EXPORTS_PATH = Path("src/market_data_platform/hk_assets/_public_exports.py")
-PUBLIC_API_PATH = Path("src/market_data_platform/hk_assets/public_api.py")
+PUBLIC_EXPORTS_PATH = Path("src/quant_market_data_platform/hk_assets/_public_exports.py")
+PUBLIC_API_PATH = Path("src/quant_market_data_platform/hk_assets/public_api.py")
 HK_SPLIT_BOUNDARY_PATH = Path("docs/hk-split-boundary.yml")
 
 
@@ -132,7 +132,7 @@ def _imported_modules(
 
 
 def _internal_module_graph(repo_root: Path) -> dict[str, set[str]]:
-    source_root = repo_root / "src" / "market_data_platform"
+    source_root = repo_root / "src" / "quant_market_data_platform"
     module_paths = {
         module: path
         for path in sorted(source_root.rglob("*.py"))
@@ -148,7 +148,7 @@ def _internal_module_graph(repo_root: Path) -> dict[str, set[str]]:
             package_name=_package_name_for_path(repo_root, path),
             top_level_only=True,
         ):
-            if not imported.startswith("market_data_platform"):
+            if not imported.startswith("quant_market_data_platform"):
                 continue
             parts = imported.split(".")
             for index in range(len(parts), 1, -1):
@@ -205,7 +205,7 @@ def check_internal_import_cycles(repo_root: Path = REPO_ROOT) -> list[BoundaryIs
     for component in _strongly_connected_components(_internal_module_graph(repo_root)):
         issues.append(
             BoundaryIssue(
-                "src/market_data_platform",
+                "src/quant_market_data_platform",
                 1,
                 "internal import cycle: " + " -> ".join(component),
             )
@@ -237,14 +237,14 @@ def check_core_import_boundaries(repo_root: Path = REPO_ROOT) -> list[BoundaryIs
 
 def check_data_lifecycle_import_boundaries(repo_root: Path = REPO_ROOT) -> list[BoundaryIssue]:
     issues: list[BoundaryIssue] = []
-    standardize_root = repo_root / "src" / "market_data_platform" / "standardize"
+    standardize_root = repo_root / "src" / "quant_market_data_platform" / "standardize"
     for path in _source_files(repo_root, (str(standardize_root.relative_to(repo_root)),)):
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for line, module in _imported_modules(
             tree,
             package_name=_package_name_for_path(repo_root, path),
         ):
-            if module.startswith("market_data_platform.providers"):
+            if module.startswith("quant_market_data_platform.providers"):
                 issues.append(
                     BoundaryIssue(
                         path=_relative_path(repo_root, path),
@@ -252,7 +252,7 @@ def check_data_lifecycle_import_boundaries(repo_root: Path = REPO_ROOT) -> list[
                         message=f"standardize layer imports provider implementation: {module}",
                     )
                 )
-            if module.startswith("market_data_platform.ingest"):
+            if module.startswith("quant_market_data_platform.ingest"):
                 issues.append(
                     BoundaryIssue(
                         path=_relative_path(repo_root, path),
@@ -279,7 +279,7 @@ def _tracked_hk_platform_dependencies(
             tree,
             package_name=_package_name_for_path(repo_root, path),
         ):
-            if not module.startswith("market_data_platform."):
+            if not module.startswith("quant_market_data_platform."):
                 continue
             if module.startswith(internal_hk) or module.startswith(seam):
                 continue
@@ -457,8 +457,8 @@ def check_private_test_imports(repo_root: Path = REPO_ROOT) -> list[BoundaryIssu
             if not isinstance(node, ast.ImportFrom):
                 continue
             if node.module not in {
-                "market_data_platform.hk_assets",
-                "market_data_platform.hk_assets.public_api",
+                "quant_market_data_platform.hk_assets",
+                "quant_market_data_platform.hk_assets.public_api",
             }:
                 continue
             for alias in node.names:

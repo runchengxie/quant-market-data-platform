@@ -6,7 +6,7 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from market_data_platform.quality import profile_l2_integrity, profile_parquet
+from quant_market_data_platform.quality import profile_l2_integrity, profile_parquet
 
 
 def _write(path: Path, rows: list[dict]) -> None:

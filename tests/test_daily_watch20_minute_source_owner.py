@@ -8,17 +8,19 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from market_data_platform.research_views.daily_watch20_data import DailyWatch20Assets
-from market_data_platform.research_views.daily_watch20_live_inputs import (
+from quant_market_data_platform.research_views.daily_watch20_data import DailyWatch20Assets
+from quant_market_data_platform.research_views.daily_watch20_live_inputs import (
     DailyWatch20InputOptions,
     inspect_daily_watch20_input_availability,
 )
-from market_data_platform.research_views.daily_watch20_minute_source import (
+from quant_market_data_platform.research_views.daily_watch20_minute_source import (
     cached_source_partitions,
     minute_cache_delta,
     scan_daily_watch20_minute_sources,
 )
-from market_data_platform.research_views.daily_watch20_policy import DailyWatch20UniversePolicy
+from quant_market_data_platform.research_views.daily_watch20_policy import (
+    DailyWatch20UniversePolicy,
+)
 
 
 def _partition(root: Path, date: str, name: str = "part-000.parquet") -> Path:
