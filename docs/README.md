@@ -32,7 +32,7 @@ RQData 已完全退役，HK 行情支持已移除。当前活跃主线是中国�
 | 路径、资产键、清单和当前数据契约 | [contracts.md](contracts.md) |
 | Knowledge v2 数据集试点契约 | [knowledge-contract-v2.md](knowledge-contract-v2.md) |
 | Knowledge v2 试点清单 | [knowledge/pilot.yml](knowledge/pilot.yml) |
-| 数据代码生命周期分层 | [data-lifecycle-architecture.md](data-lifecycle-architecture.md) |
+| 数据代码生命周期分层 | [data-lifecycle-architecture.zh-CN.md](data-lifecycle-architecture.zh-CN.md) |
 | A 股研究资产口径 | [a-share-research-profile.md](a-share-research-profile.md) |
 | 基本面原始数据到 PIT | [a-share-fundamentals.md](a-share-fundamentals.md) |
 | 历史行业标签展开 | [concepts/historical-industry-labels.md](concepts/historical-industry-labels.md) |

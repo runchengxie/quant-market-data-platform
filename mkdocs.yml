@@ -57,7 +57,7 @@ nav:
   - Overview: index.md
   - Architecture and boundaries:
       - Platform overview: architecture/quant-repo-boundaries.en.md
-      - Data lifecycle: data-lifecycle-architecture.en.md
+      - Data lifecycle: data-lifecycle-architecture.md
       - Data ownership migration: ownership-migration.en.md
       - Integration boundaries: integrations.en.md
   - Data contracts:

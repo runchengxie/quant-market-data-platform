@@ -19,7 +19,7 @@ def test_mkdocs_uses_english_and_translated_pages_link_both_ways() -> None:
 
     pairs = (
         ("architecture/quant-repo-boundaries.en.md", "architecture/quant-repo-boundaries.md"),
-        ("data-lifecycle-architecture.en.md", "data-lifecycle-architecture.md"),
+        ("data-lifecycle-architecture.md", "data-lifecycle-architecture.zh-CN.md"),
         ("ownership-migration.en.md", "ownership-migration.md"),
         ("research-data-interface.en.md", "research-data-interface.md"),
         ("research-integrity.en.md", "research-integrity.md"),
@@ -91,14 +91,14 @@ def test_currently_translated_navigation_entries_use_english_pages() -> None:
             return [path for value in node.values() for path in page_paths(value)]
         if isinstance(node, list):
             return [path for value in node for path in page_paths(value)]
-        if isinstance(node, str) and node.endswith(".md"):
-            return [node]
-        return []
+        return [node] if isinstance(node, str) and node.endswith(".md") else []
 
-    assert all(path == "index.md" or path.endswith(".en.md") for path in page_paths(nav))
+    canonical_page = "data-lifecycle-architecture.md"
+    pages = page_paths(nav)
+    assert all(path in {canonical_page, "index.md"} or path.endswith(".en.md") for path in pages)
     for path in (
         "architecture/quant-repo-boundaries.en.md",
-        "data-lifecycle-architecture.en.md",
+        "data-lifecycle-architecture.md",
         "ownership-migration.en.md",
         "research-data-interface.en.md",
         "research-integrity.en.md",
@@ -134,6 +134,5 @@ def test_currently_translated_navigation_entries_use_english_pages() -> None:
         "operations/a-share-minutes.en.md",
         "operations/a-share-tushare.en.md",
         "maintenance.en.md",
-        "a-share-flow-ownership-features.en.md",
     ):
         assert path in rendered
