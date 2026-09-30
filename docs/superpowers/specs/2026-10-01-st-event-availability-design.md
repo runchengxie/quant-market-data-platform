@@ -12,7 +12,7 @@ Research consumers currently receive `is_st` from `daily_clean` and use it direc
 
 ## Selected design
 
-Add `available_from` to reconstructed ST history as a date-level point-in-time field. Keep `interval_start`, `interval_end`, `ann_date`, and `is_st` semantics unchanged. Propagate this as `st_available_from` in `daily_clean`, where it accompanies the existing `is_st` value.
+Add `available_from` to reconstructed ST history as a date-level point-in-time field. Keep `interval_start`, `interval_end`, `ann_date`, and `is_st` semantics unchanged. Set the reconstructed ST receipt schema to `market-data-platform.reconstructed-st-history.v2`. Propagate this as `st_available_from` in `daily_clean`, where it accompanies the existing `is_st` value, and bump its manifest schema to `tushare.a_share.daily_clean.v2`.
 
 - For a row whose `ann_date` is strictly before its effective interval start, set `available_from` to the first trading session on or after `interval_start`.
 - For a row whose `ann_date` is equal to or later than `interval_start`, set `available_from` to the first trading session strictly after `ann_date`. This is the conservative rule for announcements without a publication time.
@@ -20,7 +20,7 @@ Add `available_from` to reconstructed ST history as a date-level point-in-time f
 - Use the supplied trading calendar for session arithmetic. Do not approximate the next session with a calendar-day increment.
 - Preserve the historical `is_st` value on every effective-date row. Consumers determine decision-time availability using `available_from <= trade_date` and fail closed when it is missing.
 
-The published daily-clean artifact must expose `st_available_from` alongside `is_st`, with its manifest and receipt recording the source lineage and schema version. For rows with `is_st=true`, preserve the source event's `available_from`; rows with no active ST interval keep `st_available_from` null. Existing data that lacks the new field cannot claim the new PIT guarantee. Its current `revision_safe=false` status remains in force until a rebuilt candidate passes validation.
+The published daily-clean artifact must expose `st_available_from` alongside `is_st`, with its manifest and receipt recording the source lineage and schema version. For rows with `is_st=true`, preserve the source event's `available_from`; rows with no active ST interval keep `st_available_from` null. Existing v1 data that lacks the new field cannot claim the new PIT guarantee. Its current `revision_safe=false` status remains in force until a rebuilt candidate passes validation.
 
 ## 600530.SH evidence handling
 
