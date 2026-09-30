@@ -1,5 +1,12 @@
 # Data code lifecycle
 
+> status: active
+> owner: quant-market-data-platform
+> audience: human and agent
+> last_verified: 2026-09-30
+> source_of_truth: yes
+> superseded_by: n/a
+
 [中文页面](data-lifecycle-architecture.zh-CN.md)
 
 The platform organizes shared market data around the following dependency direction:
