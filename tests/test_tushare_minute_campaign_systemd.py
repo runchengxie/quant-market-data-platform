@@ -4,10 +4,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SYSTEMD_ROOT = REPO_ROOT / "scripts" / "systemd"
-CONFIG_ENVIRONMENT_FILE = (
-    "EnvironmentFile=-@HOME@/.config/richard/projects/quant/"
-    "quant-market-data-platform/config.env"
-)
 
 
 def _unit(name: str) -> str:
@@ -33,7 +29,7 @@ def test_campaign_service_enforces_window_and_shared_quota() -> None:
     assert "--minute-quota-safety-rows 4000000" in service
     assert "Requires=tushare-minute-quota-coordinator.service" in service
     assert "REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt" in service
-    assert CONFIG_ENVIRONMENT_FILE in service
+    assert "projects/quant/quant-market-data-platform/config.env" in service
     assert "OnFailure=tushare-minute-replacement-campaign-status.service" in service
     assert "cutover" not in service.lower()
 
@@ -79,7 +75,7 @@ def test_accelerator_reuses_campaign_budget_after_daily_raw_completion() -> None
     assert "--not-before-local 05:15" in service
     assert "release-ready" in service
     assert "REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt" in service
-    assert CONFIG_ENVIRONMENT_FILE in service
+    assert "projects/quant/quant-market-data-platform/config.env" in service
     assert "tushare_minute_replacement_campaign_accelerate.log" in service
     assert "cutover" not in service.lower()
 
@@ -127,7 +123,7 @@ def test_quota_coordinator_precedes_campaign_with_idempotent_request_holds() -> 
         "tushare-minute-replacement-campaign-tail.service",
     ):
         dependent = _unit(dependent_name)
-        assert CONFIG_ENVIRONMENT_FILE in dependent
+        assert "projects/quant/quant-market-data-platform/config.env" in dependent
         assert "Requires=tushare-minute-quota-coordinator.service" in dependent
         assert "After=network-online.target tushare-minute-quota-coordinator.service" in dependent
 
