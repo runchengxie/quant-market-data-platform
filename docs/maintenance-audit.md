@@ -124,6 +124,13 @@ uv run --extra dev python scripts/dev/architecture_governance.py --check
 66549/66549 行，排除 0 个文件和 0 行。
 `maintainability_metrics.py --json --limit 30` 报告 452 个 Python 文件、109101 行、
 38 个超过 100 行的函数、1 个超过 250 行的函数，最大文件 2045 行、最大函数 309 行。
+
+## 2026-09-30 canonical package rename
+
+将 distribution/import 从 `market-data-platform` / `market_data_platform` 改为
+`quant-market-data-platform` / `quant_market_data_platform` 后，较长的绝对导入由 formatter 拆行，
+`config/code-quality-baseline.json` 的 `python_lines` 因此从 109565 调整为 109626。文件数和其余
+质量指标保持不变。此基线在内部导入改为相对路径或下一次明确的源码布局调整时重新评估。
 这些热点指标没有随本次试点增加。
 
 后续收紧时，优先在知识索引的解析、清单加载和 CLI 中移除重复逻辑，保持测试覆盖。
