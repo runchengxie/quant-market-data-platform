@@ -1,5 +1,7 @@
 # 共享数据契约
 
+[English page](contracts.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent

@@ -1,5 +1,7 @@
 # A 股分钟数据
 
+[English page](a-share-minutes.en.md)
+
 本页记录当前生产资产、来源口径、重建流程和切换规则。历史试验和已经退役的中间版本不再展开。
 
 ## TuShare 历史可用性探测

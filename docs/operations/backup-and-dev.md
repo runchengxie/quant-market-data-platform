@@ -1,5 +1,7 @@
 # 备份和本地开发
 
+[English page](backup-and-dev.en.md)
+
 ## 本地快照备份
 
 `marketdata backup-data` 用于冻结本地缓存、股票池、配置文件。该命令写入快照目录和 `manifest.yml`，不会覆盖已有快照。

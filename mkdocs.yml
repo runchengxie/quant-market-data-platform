@@ -25,12 +25,12 @@ theme:
       scheme: default
       toggle:
         icon: material/brightness-7
-        name: 切换到深色模式
+        name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       toggle:
         icon: material/brightness-4
-        name: 切换到浅色模式
+        name: Switch to light mode
 
 plugins:
   - search
@@ -56,45 +56,46 @@ markdown_extensions:
 nav:
   - Overview: index.md
   - Architecture and boundaries:
-      - Platform overview: architecture/quant-repo-boundaries.md
-      - Data lifecycle: data-lifecycle-architecture.md
-      - Data ownership migration: ownership-migration.md
-      - Integration boundaries: integrations.md
+      - Platform overview: architecture/quant-repo-boundaries.en.md
+      - Data lifecycle: data-lifecycle-architecture.en.md
+      - Data ownership migration: ownership-migration.en.md
+      - Integration boundaries: integrations.en.md
   - Data contracts:
-      - Contract overview: contracts.md
-      - Data warehouse: data-warehouse.md
-      - Research data interface: research-data-interface.md
-      - Research integrity: research-integrity.md
+      - Contract overview: contracts.en.md
+      - Data warehouse: data-warehouse.en.md
+      - Research data interface: research-data-interface.en.md
+      - Research integrity: research-integrity.en.md
   - Sources and operations:
-      - Operations overview: operations.md
-      - A-share TuShare: operations/a-share-tushare.md
-      - A-share minute data: operations/a-share-minutes.md
-      - ETF minute data: operations/etf-minutes.md
-      - Credentials and configuration: operations/credentials.md
-      - Backup and development: operations/backup-and-dev.md
+      - Operations overview: operations.en.md
+      - A-share TuShare: operations/a-share-tushare.en.md
+      - A-share minute data: operations/a-share-minutes.en.md
+      - ETF minute data: operations/etf-minutes.en.md
+      - Credentials and configuration: operations/credentials.en.md
+      - Backup and development: operations/backup-and-dev.en.md
   - Quality and governance:
-      - Data governance: data-governance.md
-      - L2 ingestion gate: l2-ingestion-gate.md
-      - Quality governance: quality-governance.md
-      - Testing: operations/testing.md
-      - Maintainability audit: maintenance-audit.md
+      - Data governance: data-governance.en.md
+      - L2 ingestion gate: l2-ingestion-gate.en.md
+      - Quality governance: quality-governance.en.md
+      - Testing: operations/testing.en.md
+      - Maintainability audit: maintenance.en.md
   - Developer reference:
-      - Compatibility layer: compatibility.md
-      - Publishing and packaging: operations/package-publishing.md
-      - Test entry points: testing.md
-      - Documentation style: documentation-style.md
-      - Research data IO: research-parquet-io.md
-      - Quota rendering: quota-rendering.md
-      - AFML research features: afml-research-features.md
-      - A-share research profile: a-share-research-profile.md
-      - A-share fundamentals: a-share-fundamentals.md
-      - A-share flow and ownership features: a-share-flow-ownership-features.md
-      - Fund top-10 ownership features: a-share-fund-top10-ownership-features.md
-      - L2 special-event semantics: l2-special-event-semantics.md
-  - 迁移与专题:
-      - 历史行业标签: concepts/historical-industry-labels.md
-      - 当前资产消费审计: migration/current-assets-consumer-audit.md
-      - 当前资产迁移状态: migration/current-assets-migration-status.md
-      - 当前资产回滚清单: migration/current-assets-publish-rollback-checklist.md
-      - 上下文数据: operations/context-data.md
-      - 港股历史恢复: operations/hk-archive-restore.md
+      - Compatibility layer: compatibility.en.md
+      - Publishing and packaging: operations/package-publishing.en.md
+      - Test entry points: operations/testing.en.md
+      - Documentation style: documentation-style.en.md
+      - Research data IO: research-parquet-io.en.md
+      - Quota rendering: quota-rendering.en.md
+      - AFML research features: afml-research-features.en.md
+      - A-share research profile: a-share-research-profile.en.md
+      - A-share fundamentals: a-share-fundamentals.en.md
+      - A-share flow and ownership features: a-share-flow-ownership-features.en.md
+      - Fund top-10 ownership features: a-share-fund-top10-ownership-features.en.md
+      - L2 special-event semantics: l2-special-event-semantics.en.md
+  - Migration and topics:
+      - Historical industry labels: concepts/historical-industry-labels.en.md
+      - Current-asset consumer audit: migration/current-assets-consumer-audit.en.md
+      - Current-asset migration status: migration/current-assets-migration-status.en.md
+      - Current-asset rollback checklist: migration/current-assets-publish-rollback-checklist.en.md
+      - Context data: operations/context-data.en.md
+      - Hong Kong archive recovery: operations/hk-archive-restore.en.md
+      - Current-assets closeout snapshot: migration/current-assets-closeout-20260918.en.md

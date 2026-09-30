@@ -1,5 +1,7 @@
 # A 股公募基金前十大重仓 PIT 特征
 
+[English page](a-share-fund-top10-ownership-features.en.md)
+
 本页记录从 TuShare `fund_portfolio` 构建一致披露口径公募基金持仓特征的规则。
 
 ## 为什么单独建 top-10 资产

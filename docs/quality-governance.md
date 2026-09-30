@@ -1,5 +1,7 @@
 # 质量治理与维护债务
 
+[English page](quality-governance.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent

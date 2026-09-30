@@ -1,5 +1,7 @@
 # 数据目录、标准层与 DuckDB 查询
 
+[English page](data-warehouse.en.md)
+
 `marketdata data ...` 负责依据数据清单的目录刷新、标准层物化和 DuckDB 查询，相关能力由本平台统一维护。
 
 默认产物根目录解析顺序为：

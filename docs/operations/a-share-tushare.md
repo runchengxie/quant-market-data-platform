@@ -1,5 +1,7 @@
 # A 股 / TuShare 运维
 
+[English page](a-share-tushare.en.md)
+
 TuShare 是中国大陆市场数据的并存 provider，当前主要用于 A 股基础数据采集。安装可选依赖后，以环境变量或未跟踪的 `.env.local` 提供 token。显式导出的环境变量优先级高于 `.env.local`。
 
 当前分钟数据采用显式分源的双入口。`minute_1m` 保留 Guan legacy canonical。

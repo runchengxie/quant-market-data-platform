@@ -1,5 +1,7 @@
 # 港股归档恢复（已退役）
 
+[English page](hk-archive-restore.en.md)
+
 > status: archived
 > owner: quant-market-data-platform
 > audience: human and agent

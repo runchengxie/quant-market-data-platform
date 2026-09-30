@@ -1,5 +1,7 @@
 # 量化仓库职责边界
 
+[English page](quant-repo-boundaries.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent

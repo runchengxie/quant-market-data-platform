@@ -1,5 +1,7 @@
 # 维护性审计快照
 
+[English page](maintenance.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent
@@ -188,6 +190,10 @@ uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseli
 ## 2026-09-29 ST 事件日期审计基线
 
 共享代码质量基线的 `python_files` 从 452 调整到 454，`python_lines` 从 109311 调整到 109565。新增的模块与测试为带来源哈希的 ST 事件日期审计和原始参考数据回执提供可重复执行的命令。`functions_over_100`、复杂度与长行基线没有增加。退出条件是将这些审计合并进既有 ST 质量流水线时删除独立入口及对应冗余代码。在公告时刻可用性得到原始证据前，继续保留 `revision_safe=false`。
+
+## 2026-09-30 双语文档回归测试基线
+
+双语页面测试增加 1 个 Python 文件和 148 行，检查 README 与 MkDocs 页面使用英文 canonical、中文 companion 链接互通，以及导航目标保持英文。共享基线的 `python_files` 从 454 调整到 455，`python_lines` 从 109626 调整到 109774。没有提高复杂度或长函数预算。只要页面仍按文件配对维护，该测试就是语言路由契约。未来若迁移到统一 i18n 路由，应将断言并入新的契约测试并重新测量基线。
 
 ## 下一轮优先级
 

@@ -1,6 +1,8 @@
 # 研究数据读取适配器
 
-`quant_market_data_platform.research_data_interface.ResearchDataInterface` 为研究应用提供统一的数据读取入口。
+[English page](research-data-interface.en.md)
+
+`market_data_platform.research_data_interface.ResearchDataInterface` 为研究应用提供统一的数据读取入口。
 它负责读取市场数据平台发布的资产，也支持读取已经固定下来的本地研究资产。
 
 ## 支持的读取方式

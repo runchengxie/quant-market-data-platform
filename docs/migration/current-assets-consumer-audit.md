@@ -1,5 +1,7 @@
 # current_assets 读取审计
 
+[English page](current-assets-consumer-audit.en.md)
+
 更新时间：2026 年 9 月 18 日
 
 ## 结论

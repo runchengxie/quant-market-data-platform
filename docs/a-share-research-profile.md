@@ -1,5 +1,7 @@
 # A 股研究资产口径
 
+[English page](a-share-research-profile.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > last_verified: 2026-07-20

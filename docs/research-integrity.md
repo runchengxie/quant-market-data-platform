@@ -1,5 +1,7 @@
 # 研究数据完整性边界
 
+[English page](research-integrity.en.md)
+
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent
