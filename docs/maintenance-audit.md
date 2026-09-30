@@ -193,7 +193,7 @@ uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseli
 
 ## 2026-09-30 双语文档回归测试基线
 
-双语页面测试增加 1 个 Python 文件和 148 行，检查 README 与 MkDocs 页面使用英文 canonical、中文 companion 链接互通，以及导航目标保持英文。共享基线的 `python_files` 从 454 调整到 455，`python_lines` 从 109626 调整到 109774。没有提高复杂度或长函数预算。只要页面仍按文件配对维护，该测试就是语言路由契约；未来若迁移到统一 i18n 路由，应将断言并入新的契约测试并重新测量基线。
+双语页面测试增加 1 个 Python 文件和 148 行，检查 README 与 MkDocs 页面使用英文 canonical、中文 companion 链接互通，以及导航目标保持英文。共享基线的 `python_files` 从 454 调整到 455，`python_lines` 从 109626 调整到 109774。没有提高复杂度或长函数预算。只要页面仍按文件配对维护，该测试就是语言路由契约。未来若迁移到统一 i18n 路由，应将断言并入新的契约测试并重新测量基线。
 
 ## 下一轮优先级
 
