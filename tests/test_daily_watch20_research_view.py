@@ -55,6 +55,12 @@ def _assets(tmp_path: Path) -> DailyWatch20Assets:
     daily = tmp_path / "daily"
     data_dir = daily / "data"
     data_dir.mkdir(parents=True)
+    (daily / "manifest.yml").write_text(
+        "schema_version: tushare.a_share.daily_clean.v2\n"
+        "status: completed\n"
+        "contracts:\n  st_availability: daily_clean.st_available_from.v1\n",
+        encoding="utf-8",
+    )
     # A1's local RED/GREEN harness substitutes only the unavailable
     # DuckDB/PyArrow execution boundary; production tests still exercise the loader.
     (data_dir / "part.parquet").write_bytes(b"test-placeholder")
@@ -200,4 +206,21 @@ def test_daily_watch20_loader_rejects_rows_outside_requested_date_range(
             start_date="20260828",
             end_date="20260828",
             threads=1,
+        )
+
+
+def test_daily_watch20_loader_rejects_legacy_daily_clean_manifest(
+    tmp_path: Path,
+) -> None:
+    assets = _assets(tmp_path)
+    (assets.daily_clean / "manifest.yml").write_text(
+        "schema_version: tushare.a_share.daily_clean.v1\nstatus: completed\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="unsupported schema"):
+        load_daily_watch20_daily(
+            assets,
+            start_date="20260828",
+            end_date="20260828",
         )
