@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## PR review 例外
+
+由用户本人提交，或由用户明确委托 agent 完成的 PR，无需单独的人工 review。这是持续有效的授权，不需要逐个 PR 确认，并覆盖本文件中的一般 PR review 要求。必需检查仍须通过，冲突必须解决。不得绕过 GitHub 分支保护或 ruleset 强制要求的审批。
+
 ## 迁移通知
 
 `research-workspace` 处于 sunset 过渡期。`quant-market-data-platform` 保持独立，继续负责数据接入、生产、质量治理、版本和 published asset。通用回测、组合、风险和执行模拟进入 `quant-platform`，策略专属派生进入 `quant-research`。
