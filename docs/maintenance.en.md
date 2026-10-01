@@ -70,6 +70,8 @@ On 2026-09-27, the shared code-quality baseline was adjusted for the Knowledge v
 
 On 2026-09-30, bilingual documentation regression coverage added one Python file and 148 lines. It checks that README and MkDocs pages use English canonical pages, Chinese companions link back, and configured navigation targets remain English. The shared code-quality baseline increased from 454 files / 109,626 lines to 455 files / 109,774 lines. Complexity and long-function budgets did not increase. Keep this test while pages are maintained as file pairs. If the repository adopts a centralized i18n route map, fold these assertions into that contract test and recalculate the baseline.
 
+On 2026-10-01, the ST event availability contract added 284 Python lines for conservative exchange-session availability, `daily_clean.v2` propagation, and regression checks for receipts and row consistency. The shared baseline increased from 109,774 to 110,058 lines; file count, complexity, long-function, and long-line budgets did not increase. Once providers and consumers complete the versioned migration, assess consolidating duplicate checks into the existing ST quality pipeline and tighten the line baseline after removing equivalent redundant code. Reconstructed history remains `revision_safe=false`.
+
 See the dated Chinese audit record for the exact historical line-count changes. Those figures describe specific commits and are not current size targets.
 
 ## Compatibility decisions
