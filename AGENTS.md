@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## PR review 例外
+
+用户明确授权合并由用户本人编写，或由用户明确委托 agent 完成的 PR 时，可免除单独的人工 review。必需检查仍须通过，冲突必须解决；不得绕过分支保护、ruleset 或项目维护者明确规定的不可豁免审查。
+
 ## 迁移通知
 
 `research-workspace` 处于 sunset 过渡期。`quant-market-data-platform` 保持独立，继续负责数据接入、生产、质量治理、版本和 published asset。通用回测、组合、风险和执行模拟进入 `quant-platform`，策略专属派生进入 `quant-research`。
