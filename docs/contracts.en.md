@@ -135,6 +135,8 @@ Reconstructed ST history records effective dates separately from information ava
 
 `daily_clean` schema `tushare.a_share.daily_clean.v2` carries the matching `st_available_from` value beside `is_st`. It is null when the symbol has no active ST interval or when the source cannot establish availability. A consumer may use a positive ST value for a decision only when `st_available_from` is present and no later than that decision date; unknown availability must fail closed.
 
+The public `load_a_share_research_daily` and `load_daily_watch20_daily` views expose `is_st` and `st_available_from` from each dated daily row. The generic A-share view also exposes `is_suspended` and `list_date`. Consumers must use the dated ST fields for historical decisions and must not substitute current instrument metadata.
+
 `audit-a-share-st-event-timing` reads receipt-backed ST events and reconstructed ST history, auditing rows where `ann_date=trade_date`. It emits `st_event_timing_audit.parquet` and a hash receipt. Status values include `prior_dated_st_event`, `same_day_time_unknown`, `later_event_date_conflict`, and `no_active_prior_event`. Conflict candidates are limited to the same symbol and ST events effective within the following 10 calendar days and require manual review. The audit compares dates only, does not modify published `is_st`, and does not treat the `st` event endpoint as a complete daily state history.
 
 Raw reference downloads from `download-a-share-reference` create a same-directory `*.receipt.json` with query range, row count, quality status, and file SHA-256. This proves download-file integrity, not intraday announcement availability. Publication must revalidate the source hash.

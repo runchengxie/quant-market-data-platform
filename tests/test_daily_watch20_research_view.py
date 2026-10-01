@@ -31,6 +31,7 @@ def _rows() -> pd.DataFrame:
         "listed_days": 300,
         "board": "main",
         "is_st": False,
+        "st_available_from": None,
         "is_suspended": False,
         "is_limit_up": False,
         "is_limit_down": False,
@@ -167,15 +168,15 @@ def test_daily_watch20_loader_rejects_duplicate_stock_date_rows(
         )
 
 
-def test_daily_watch20_loader_rejects_missing_valuation_result_columns(
+def test_daily_watch20_loader_rejects_missing_contract_result_columns(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
     assets = _assets(tmp_path)
-    result = _rows().iloc[[0]].drop(columns="ps_ttm")
+    result = _rows().iloc[[0]].drop(columns="st_available_from")
     _patch_duckdb_result(monkeypatch, result)
 
-    with pytest.raises(ValueError, match="missing columns.*ps_ttm"):
+    with pytest.raises(ValueError, match="missing columns.*st_available_from"):
         load_daily_watch20_daily(
             assets,
             start_date="20260828",

@@ -170,7 +170,15 @@ def _validate_daily_watch20_daily_result(
     start_date: str,
     end_date: str,
 ) -> pd.DataFrame:
-    required = {"trade_date", "symbol", "pb", "pe_ttm", "ps_ttm"}
+    required = {
+        "trade_date",
+        "symbol",
+        "pb",
+        "pe_ttm",
+        "ps_ttm",
+        "is_st",
+        "st_available_from",
+    }
     missing = sorted(required - set(frame.columns))
     if missing:
         raise ValueError(f"DailyWatch20 daily result is missing columns: {missing}")
@@ -199,7 +207,7 @@ def load_daily_watch20_daily(
         "trade_date, symbol, open, adj_open, up_limit, down_limit, "
         "tr_close, high, low, close, amount, "
         "turnover_rate, volume_ratio, total_mv, pb, pe_ttm, ps_ttm, listed_days, board, "
-        "is_st, is_suspended, is_limit_up, is_limit_down"
+        "is_st, st_available_from, is_suspended, is_limit_up, is_limit_down"
     )
     query = f"""
         SELECT {columns}

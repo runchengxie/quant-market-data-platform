@@ -6,6 +6,7 @@
 
 - building the candidate universe from information available on the research date;
 - validating the requested date's partitions and snapshot completeness;
+- exposing dated ST availability alongside each daily row for point-in-time consumers;
 - recording source files, content hashes, and data lineage;
 - summarizing minute-data source inventories and input availability.
 
