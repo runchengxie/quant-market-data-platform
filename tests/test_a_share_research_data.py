@@ -24,6 +24,10 @@ def test_load_a_share_research_frames_from_published_paths(tmp_path: Path) -> No
             "close": [10.0, 10.5],
             "turnover_rate": [1.2, 1.3],
             "total_mv": [100.0, 101.0],
+            "is_st": [False, True],
+            "st_available_from": [None, "2024-01-04"],
+            "is_suspended": [False, False],
+            "list_date": ["2010-01-01", "2010-01-01"],
         }
     ).to_parquet(data_dir / "part.parquet", index=False)
     instruments = tmp_path / "instruments.parquet"

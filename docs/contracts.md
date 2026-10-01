@@ -181,6 +181,10 @@ marketdata contract inspect \
 消费者只有在 `st_available_from` 存在且不晚于决策日时，才能将正向 ST 状态用于该决策，
 可用时间未知时必须按不具备资格处理。
 
+公开读取接口 `load_a_share_research_daily` 和 `load_daily_watch20_daily` 会在每日记录中提供
+`is_st` 与 `st_available_from`。通用 A 股研究视图还提供 `is_suspended` 和 `list_date`。
+历史决策必须使用对应日期的 ST 字段，不能用当前 instruments 元数据替代。
+
 `audit-a-share-st-event-timing` 读取带下载回执的 `st` 事件源及重建 ST 历史，审计 `ann_date=trade_date` 的行。输出 `st_event_timing_audit.parquet` 和哈希回执。状态为 `prior_dated_st_event`、`same_day_time_unknown`、`later_event_date_conflict` 或 `no_active_prior_event`。冲突候选仅限同一股票、之后 10 个自然日内生效的 ST 事件，仍需人工核对。该审计只比较日期，不修改已发布的 `is_st`，也不将 `st` 事件视为完整的每日 ST 状态。
 
 `download-a-share-reference` 下载的原始参考数据会在同目录写入同名 `*.receipt.json`。回执包含查询区间、行数、质量状态和文件 SHA-256。原始回执只证明下载文件完整，不证明公告日内的可用时刻。发布流程仍需重新校验来源哈希。

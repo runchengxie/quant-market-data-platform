@@ -56,7 +56,17 @@ def load_a_share_research_daily(
     if not data_dir.is_dir() or not any(data_dir.glob("*.parquet")):
         raise FileNotFoundError(f"Published daily_clean data directory is missing: {data_dir}")
 
-    columns = ["trade_date", "symbol", "close", "turnover_rate", "total_mv"]
+    columns = [
+        "trade_date",
+        "symbol",
+        "close",
+        "turnover_rate",
+        "total_mv",
+        "is_st",
+        "st_available_from",
+        "is_suspended",
+        "list_date",
+    ]
     frame = pd.read_parquet(data_dir, columns=columns)
     frame["trade_date"] = pd.to_datetime(frame["trade_date"], errors="coerce")
     frame["symbol"] = frame["symbol"].astype(str)
