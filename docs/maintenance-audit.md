@@ -199,6 +199,8 @@ uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseli
 
 ST 历史增加保守的交易日可用时间，并将 `st_available_from` 传播到 `daily_clean.v2`。对应校验覆盖缺失公告日期、同日公告、下一交易日、receipt 版本和逐行一致性。共享代码质量基线的 `python_lines` 从 109774 调整到 110058。文件数、复杂度、长函数和长行预算未增加。退出条件是 provider 与消费者完成版本化迁移后，评估将重复的独立校验收敛到既有 ST 质量流水线，并在删减等量冗余代码后收紧行数基线。重建历史仍标记 `revision_safe=false`。
 
+研究视图将每日 `st_available_from` 提供给 A 股和 DailyWatch20 消费者，并在缺少字段时失败，确保使用者不会静默退回旧契约。共享 `python_lines` 基线从 110058 调整至 110081，增加内容为 API 字段投影、契约测试和必要文档。文件数、函数复杂度、长函数和长行预算未增加。消费者完成迁移后，可评估将重复的逐行可用性检查集中到共享数据校验。
+
 ## 下一轮优先级
 
 
