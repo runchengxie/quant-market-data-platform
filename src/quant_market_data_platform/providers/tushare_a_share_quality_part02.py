@@ -35,7 +35,7 @@ from .tushare_a_share_daily_schema import PRICE_COLUMNS
 
 def _load_st_keys(
     manifest: dict[str, Any] | None,
-) -> tuple[set[tuple[str, str]] | None, str | None]:
+) -> tuple[dict[tuple[str, str], str | None] | None, str | None]:
     source = (manifest or {}).get("inputs", {}).get("st_history_file")
     if not source:
         return None, "dated ST history source is missing"
@@ -47,6 +47,8 @@ def _load_st_keys(
         if not path.is_file() or not receipt_path.is_file():
             raise ValueError("dated ST history source or receipt is missing")
         receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        if receipt.get("schema_version") != "market-data-platform.reconstructed-st-history.v2":
+            raise ValueError("dated ST history receipt does not include the availability contract")
         if (
             receipt.get("quality_status") != "complete"
             or receipt.get("source_quality_status", "complete") != "complete"
@@ -61,12 +63,24 @@ def _load_st_keys(
             query.get("end_date", "00000000")
         ) > receipt.get("end_date", "00000000"):
             raise ValueError("dated ST history receipt does not cover daily_clean dates")
-        history = pd.read_parquet(path, columns=["ts_code", "trade_date"])
+        if "available_from" not in pq.read_schema(path).names:
+            raise ValueError("dated ST history is missing available_from")
+        history = pd.read_parquet(path, columns=["ts_code", "trade_date", "available_from"])
         if history.duplicated(["ts_code", "trade_date"]).any():
             raise ValueError("dated ST history has duplicate symbol/date keys")
+        availability = history["available_from"].astype("string").str.replace("-", "", regex=False)
+        valid = availability.isna() | availability.str.fullmatch(r"\d{8}", na=False)
+        if not bool(valid.all()):
+            raise ValueError("dated ST history contains malformed availability dates")
+        history["available_from"] = availability
     except (OSError, ValueError, KeyError, pd.errors.ParserError) as error:
         return None, f"dated ST history could not be read: {error}"
-    return set(zip(history.ts_code.astype(str), history.trade_date.astype(str), strict=True)), None
+    return {
+        (str(symbol), str(day)): None if pd.isna(available_from) else str(available_from)
+        for symbol, day, available_from in history[
+            ["ts_code", "trade_date", "available_from"]
+        ].itertuples(index=False, name=None)
+    }, None
 
 
 def _build_checks(request: _BuildChecksRequest) -> list[dict[str, Any]]:
@@ -190,6 +204,15 @@ def _build_checks(request: _BuildChecksRequest) -> list[dict[str, Any]]:
                 severity="error",
                 message="daily_clean is_st disagrees with its dated ST source.",
                 affected=counts.get("st_flag_consistency", 0),
+                samples=accumulator.samples,
+            )
+        )
+        checks.append(
+            _check_row(
+                check="st_availability_consistency",
+                severity="error",
+                message="daily_clean ST availability disagrees with its dated ST source.",
+                affected=counts.get("st_availability_consistency", 0),
                 samples=accumulator.samples,
             )
         )
@@ -322,7 +345,7 @@ def _scan_validation_frames(
     scanner: ParquetBatchScanner,
     accumulator: _Accumulator,
     readable_files: list[Path],
-    st_keys: set[tuple[str, str]] | None,
+    st_keys: dict[tuple[str, str], str | None] | None,
 ) -> None:
     for path, frame in scanner.iter_frames(readable_files):
         _record_common_checks(accumulator, frame, path=path)
@@ -342,6 +365,25 @@ def _scan_validation_frames(
                     _safe_bool(frame, "is_st").ne(expected),
                     frame,
                     sample_columns=("symbol", "trade_date", "is_st"),
+                )
+                expected_availability = pd.Series(
+                    [
+                        st_keys.get((str(symbol), str(day)))
+                        for symbol, day in zip(
+                            frame.symbol.astype(str), frame.trade_date.astype(str), strict=True
+                        )
+                    ],
+                    index=frame.index,
+                    dtype="string",
+                )
+                actual_availability = (
+                    frame["st_available_from"].astype("string").str.replace("-", "", regex=False)
+                )
+                accumulator.increment(
+                    "st_availability_consistency",
+                    actual_availability.fillna("").ne(expected_availability.fillna("")),
+                    frame,
+                    sample_columns=("symbol", "trade_date", "is_st", "st_available_from"),
                 )
             _record_research_checks(
                 accumulator,
@@ -447,6 +489,9 @@ def _validation_report(request: _ValidationReportRequest) -> dict[str, Any]:
                     else "unknown_no_dated_history"
                 )
             ),
+            "st_availability_contract": (request.manifest or {})
+            .get("contracts", {})
+            .get("st_availability", "unknown"),
             "daily_basic_provenance": "daily_valuation_overlay_not_pit_fundamentals",
         },
         "scanner": request.scanner.telemetry.to_dict(),

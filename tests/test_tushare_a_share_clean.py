@@ -14,7 +14,10 @@ from quant_market_data_platform.providers.tushare_a_share_clean import (
 from quant_market_data_platform.standardize.tushare.a_share_daily import (
     build_a_share_daily_clean as standardized_build_a_share_daily_clean,
 )
-from quant_market_data_platform.standardize.tushare.a_share_daily_part01 import _derive_st_flag
+from quant_market_data_platform.standardize.tushare.a_share_daily_part01 import (
+    _derive_st_available_from,
+    _derive_st_flag,
+)
 
 
 def test_legacy_daily_clean_build_is_a_compatibility_facade() -> None:
@@ -31,6 +34,27 @@ def test_st_flag_uses_trade_date_history_instead_of_current_name() -> None:
     history = pd.DataFrame({"ts_code": ["000001.SZ"], "trade_date": ["20240103"]})
     assert _derive_st_flag(daily, history).tolist() == [False, True]
     assert _derive_st_flag(daily, None).isna().all()
+
+
+def test_st_availability_is_propagated_only_for_matching_positive_rows() -> None:
+    daily = pd.DataFrame(
+        {
+            "symbol": ["000001.SZ", "000001.SZ", "000002.SZ"],
+            "trade_date": ["20240102", "20240103", "20240103"],
+        }
+    )
+    history = pd.DataFrame(
+        {
+            "ts_code": ["000001.SZ"],
+            "trade_date": ["20240103"],
+            "available_from": ["20240104"],
+        }
+    )
+
+    result = _derive_st_available_from(daily, history)
+    assert result.isna().tolist() == [True, False, True]
+    assert result.iloc[1] == "20240104"
+    assert _derive_st_available_from(daily, None).isna().all()
 
 
 def test_daily_clean_uses_validated_st_history_across_dates(tmp_path) -> None:
@@ -72,6 +96,7 @@ def test_daily_clean_uses_validated_st_history_across_dates(tmp_path) -> None:
             {
                 "ts_code": "000001.SZ",
                 "trade_date": "20240103",
+                "available_from": "20240104",
             }
         ]
     ).to_parquet(history, index=False)
@@ -79,6 +104,7 @@ def test_daily_clean_uses_validated_st_history_across_dates(tmp_path) -> None:
         json.dumps(
             {
                 "quality_status": "complete",
+                "schema_version": "market-data-platform.reconstructed-st-history.v2",
                 "start_date": "20240102",
                 "end_date": "20240103",
                 "history_sha256": hashlib.sha256(history.read_bytes()).hexdigest(),
@@ -97,7 +123,13 @@ def test_daily_clean_uses_validated_st_history_across_dates(tmp_path) -> None:
     )
     rows = pd.read_parquet(out / "data" / "000001.SZ.parquet")
     assert rows["is_st"].tolist() == [False, True]
+    assert rows["st_available_from"].isna().tolist() == [True, False]
+    assert rows.loc[1, "st_available_from"] == "20240104"
     assert manifest["inputs"]["st_history_file"] == str(history)
+    assert manifest["inputs"]["st_history_receipt_schema"] == (
+        "market-data-platform.reconstructed-st-history.v2"
+    )
+    assert "st_available_from" in manifest["columns"]
 
 
 def _write_part(frame, root, trade_date):
@@ -119,6 +151,7 @@ def _baseline_row(symbol="600519.SH", trade_date="20260522", **overrides):
         "amount": 100000.0,
         "tr_close": 100.0,
         "is_st": False,
+        "st_available_from": None,
         "is_suspended": False,
         "is_limit_up": False,
         "is_limit_down": False,
@@ -140,7 +173,7 @@ def _write_clean_manifest(  # noqa: PLR0913
     (root / "manifest.yml").write_text(
         yaml.safe_dump(
             {
-                "schema_version": "tushare.a_share.daily_clean.v1",
+                "schema_version": "tushare.a_share.daily_clean.v2",
                 "dataset": "daily_clean",
                 "query": {"start_date": start_date, "end_date": end_date},
                 "inputs": {"st_history_file": st_history_file},
@@ -158,13 +191,16 @@ def _write_st_history(tmp_path, rows):
 
     path = tmp_path / "st_history_reconstructed.parquet"
     pd = __import__("pandas")
-    pd.DataFrame(rows, columns=pd.Index(["ts_code", "trade_date"])).to_parquet(path, index=False)
+    pd.DataFrame(rows, columns=pd.Index(["ts_code", "trade_date", "available_from"])).to_parquet(
+        path, index=False
+    )
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     path.with_name("st_history_reconstructed.receipt.json").write_text(
         json.dumps(
             {
                 "quality_status": "complete",
                 "source_quality_status": "complete",
+                "schema_version": "market-data-platform.reconstructed-st-history.v2",
                 "history_sha256": digest,
                 "start_date": "20260522",
                 "end_date": "20260522",
@@ -267,7 +303,7 @@ def test_build_a_share_daily_clean_merges_adjustment_valuation_and_limit_status(
     assert bool(output.loc[0, "is_limit_up"]) is True
     assert output.loc[0, "board"] == "MAIN"
     manifest_payload = yaml.safe_load((out_dir / "manifest.yml").read_text(encoding="utf-8"))
-    assert manifest_payload["schema_version"] == "tushare.a_share.daily_clean.v1"
+    assert manifest_payload["schema_version"] == "tushare.a_share.daily_clean.v2"
 
 
 def test_build_a_share_daily_clean_repairs_missing_pre_close_and_list_date(tmp_path):
@@ -698,3 +734,50 @@ def test_research_validation_rejects_st_flag_disagreeing_with_dated_history(tmp_
     )
     assert invalid["status"] == "failed"
     assert invalid["lineage"]["st_provenance"] == "invalid_dated_history"
+
+
+def test_research_validation_rejects_st_availability_disagreeing_with_source(tmp_path):
+    pd = __import__("pandas")
+    root = tmp_path / "daily_clean"
+    data_dir = root / "data"
+    data_dir.mkdir(parents=True)
+    daily = data_dir / "600519.SH.parquet"
+    pd.DataFrame(
+        [
+            _baseline_row(
+                is_st=True,
+                st_available_from="20260523",
+                pe_ttm=25.0,
+                pb=9.0,
+                total_mv=2000000.0,
+                turnover_rate=1.2,
+                up_limit=110.0,
+                down_limit=90.0,
+                board="MAIN",
+                listed_days=9000,
+            )
+        ]
+    ).to_parquet(daily, index=False)
+    trade_cal = tmp_path / "trade_cal.parquet"
+    pd.DataFrame({"cal_date": ["20260522"], "is_open": [1]}).to_parquet(trade_cal, index=False)
+    st_history = _write_st_history(
+        tmp_path,
+        [
+            {
+                "ts_code": "600519.SH",
+                "trade_date": "20260522",
+                "available_from": "20260524",
+            }
+        ],
+    )
+    _write_clean_manifest(root, rows=1, symbols=1, files=1, st_history_file=str(st_history))
+
+    summary = validate_a_share_daily_clean(
+        daily_clean_dir=root,
+        profile="research",
+        trade_cal_file=trade_cal,
+    )
+
+    checks = {row["check"]: row for row in summary["checks"]}
+    assert summary["status"] == "failed"
+    assert checks["st_availability_consistency"]["affected_rows"] == 1

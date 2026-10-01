@@ -170,6 +170,17 @@ marketdata contract inspect \
 构建清单记录 `st_history_file` 来源。研究级质量检查核验来源回执、文件哈希和日期覆盖，
 并逐行比较 `is_st` 与已发布的定日 ST 历史。历史来源的 `revision_safe=false` 仍表示它不能证明原始公告时刻可用。
 
+重建 ST 历史分别记录实际生效日期和信息可用日期。若 `ann_date` 早于生效日期，`available_from`
+取生效日当天或之后的首个交易日。若 `ann_date` 等于或晚于生效日，则取公告日之后的首个交易日。
+`ann_date` 缺失或格式无效，或提供的交易日历中没有后续交易日时，可用日期保持未知。
+回执 schema `market-data-platform.reconstructed-st-history.v2` 标识这一契约。该保守日期规则
+无法证明具体的日内公告时刻，因此 `revision_safe` 仍为 false。
+
+`daily_clean` schema `tushare.a_share.daily_clean.v2` 在 `is_st` 旁提供对应的
+`st_available_from`。股票没有生效中的 ST 区间，或来源无法确定可用时间时，该字段为空。
+消费者只有在 `st_available_from` 存在且不晚于决策日时，才能将正向 ST 状态用于该决策，
+可用时间未知时必须按不具备资格处理。
+
 `audit-a-share-st-event-timing` 读取带下载回执的 `st` 事件源及重建 ST 历史，审计 `ann_date=trade_date` 的行。输出 `st_event_timing_audit.parquet` 和哈希回执。状态为 `prior_dated_st_event`、`same_day_time_unknown`、`later_event_date_conflict` 或 `no_active_prior_event`。冲突候选仅限同一股票、之后 10 个自然日内生效的 ST 事件，仍需人工核对。该审计只比较日期，不修改已发布的 `is_st`，也不将 `st` 事件视为完整的每日 ST 状态。
 
 `download-a-share-reference` 下载的原始参考数据会在同目录写入同名 `*.receipt.json`。回执包含查询区间、行数、质量状态和文件 SHA-256。原始回执只证明下载文件完整，不证明公告日内的可用时刻。发布流程仍需重新校验来源哈希。

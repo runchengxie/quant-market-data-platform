@@ -26,7 +26,7 @@ from quant_market_data_platform.providers.tushare_constraint_publish import (
     publish_constraint_assets,
 )
 
-ST_RECEIPT_SCHEMA = "market-data-platform.reconstructed-st-history.v1"
+ST_RECEIPT_SCHEMA = "market-data-platform.reconstructed-st-history.v2"
 ST_NAME_PATTERN = re.compile(r"^\s*(?:S\*?ST|\*?ST|PT)", re.IGNORECASE)
 
 
@@ -61,8 +61,9 @@ def _calendar_frame(options: ReconstructedSTOptions) -> Any:
     if "is_open" in frame:
         frame = frame[frame["is_open"].astype(str).isin(("1", "True", "true"))]
     dates = frame[column].astype(str).str.replace("-", "", regex=False).str.slice(0, 8)
-    dates = dates[(dates >= options.start_date) & (dates <= options.end_date)]
-    if dates.empty:
+    dates = dates[dates >= options.start_date]
+    requested = dates[dates <= options.end_date]
+    if requested.empty:
         raise ValueError("trade calendar is empty in the requested ST window")
     return pd.DataFrame({"trade_date": sorted(dates.unique())})
 
@@ -146,9 +147,26 @@ def _st_intervals(options: ReconstructedSTOptions) -> Any:
     return intervals
 
 
+def _availability_date(ann_date: Any, interval_start: str, sessions: list[str]) -> str | None:
+    pd = pandas()
+    if ann_date is None or pd.isna(ann_date):
+        return None
+    announced = str(ann_date)
+    if len(announced) != 8 or not announced.isdigit():
+        return None
+    try:
+        _validate_date(announced, "ann_date")
+    except ValueError:
+        return None
+    if announced < interval_start:
+        return next((session for session in sessions if session >= interval_start), None)
+    return next((session for session in sessions if session > announced), None)
+
+
 def _expand_st_history(intervals: Any, calendar: Any) -> Any:
     pd = pandas()
     frames: list[Any] = []
+    sessions = sorted(calendar["trade_date"].astype(str).unique())
     for row in intervals.itertuples(index=False):
         dates = calendar.loc[
             calendar["trade_date"].between(row.interval_start, row.interval_end),
@@ -165,13 +183,28 @@ def _expand_st_history(intervals: Any, calendar: Any) -> Any:
                     "interval_start": row.interval_start,
                     "interval_end": row.interval_end,
                     "ann_date": getattr(row, "ann_date", None),
+                    "available_from": _availability_date(
+                        getattr(row, "ann_date", None), row.interval_start, sessions
+                    ),
                     "source": row.source,
                     "pit_class": row.pit_class,
                 }
             )
         )
     if not frames:
-        return pd.DataFrame(columns=["trade_date", "ts_code"])
+        return pd.DataFrame(
+            columns=[
+                "trade_date",
+                "ts_code",
+                "name",
+                "interval_start",
+                "interval_end",
+                "ann_date",
+                "available_from",
+                "source",
+                "pit_class",
+            ]
+        )
     history = pd.concat(frames, ignore_index=True, sort=False)
     return (
         history.sort_values(["trade_date", "ts_code", "interval_start"])

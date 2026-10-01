@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gc
+import json
 import shutil
 from pathlib import Path
 from typing import Any, cast
@@ -33,6 +34,7 @@ from quant_market_data_platform.standardize.tushare.a_share_daily_part01 import 
     _DailyCleanStats,
     _DailyCleanTradeDateFrameInputs,
     _derive_is_suspended,
+    _derive_st_available_from,
     _derive_st_flag,
     _effective_list_dates,
     _fill_missing_pre_close,
@@ -195,8 +197,18 @@ def _build_daily_clean_manifest(request: _DailyCleanManifestRequest) -> dict[str
     memory_policy = request.memory_policy
     rows = stats.rows
     symbols = stats.symbol_count
+    st_receipt_schema = None
+    if inputs.st_history_file is not None:
+        st_path = Path(inputs.st_history_file).expanduser().resolve()
+        receipt_path = st_path.with_name("st_history_reconstructed.receipt.json")
+        if not receipt_path.is_file():
+            receipt_path = st_path.with_suffix(".receipt.json")
+        if receipt_path.is_file():
+            st_receipt_schema = json.loads(receipt_path.read_text(encoding="utf-8")).get(
+                "schema_version"
+            )
     return {
-        "schema_version": "tushare.a_share.daily_clean.v1",
+        "schema_version": "tushare.a_share.daily_clean.v2",
         "dataset": "daily_clean",
         "market": "a_share",
         "provider": "tushare",
@@ -215,6 +227,7 @@ def _build_daily_clean_manifest(request: _DailyCleanManifestRequest) -> dict[str
             "suspend_dir": _resolved_optional_path(inputs.suspend_dir),
             "instruments_file": _resolved_optional_path(inputs.instruments_file),
             "st_history_file": _resolved_optional_path(inputs.st_history_file),
+            "st_history_receipt_schema": st_receipt_schema,
         },
         "build": {
             "mode": "streaming_trade_date_to_symbol",
@@ -237,6 +250,7 @@ def _build_daily_clean_manifest(request: _DailyCleanManifestRequest) -> dict[str
             "limit_up_rows": stats.limit_up_rows,
             "limit_down_rows": stats.limit_down_rows,
         },
+        "contracts": {"st_availability": "daily_clean.st_available_from.v1"},
         "columns": sorted(stats.columns or set()),
     }
 
@@ -277,6 +291,7 @@ def _add_instrument_columns_frame(
 ) -> pd.DataFrame:
     out = frame
     out["is_st"] = _derive_st_flag(out, st_history)
+    out["st_available_from"] = _derive_st_available_from(out, st_history)
     if not instruments.empty and "list_date" in instruments.columns:
         listed_frame = cast(pd.DataFrame, instruments[["symbol", "list_date"]])
         listed = listed_frame.sort_values("symbol").groupby("symbol", as_index=False).tail(1)

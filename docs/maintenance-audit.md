@@ -195,6 +195,10 @@ uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseli
 
 双语页面测试增加 1 个 Python 文件和 148 行，检查 README 与 MkDocs 页面使用英文 canonical、中文 companion 链接互通，以及导航目标保持英文。共享基线的 `python_files` 从 454 调整到 455，`python_lines` 从 109626 调整到 109774。没有提高复杂度或长函数预算。只要页面仍按文件配对维护，该测试就是语言路由契约。未来若迁移到统一 i18n 路由，应将断言并入新的契约测试并重新测量基线。
 
+## 2026-10-01 ST 可用时间契约基线
+
+ST 历史增加保守的交易日可用时间，并将 `st_available_from` 传播到 `daily_clean.v2`。对应校验覆盖缺失公告日期、同日公告、下一交易日、receipt 版本和逐行一致性。共享代码质量基线的 `python_lines` 从 109774 调整到 110058。文件数、复杂度、长函数和长行预算未增加。退出条件是 provider 与消费者完成版本化迁移后，评估将重复的独立校验收敛到既有 ST 质量流水线，并在删减等量冗余代码后收紧行数基线。重建历史仍标记 `revision_safe=false`。
+
 ## 下一轮优先级
 
 

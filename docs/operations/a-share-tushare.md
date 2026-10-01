@@ -442,8 +442,8 @@ OHLC、成交量和成交额。`research` profile 在此基础上增加估值、
 板块分类和 ST 来源校验。研究级检查还逐行核对 `is_st` 与定日 ST 历史，来源回执、哈希或日期覆盖不合格时失败。`--st-history-file` 指向由 `build-a-share-st-history` 生成的
 `st_history_reconstructed.parquet` 或已发布的 latest 资产，配套 receipt 必须为 `complete`
 且覆盖全部构建日期。
-`is_st` 按交易日匹配这份历史表。没有历史表时输出未知值，研究级校验拒绝该资产。
-历史表按名称生效日期重建，仍需区分公告实际可用时间。
+`is_st` 按交易日匹配这份历史表。daily_clean v2 同时输出 `st_available_from`，并由研究级检查逐行核对两项值与 ST 历史来源。没有历史表时，`is_st` 和可用时间都为未知值，研究级校验拒绝该资产。
+ST 历史使用 v2 receipt。公告时刻未知时，同日或更晚公告的 `st_available_from` 取公告日后的首个交易日，公告日期缺失时保持未知。消费者只能在可用日期不晚于决策日时使用正向 ST 状态。历史表按名称生效日期重建，日期规则不能证明具体的日内公告时间，`revision_safe=false` 仍然有效。
 `daily_basic` 也只是逐日估值 overlay，不能描述成 PIT fundamentals。
 
 ```bash

@@ -42,6 +42,7 @@ BASELINE_REQUIRED_COLUMNS = {
     "amount",
     "tr_close",
     "is_st",
+    "st_available_from",
     "is_suspended",
     "is_limit_up",
     "is_limit_down",
