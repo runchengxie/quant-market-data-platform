@@ -219,6 +219,29 @@ def _derive_st_flag(daily: pd.DataFrame, st_history: pd.DataFrame | None) -> pd.
     )
 
 
+def _derive_st_available_from(daily: pd.DataFrame, st_history: pd.DataFrame | None) -> pd.Series:
+    result = pd.Series(pd.NA, index=daily.index, dtype="string")
+    if daily.empty or st_history is None or "available_from" not in st_history:
+        return result
+    availability = {
+        (str(symbol), str(date)): (
+            pd.NA if pd.isna(available_from) else _normalize_trade_date(available_from)
+        )
+        for symbol, date, available_from in zip(
+            st_history["ts_code"],
+            st_history["trade_date"],
+            st_history["available_from"],
+            strict=True,
+        )
+    }
+    keys = zip(daily["symbol"], daily["trade_date"], strict=False)
+    return pd.Series(
+        [availability.get((str(symbol), str(date)), pd.NA) for symbol, date in keys],
+        index=daily.index,
+        dtype="string",
+    )
+
+
 def _load_st_history(
     st_history_file: str | Path | None, trade_dates: list[str]
 ) -> dict[str, pd.DataFrame] | None:
@@ -243,9 +266,17 @@ def _load_st_history(
         or trade_dates[-1] > receipt.get("end_date", "00000000")
     ):
         raise ValueError("ST history receipt does not cover the daily_clean date range")
-    history = pd.read_parquet(path, columns=["ts_code", "trade_date"])
+    columns = ["ts_code", "trade_date"]
+    if receipt.get("schema_version") == "market-data-platform.reconstructed-st-history.v2":
+        columns.append("available_from")
+    history = pd.read_parquet(path, columns=columns)
+    if "available_from" not in history:
+        history["available_from"] = pd.NA
     history["ts_code"] = history["ts_code"].map(normalize_ts_code)
     history["trade_date"] = history["trade_date"].map(_normalize_trade_date)
+    history["available_from"] = history["available_from"].map(
+        lambda value: pd.NA if pd.isna(value) else _normalize_trade_date(value)
+    )
     if history.duplicated(["ts_code", "trade_date"]).any():
         raise ValueError("ST history has duplicate symbol/date rows")
     return {str(date): group for date, group in history.groupby("trade_date", sort=False)}
