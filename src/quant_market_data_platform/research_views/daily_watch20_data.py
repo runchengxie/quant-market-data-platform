@@ -12,6 +12,10 @@ from typing import Any, Literal, cast
 import numpy as np
 import pandas as pd
 
+from quant_market_data_platform.research_views._daily_clean_contract import (
+    require_daily_clean_st_availability,
+)
+
 MinuteDataset = Literal["legacy", "tushare"]
 
 
@@ -200,6 +204,7 @@ def load_daily_watch20_daily(
     memory_limit: str = "12GB",
     threads: int = 3,
 ) -> pd.DataFrame:
+    require_daily_clean_st_availability(assets.daily_clean)
     data_glob = assets.daily_clean / "data" / "*.parquet"
     if not list(data_glob.parent.glob("*.parquet")):
         raise FileNotFoundError(f"Daily clean parquet files not found: {data_glob}")
