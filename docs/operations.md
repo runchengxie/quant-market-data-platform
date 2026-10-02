@@ -116,6 +116,10 @@ marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG"
 
 The raw download and archive commands accept repeated `--report-type` options (for example `1`, `4`, `5`). Omitting this option preserves the provider default. Normalized standard statements continue to use type `1`; other report types are retained for version audits.
 
+For multi-vintage research inputs, use `read_statement_observations(...,
+dataset="income", columns=[...])` to project required fields. Include identity,
+disclosure, observation, availability and source-hash fields when downstream code
+selects revisions. The reader verifies all partition checksums before applying filters.
 ### 同花顺成分续传
 
 `marketdata tushare mirror-a-share-ths-member --out-dir <output> --skip-existing` 显式复用已验证的概念缓存分区，补取剩余概念。默认拒绝非空输出目录。续传必须使用相同字段和数据源配置。概念成分仅代表获取时的快照。

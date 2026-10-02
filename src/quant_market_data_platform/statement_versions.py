@@ -108,10 +108,22 @@ def build_statement_version_ledger(
     return summary
 
 
-def read_statement_observations(*, asset_dir: str, as_of: str, report_type: str = "1") -> Any:
+def read_statement_observations(
+    *,
+    asset_dir: str,
+    as_of: str,
+    report_type: str = "1",
+    dataset: str | None = None,
+    columns: list[str] | None = None,
+) -> Any:
     """Read verified observations visible on a date; retain all versions for caller audit."""
     import pandas as pd
+    import pyarrow.parquet as pq
 
+    if dataset is not None and dataset not in _DATASETS.values():
+        raise ValueError("Unsupported statement dataset")
+    if columns is not None and (not columns or len(columns) != len(set(columns))):
+        raise ValueError("Projected columns must be non-empty and unique")
     cutoff = datetime.strptime(as_of, "%Y%m%d").strftime("%Y%m%d")
     root = Path(asset_dir).expanduser()
     manifest = json.loads((root / "manifest.json").read_text())
@@ -125,12 +137,29 @@ def read_statement_observations(*, asset_dir: str, as_of: str, report_type: str 
         path = root / part["path"]
         if path.resolve().parent != root.resolve() or _digest(path) != part["sha256"]:
             raise ValueError("Ledger partition path or checksum mismatch")
-        frame = pd.read_parquet(path)
+        if columns is None:
+            frame = pd.read_parquet(path)
+        else:
+            schema = pq.ParquetFile(path)
+            if schema.metadata.num_rows == 0:
+                continue
+            requested = list(dict.fromkeys([*columns, "dataset", "available_from", "report_type"]))
+            frame = pd.read_parquet(
+                path, columns=[c for c in requested if c in schema.schema_arrow.names]
+            )
         if frame.empty:
             continue
         mask = (frame["available_from"] <= cutoff) & (
             frame["report_type"].astype(str) == report_type
         )
+        if dataset is not None:
+            mask &= frame["dataset"].eq(dataset)
         if mask.any():
-            frames.append(frame.loc[mask])
-    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+            if columns is not None and not set(columns).issubset(frame):
+                raise ValueError("Requested columns are absent from visible statement dataset")
+            frames.append(frame.loc[mask, columns] if columns is not None else frame.loc[mask])
+    return (
+        pd.concat(frames, ignore_index=True)
+        if frames
+        else pd.DataFrame(columns=pd.Index(columns or []))
+    )

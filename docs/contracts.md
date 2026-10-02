@@ -292,3 +292,14 @@ immutable lineage contract.
 The optional `statement-observations.v1` ledger preserves raw statement fields, `dataset`, `observed_at`, `source_sha256`, `source_manifest_sha256`, and `available_from`. Visibility is the later of the provider disclosure date and actual retrieval date in Asia/Shanghai, plus at least one calendar day. This is a conservative observation boundary, not an exchange execution calendar. Consumers must enforce it before selecting observations and must explicitly choose report semantics; type `4` and `5` are not interchangeable with standard type `1` statements. Historical revision completeness remains false. The ledger does not publish a current alias or authorize frozen holdout evaluation.
 
 The shared quality baseline adds two small Python files and 277 lines for the statement ledger and its contract tests. Structural debt thresholds (large functions, large files, complexity exclusions) are unchanged. This growth is retained while the observation contract is supported; remove the module and tests together if that contract is retired.
+
+Statement observation reads accept an optional `dataset` (`income`, `balancesheet`, or
+`cashflow`) and non-empty, unique `columns` projection. Checksums remain mandatory
+for every partition, including excluded datasets. Visibility and report-type fields
+are loaded internally for filtering; projected results contain only requested fields.
+This limits retained columns when consuming multiple observed vintages. It does not
+select a financial revision or establish historical revision completeness.
+
+The maintainability baseline accounts for 100 net Python lines added by statement
+projection and its schema, visibility and integrity tests. Other debt budgets are
+unchanged; future projection growth must pass the existing ratchet or replace code.
