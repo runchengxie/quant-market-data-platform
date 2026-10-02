@@ -11,7 +11,14 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
-_DATASETS = {"income_vip": "income", "balancesheet_vip": "balancesheet", "cashflow_vip": "cashflow"}
+_DATASETS = {
+    "income": "income",
+    "income_vip": "income",
+    "balancesheet": "balancesheet",
+    "balancesheet_vip": "balancesheet",
+    "cashflow": "cashflow",
+    "cashflow_vip": "cashflow",
+}
 
 
 def _digest(path: Path) -> str:
