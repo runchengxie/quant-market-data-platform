@@ -200,3 +200,12 @@ be serialized by the caller; unrelated mutable latest directories are not an
 immutable lineage contract.
 
 For TuShare trade-date mirrors, `totals.rows`, `totals.symbols`, and `totals.files` describe all stored Parquet partitions under the asset data directory, including retained partitions outside the current request. `run_totals` records rows, symbols, files, and date counters for this invocation; skipped partitions contribute no newly written rows. Query dates describe the request and are not inferred from this inventory. Physical inventory does not certify source completeness: per-date receipts remain authoritative, including incomplete receipts beside retained last-known-good files.
+
+### Institutional trading amount units
+
+TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) reports `buy`,
+`sell`, and `net_buy` in yuan. `top_inst_events` converts these amounts to
+ten-thousand yuan before aggregation and rolling calculations, matching
+`daily.amount / 10` from its thousand-yuan source unit. Field names remain
+stable; assets built before this correction must be rebuilt before using
+their amount features or turnover ratios. Counts and provider rates are unchanged.

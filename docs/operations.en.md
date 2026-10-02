@@ -90,3 +90,17 @@ selects revisions. The reader verifies all partition checksums before applying f
 Reference publication writes a sibling `.manifest.yml` bound to the owner receipt and payload hash, with counts, dates and source semantics. Partial constraint provenance remains `partial`. Refresh the receipt and manifest whenever the reference payload changes.
 
 Reference `version_date` records the version label date. When a source `end_date` is present, manifest freshness and query end use that actual source coverage date.
+
+### Institutional trading amount units
+
+TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) reports `buy`,
+`sell`, and `net_buy` in yuan. `top_inst_events` converts these amounts to
+ten-thousand yuan before aggregation and rolling calculations, matching
+`daily.amount / 10` from its thousand-yuan source unit. Field names remain
+stable; assets built before this correction must be rebuilt before using
+their amount features or turnover ratios. Counts and provider rates are unchanged.
+
+The quality ratchet budget increases by one test file and 58 Python lines for
+this conversion and its independent arithmetic regression. Existing complexity
+thresholds remain unchanged. Remove this budget only when replacing the test
+with equivalent coverage without adding source or test lines.

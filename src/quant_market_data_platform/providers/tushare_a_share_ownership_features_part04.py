@@ -90,7 +90,7 @@ def build_a_share_top_inst_events(  # noqa: PLR0913
                 "is supplied."
             ),
             "amount_unit": (
-                "top_inst buy/sell/net_buy are treated as ten-thousand CNY; "
+                "top_inst buy/sell/net_buy in CNY are divided by 10000 to ten-thousand CNY; "
                 "daily.amount is divided by 10 from thousand CNY to ten-thousand CNY."
             ),
         },
