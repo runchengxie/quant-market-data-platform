@@ -93,3 +93,8 @@ The root README, `AGENTS.md`, and user-facing `docs/` are expected to reflect cu
 ## Refactoring priorities
 
 The recorded next steps are to split the daily executor and checkpoint/receipt finalizer in `tushare_a_share_mins.py::mirror_minute_bars`; break the monolithic minute-cutover test fixture into raw/full-day/Beijing receipt builders; continue reducing long minute-materialization and provider functions; further separate provider SDK adapters from frame-processing pipelines; and continue breaking down pandas-heavy `data_warehouse_*` modules while evaluating stricter per-module typing. RQData and the Hong Kong recovery control plane were retired on 2026-07-26 and do not need restoration drills.
+
+
+## QuantZone configuration size baseline — 2026-10-02
+
+The shared size baseline now records 472 Python files and 112,768 lines after adding the private JSON loader/launcher, optional QuantZone planner/adapter/artifact modules and their tests. This update accounts for the intentional feature addition. Complexity, long-function, large-file and lint-exclusion thresholds remain unchanged. There is no extra size allowance beyond the measured snapshot. Future growth requires an explained feature change or refactoring. Remove the corresponding size allowance if these modules are retired.

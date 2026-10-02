@@ -81,7 +81,7 @@ uv sync --extra dev
 ```
 
 真实凭证优先放在用户目录下的私有配置文件
-`~/.config/richard/projects/quant/quant-market-data-platform/config.env`，并限制文件权限。CI 和部署环境按其凭证管理机制注入变量。
+`DATA_PLATFORM_CONFIG` 指定的仓库外私有 JSON（示例见 `config/config.example.json`），并限制文件权限。CI 和部署环境按其凭证管理机制注入变量。
 `.env.local`、`.env` 仍为本地兼容入口，但不作为新环境的默认配置方式。文档只记录变量名和配置方式。
 
 TuShare 凭证与自定义 API 地址的规则见 `docs/operations/credentials.md`。不要读取、打印或提交 token。

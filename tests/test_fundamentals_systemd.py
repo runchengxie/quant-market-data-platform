@@ -19,3 +19,9 @@ def test_fundamentals_archive_runs_daily_without_publishing() -> None:
     assert "publish" not in service.lower()
     assert "OnCalendar=*-*-* 02:30:00 Asia/Shanghai" in timer
     assert "Persistent=true" in timer
+
+
+def test_service_uses_owner_json_launcher() -> None:
+    service = _unit("tushare-fundamentals-vintage-archive.service")
+    assert "config run --config @DATA_PLATFORM_CONFIG@ --" in service
+    assert "EnvironmentFile=" not in service

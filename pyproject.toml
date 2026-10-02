@@ -15,6 +15,11 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+quantzone = [
+  "quantzone==0.10.0; python_version < '3.14'",
+  "pandas>=2.2",
+  "pyarrow>=25.0.0",
+]
 dev = [
   "duckdb>=1.5.5",
   "pandas>=2.2",
