@@ -48,3 +48,5 @@ marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG" --resume 
 两个 QuantZone 命令都支持 `--job /private/path/jobs/quantzone-pilot.json`，用于覆盖默认任务路径。任务不能覆盖连接设置。普通配置检查和 TuShare 启动不读取任务文件。
 
 每次下载在数据目录的独立运行文件夹中写入 `job.json`，记录解析后的非敏感执行参数。`receipt.json` 记录它的 SHA-256。恢复下载前校验快照、哈希和当前任务是否一致。凭证及共享注册表内容不会进入运行归档。旧版无快照的运行保留恢复兼容。
+
+两个 QuantZone 命令均支持 `--no-proxy`，用于直连供应商。该选项只在创建 SDK 客户端时临时移除 HTTP/SOCKS 代理环境变量，创建失败也会恢复原值。其他命令继续使用原有代理设置。

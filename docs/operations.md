@@ -149,3 +149,5 @@ TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
 `--skip-existing` 要求存在与数据哈希、准确查询和各页行数一致的 `pagination.json` 凭证。没有凭证的旧数据应保留，并在新目录重新获取。分页完成只证明本次观察到的获取范围，不证明历史观察版本安全。[官方调研接口文档](https://tushare.pro/document/2?doc_id=275) 说明单次最多 400 行，可以循环或分页获取。重复页会触发对忽略分页的代理的拒绝，不额外声称数据源在请求期间保持稳定。
 
 财报观测账本构建器也接受非 VIP 单证券查询的完成清单。恢复旧缓存时保留原始清单和日期声明，校验归档内容，并为恢复输入记录真实恢复时间与哈希。原始分区缺少内容校验凭证时，不要把恢复时计算的哈希与历史日期拼接成已验证旧版本。
+
+Use `--no-proxy` on either QuantZone command to connect directly when an inherited HTTP or SOCKS proxy is unsuitable. The option suppresses proxy environment variables only while constructing the SDK client and restores their original values even if construction fails. Other commands keep their inherited proxy policy.
