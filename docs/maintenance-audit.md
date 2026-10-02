@@ -235,3 +235,9 @@ Python lines increase from 113231 to 113260 to distinguish immutable version lab
 ### Resumed trade-date mirror inventory (2026-10-02)
 
 Python lines increase from 113260 to 113368 for bounded physical partition inventory and regressions covering six mirror datasets, retained files, empty refreshes and unreadable inventory. The change separates asset totals from per-run counters without changing source completeness or request dates. All other budgets remain unchanged. Reduce this exact allowance if inventory or fixtures are consolidated while preserving resume and incomplete-source coverage.
+
+### Institutional survey pagination inventory (2026-10-02)
+
+Python files increase from 476 to 478, and lines from 113368 to 113832 (464 lines), for the endpoint-specific bounded survey pagination adapter and failure/resume regressions. This exact measured allowance covers the documented 400-row cap, terminal-page proofs, hash-bound retained partitions, independent physical totals and partial-source handling. The existing generic event mirror is split at dispatch to preserve the long-function budget. No complexity, long-function, large-file, long-line or exclusion limits increase. Reduce this allowance when pagination or fixtures are consolidated while preserving ignored-offset, terminal-cap and stale-receipt coverage.
+
+机构调研分页新增专用适配器及失败、恢复回归测试，Python 文件数从 476 调整至 478，行数从 113368 调整至 113832，增加 464 行，额度与实测清单一致。通用事件镜像在分派处拆分，保持长函数预算。复杂度、长函数、大文件、长行和排除范围限制均未提高。未来合并分页实现或测试 fixture 时，应在保留忽略 offset、末页限额及陈旧凭证回归覆盖的前提下收紧对应额度。
