@@ -111,3 +111,30 @@ def test_manifest_parses_and_hashes_one_receipt_snapshot(tmp_path, monkeypatch):
     assert len(reads) == 1
     assert manifest["status"] == "completed"
     assert manifest["lineage"]["owner_receipt_sha256"] == hashlib.sha256(original_bytes).hexdigest()
+
+
+def test_reference_manifest_distinguishes_version_date_from_coverage(tmp_path):
+    asset = tmp_path / "latest.parquet"
+    asset.write_bytes(b"validated-history")
+    receipt = tmp_path / "latest.receipt.json"
+    receipt.write_text(
+        json.dumps(
+            {
+                "dataset": "st_history_reconstructed",
+                "sha256": hashlib.sha256(asset.read_bytes()).hexdigest(),
+                "rows": 1,
+                "columns": ["ts_code"],
+                "quality_status": "complete",
+                "source_quality_status": "complete",
+                "target_date": "20261002",
+                "end_date": "20260930",
+                "pit_class": "reconstructed_pit",
+                "revision_safe": False,
+            }
+        )
+    )
+    manifest = json.loads(write_reference_manifest(asset, receipt).read_text())
+    assert manifest["as_of_date"] == "20260930"
+    assert manifest["query"]["end_date"] == "20260930"
+    assert manifest["version_date"] == "20261002"
+    assert manifest["revision_safe"] is False

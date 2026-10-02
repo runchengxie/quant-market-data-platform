@@ -227,3 +227,7 @@ The shared Python line inventory increases from 112768 to 112876 for explicit TH
 ### Single-file receipt and ST wrapper inventory (2026-10-02)
 
 Python files increase from 472 to 476, and lines from 112976 to 113231, for hash-bound reference manifests, narrowly recognized ST availability receipts and regressions. Publication integration tests are separated to keep the existing clean test module below 800 lines. Complexity, long-function and large-file limits remain unchanged. This exact inventory allowance can be reduced when receipt helpers or fixtures are consolidated while preserving provenance and failure-path coverage.
+
+### Reference coverage dates (2026-10-02)
+
+Python lines increase from 113231 to 113260 to distinguish immutable version labels from verified source coverage, with a regression. All other limits are unchanged. Reduce this exact allowance if the receipt fixture is consolidated while retaining the different-date case.

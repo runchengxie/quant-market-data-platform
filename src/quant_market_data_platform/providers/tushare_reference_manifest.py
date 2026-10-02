@@ -16,6 +16,7 @@ def write_reference_manifest(asset_path: Path, receipt_path: Path) -> Path:
         digest = hashlib.file_digest(source, "sha256").hexdigest()
     if receipt.get("sha256") != digest:
         raise ValueError("reference receipt hash does not match asset")
+    coverage_end = receipt.get("end_date") or receipt["target_date"]
     manifest = {
         "schema_version": "market-data-platform.tushare-reference-manifest.v1",
         "dataset": receipt["dataset"],
@@ -27,8 +28,9 @@ def write_reference_manifest(asset_path: Path, receipt_path: Path) -> Path:
             and receipt.get("source_quality_status", "complete") == "complete"
             else "partial"
         ),
-        "as_of_date": receipt["target_date"],
-        "query": {"end_date": receipt["target_date"]},
+        "as_of_date": coverage_end,
+        "version_date": receipt["target_date"],
+        "query": {"end_date": coverage_end},
         "totals": {"rows": receipt["rows"], "files": 1},
         "columns": receipt["columns"],
         "sha256": digest,
