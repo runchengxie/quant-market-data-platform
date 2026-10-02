@@ -130,6 +130,18 @@ selects revisions. The reader verifies all partition checksums before applying f
 
 参考文件的 `version_date` 记录版本标签日期。有来源 `end_date` 时，清单的 `as_of_date` 和查询结束日期使用实际来源覆盖日期。
 
+### 龙虎榜机构成交金额单位
+
+TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
+`sell` 和 `net_buy` 单位为元。`top_inst_events` 在聚合和滚动计算前将金额
+除以 10000，换算为万元，与原单位为千元的 `daily.amount / 10` 一致。
+字段名保持稳定。本次修正前构建的资产须重建后再使用金额特征或成交额比率。
+事件计数和数据源提供的比例不变。
+
+本次质量预算增加一个测试文件和 58 行 Python，用于单位转换和独立算术回归。
+现有复杂度阈值保持不变。只有在替代测试提供同等覆盖且减少源代码或测试行数时，
+才移除此预算。
+
 ## 机构调研分页
 
 `marketdata tushare mirror-a-share-stk-surv` 按日使用 `limit=400` 和递增的 `offset` 请求数据，只有获得不足 400 行的末页或空页后才写入当天分区。请求间隔作用于每一页，重试沿用原有 provider 策略。重复页、超限响应、调研日期不符或达到 1000 页上限时，任务失败并写入 partial 清单。其他事件镜像行为不变。

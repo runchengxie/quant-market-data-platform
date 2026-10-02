@@ -206,6 +206,9 @@ def _prepare_top_inst_frame(frame: Any, *, trade_date: str | None = None) -> Any
         if column not in df.columns:
             df[column] = float("nan")
         df[column] = numeric(df, column)
+    # TuShare top_inst amounts are yuan; derived turnover uses ten-thousand yuan.
+    for column in ("buy", "sell", "net_buy"):
+        df[column] = df[column] / 10000.0
     computed_net_buy = numeric(df, "buy") - numeric(df, "sell")
     df["net_buy"] = df["net_buy"].where(df["net_buy"].notna(), computed_net_buy)
     mask = df["symbol"].astype(str).str.fullmatch(r"\d{6}\.(SH|SZ|BJ)", na=False) & df[

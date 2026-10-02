@@ -91,6 +91,20 @@ Reference publication writes a sibling `.manifest.yml` bound to the owner receip
 
 Reference `version_date` records the version label date. When a source `end_date` is present, manifest freshness and query end use that actual source coverage date.
 
+### Institutional trading amount units
+
+TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) reports `buy`,
+`sell`, and `net_buy` in yuan. `top_inst_events` converts these amounts to
+ten-thousand yuan before aggregation and rolling calculations, matching
+`daily.amount / 10` from its thousand-yuan source unit. Field names remain
+stable; assets built before this correction must be rebuilt before using
+their amount features or turnover ratios. Counts and provider rates are unchanged.
+
+The quality ratchet budget increases by one test file and 58 Python lines for
+this conversion and its independent arithmetic regression. Existing complexity
+thresholds remain unchanged. Remove this budget only when replacing the test
+with equivalent coverage without adding source or test lines.
+
 ## Institutional survey pagination
 
 `marketdata tushare mirror-a-share-stk-surv` fetches each calendar date using `limit=400` and increasing `offset`. A date is written only after a short or empty terminal page. The request interval applies to every page, and retries retain the existing provider policy. Repeated pages, oversized responses, inconsistent survey dates and the 1,000-page bound fail with a partial manifest. Other event mirrors retain their existing behavior.

@@ -201,6 +201,15 @@ immutable lineage contract.
 
 For TuShare trade-date mirrors, `totals.rows`, `totals.symbols`, and `totals.files` describe all stored Parquet partitions under the asset data directory, including retained partitions outside the current request. `run_totals` records rows, symbols, files, and date counters for this invocation; skipped partitions contribute no newly written rows. Query dates describe the request and are not inferred from this inventory. Physical inventory does not certify source completeness: per-date receipts remain authoritative, including incomplete receipts beside retained last-known-good files.
 
+### Institutional trading amount units
+
+TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) reports `buy`,
+`sell`, and `net_buy` in yuan. `top_inst_events` converts these amounts to
+ten-thousand yuan before aggregation and rolling calculations, matching
+`daily.amount / 10` from its thousand-yuan source unit. Field names remain
+stable; assets built before this correction must be rebuilt before using
+their amount features or turnover ratios. Counts and provider rates are unchanged.
+
 ## Institutional survey completeness receipts
 
 The `tushare.stk_surv.v1` manifest retains its asset key and event-date partition layout. Its additive `pagination` section records `page_size`, `max_pages`, `complete` and per-date page row counts, observed rows and payload hashes. Per-file `pagination.json` uses `tushare.stk_surv.pagination.v1`, recording the exact query, terminal page counts and SHA256. A short terminal page is required, including an empty follow-up after an exact 400-row page. Resume validates receipt query, payload hash, row count and survey dates; asset totals independently count all physical retained partitions, while `run_totals` counts current writes. Unverified retained partitions keep the asset partial; unreadable inventory records unknown row/symbol totals and fails closed. On failure, completed dates remain preserved and the manifest is partial with the failed date and exception type; provider error text is not persisted. No failed date receives a completeness receipt. Receipts do not certify historical point-in-time availability or provider immutability.
