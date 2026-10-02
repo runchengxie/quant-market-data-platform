@@ -20,7 +20,7 @@ uv sync --extra dev
 TuShare 等服务凭证优先写入用户级私有配置文件：
 
 ```text
-~/.config/richard/projects/quant/quant-market-data-platform/config.env
+${XDG_CONFIG_HOME:-$HOME/.config}/quant-market-data-platform/config.json
 ```
 
 该文件采用 `KEY=VALUE` 格式，例如 `TUSHARE_TOKEN=...`。限制文件权限，避免其他用户读取。CI 和部署环境应使用对应平台的 secret 管理功能注入凭证。仓库仍兼容 `.env.local` 和 `.env`，但新环境不必创建这些文件。
@@ -52,3 +52,13 @@ TUSHARE_API_URL_2=https://proxy-a.example.com
 ```bash
 marketdata paths --market a_share --provider tushare --json
 ```
+
+
+## JSON process launcher
+
+```bash
+marketdata config check --config "$DATA_PLATFORM_CONFIG"
+marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python /path/to/job.py
+```
+
+Selected JSON fails closed. Legacy `.env.local`, `.env`, and `config.env` are compatibility sources only when no JSON is selected. Keep credentials in one active private JSON; backup files must remain inactive and restricted. Credential values are opaque and never substituted. Only the declared `DATA_PLATFORM_ROOT` supports `${HOME}` and `~`. Diagnostics report configured booleans only. See the [configuration example](../../config/config.example.json).

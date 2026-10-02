@@ -112,3 +112,9 @@ def test_retention_runner_scans_real_versioned_directories(tmp_path: Path) -> No
     assert result.returncode == 0, result.stderr
     assert "would-delete" not in result.stdout
     assert (root / "metadata" / "retention" / "governance-latest.tsv").is_symlink()
+
+
+def test_service_uses_owner_json_launcher() -> None:
+    service = (REPO_ROOT / "scripts/systemd/market-data-platform-retention.service").read_text()
+    assert "config run --config @DATA_PLATFORM_CONFIG@ --" in service
+    assert "EnvironmentFile=" not in service

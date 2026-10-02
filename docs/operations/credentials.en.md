@@ -20,10 +20,10 @@ uv sync --extra dev
 Store TuShare and other provider credentials in the user-private configuration file:
 
 ```text
-~/.config/richard/projects/quant/quant-market-data-platform/config.env
+${XDG_CONFIG_HOME:-$HOME/.config}/quant-market-data-platform/config.json
 ```
 
-The file uses `KEY=VALUE` entries, for example `TUSHARE_TOKEN=...`. Restrict its permissions so other users cannot read it. CI and deployment environments should inject credentials through their secret-management facility. `.env.local` and `.env` remain supported for compatibility, but new environments do not need to create them.
+Copy `config/config.example.json` into a private file, set mode `0600`, and fill its `environment` entries. Set `DATA_PLATFORM_CONFIG` to select a different private location. Null entries are unconfigured; inherited variables take precedence. Do not retain a second active credential env file. CI may inject process variables through its secret manager.
 
 ## Variables
 
@@ -49,3 +49,13 @@ Alternatively, pass `--token-env TUSHARE_TOKEN_2 --api-url https://proxy-b.examp
 ```bash
 marketdata paths --market a_share --provider tushare --json
 ```
+
+
+## JSON process launcher
+
+```bash
+marketdata config check --config "$DATA_PLATFORM_CONFIG"
+marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python /path/to/job.py
+```
+
+Selected JSON fails closed. Legacy `.env.local`, `.env`, and `config.env` are compatibility sources only when no JSON is selected. Keep credentials in one active private JSON; backup files must remain inactive and restricted. Credential values are opaque and never substituted. Only the declared `DATA_PLATFORM_ROOT` supports `${HOME}` and `~`. Diagnostics report configured booleans only. See the [configuration example](../../config/config.example.json).

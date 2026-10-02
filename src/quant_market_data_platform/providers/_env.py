@@ -7,6 +7,7 @@ import os
 import re
 from pathlib import Path
 
+from quant_market_data_platform.configuration import apply_config_environment
 from quant_market_data_platform.providers.tushare_a_share_options import DEFAULT_API_URL_ENV
 
 
@@ -69,6 +70,9 @@ def _load_env_file(path: Path) -> bool:
 
 
 def _load_tushare_env_files() -> tuple[str, ...]:
+    selected = apply_config_environment()
+    if selected is not None:
+        return (str(selected),)
     loaded: list[str] = []
     for path in _env_file_candidates():
         if _load_env_file(path):
