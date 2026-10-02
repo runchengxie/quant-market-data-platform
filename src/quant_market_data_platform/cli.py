@@ -13,12 +13,14 @@ from quant_market_data_platform.cli_data import add_data_parser
 from quant_market_data_platform.cli_governance import add_governance_parser
 from quant_market_data_platform.cli_paths import add_paths_parser
 from quant_market_data_platform.cli_quality import add_quality_parser
+from quant_market_data_platform.cli_quantzone import add_quantzone_parser
 from quant_market_data_platform.cli_research_features import add_research_features_parser
 from quant_market_data_platform.configuration import ConfigurationError
 from quant_market_data_platform.tushare_cli import add_tushare_parser
 
 OPTIONAL_DEPENDENCIES = {
     "akshare",
+    "quantzone",
     "duckdb",
     "pandas",
     "pyarrow",
@@ -30,6 +32,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="marketdata")
     subparsers = parser.add_subparsers(dest="command", required=True)
     add_config_parser(subparsers)
+    add_quantzone_parser(subparsers)
     add_paths_parser(subparsers)
     add_contract_parser(subparsers)
     add_registry_parser(subparsers)
@@ -51,6 +54,7 @@ def _is_optional_dependency_error(error: RuntimeError) -> bool:
 def _extra_for_missing_dependency(args: argparse.Namespace, missing_name: str | None) -> str:
     command_extras = {
         "tushare": "tushare",
+        "quantzone": "quantzone",
         "research-features": "research-features",
         "quality": "quality",
     }

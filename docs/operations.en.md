@@ -65,3 +65,14 @@ marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python /path/to/job.py
 ```
 
 `config check` reports names and configured booleans, without setting values or network requests. `config run` directly replaces the process using argv and preserves child exit status and signals. Services use an immutable installed release and a non-secret configuration path.
+
+
+## QuantZone research factors
+
+See [QuantZone operations](operations/quantzone.en.md).
+
+```bash
+marketdata quantzone check --config "$DATA_PLATFORM_CONFIG"
+marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG" --dry-run
+marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG"
+```
