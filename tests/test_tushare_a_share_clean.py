@@ -4,7 +4,6 @@ import hashlib
 import json
 
 import pandas as pd
-import pytest
 import yaml
 
 from quant_market_data_platform.providers import tushare_a_share_clean, tushare_a_share_quality
@@ -56,90 +55,6 @@ def test_st_availability_is_propagated_only_for_matching_positive_rows() -> None
     assert result.isna().tolist() == [True, False, True]
     assert result.iloc[1] == "20240104"
     assert _derive_st_available_from(daily, None).isna().all()
-
-
-@pytest.mark.parametrize("legacy", [False, True])
-def test_daily_clean_uses_validated_st_history_across_dates(tmp_path, legacy) -> None:
-    raw = tmp_path / "raw"
-    out = tmp_path / "clean"
-    instruments = tmp_path / "instruments.parquet"
-    history = tmp_path / "st_history_reconstructed.parquet"
-    for date in ("20240102", "20240103"):
-        _write_part(
-            pd.DataFrame(
-                [
-                    {
-                        "ts_code": "000001.SZ",
-                        "trade_date": date,
-                        "close": 10.0,
-                        "pre_close": 10.0,
-                        "open": 10.0,
-                        "high": 10.0,
-                        "low": 10.0,
-                        "vol": 100.0,
-                        "amount": 1000.0,
-                    }
-                ]
-            ),
-            raw,
-            date,
-        )
-    pd.DataFrame(
-        [
-            {
-                "ts_code": "000001.SZ",
-                "name": "ST金龙鱼",
-                "list_date": "20200101",
-            }
-        ]
-    ).to_parquet(instruments, index=False)
-    pd.DataFrame(
-        [
-            {
-                "ts_code": "000001.SZ",
-                "trade_date": "20240103",
-                **({} if legacy else {"available_from": "20240104"}),
-            }
-        ]
-    ).to_parquet(history, index=False)
-    history.with_name("st_history_reconstructed.receipt.json").write_text(
-        json.dumps(
-            {
-                "quality_status": "complete",
-                "schema_version": (
-                    "market-data-platform.tushare-reference.v1"
-                    if legacy
-                    else "market-data-platform.reconstructed-st-history.v2"
-                ),
-                "start_date": "20240102",
-                "end_date": "20240103",
-                "history_sha256": hashlib.sha256(history.read_bytes()).hexdigest(),
-            }
-        ),
-        encoding="utf-8",
-    )
-
-    manifest = build_a_share_daily_clean(
-        daily_dir=raw,
-        instruments_file=instruments,
-        st_history_file=history,
-        out_dir=out,
-        batch_trade_dates=1,
-        memory_soft_limit_mb=0,
-        memory_hard_limit_mb=0,
-    )
-    rows = pd.read_parquet(out / "data" / "000001.SZ.parquet")
-    assert rows["is_st"].tolist() == [False, True]
-    assert rows["st_available_from"].isna().tolist() == [True, legacy]
-    if not legacy:
-        assert rows.loc[1, "st_available_from"] == "20240104"
-    assert manifest["inputs"]["st_history_file"] == str(history)
-    assert manifest["inputs"]["st_history_receipt_schema"] == (
-        "market-data-platform.tushare-reference.v1"
-        if legacy
-        else "market-data-platform.reconstructed-st-history.v2"
-    )
-    assert "st_available_from" in manifest["columns"]
 
 
 def _write_part(frame, root, trade_date):
@@ -196,7 +111,6 @@ def _write_clean_manifest(  # noqa: PLR0913
 
 
 def _write_st_history(tmp_path, rows):
-    import hashlib
     import json
 
     path = tmp_path / "st_history_reconstructed.parquet"

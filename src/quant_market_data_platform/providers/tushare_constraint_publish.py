@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
-from quant_market_data_platform.providers.tushare_constraint_io import atomic_json, sha256
+from quant_market_data_platform.providers.tushare_constraint_io import sha256
 
 CONSTRAINT_PUBLISH_DATASETS = (
     "namechange",
@@ -113,15 +113,13 @@ def publish_constraint_assets(
         source_path = source_root / f"{dataset}.parquet"
         if not source_path.is_file():
             continue
-        item = publish_reference_asset(dataset, source_path, paths[dataset], target_date)
+        lineage = {"source_quality_status": "unknown"}
         if dataset in source_receipts:
             receipt_path, source_receipt = source_receipts[dataset]
             lineage = _lineage(dataset, receipt_path, source_receipt)
-            published_receipt_path = Path(item["receipt_path"])
-            published_receipt = json.loads(published_receipt_path.read_text(encoding="utf-8"))
-            published_receipt.update(lineage)
-            atomic_json(published_receipt_path, published_receipt)
-            item.update(lineage)
+        item = publish_reference_asset(
+            dataset, source_path, paths[dataset], target_date, receipt_lineage=lineage
+        )
         published.append(item)
     return {"target_date": target_date, "published": published, "missing": missing}
 

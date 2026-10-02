@@ -267,7 +267,9 @@ def _load_st_history(
     ):
         raise ValueError("ST history receipt does not cover the daily_clean date range")
     columns = ["ts_code", "trade_date"]
-    if receipt.get("schema_version") == "market-data-platform.reconstructed-st-history.v2":
+    from quant_market_data_platform.st_history_contract import has_st_availability_contract
+
+    if has_st_availability_contract(receipt):
         columns.append("available_from")
     history = pd.read_parquet(path, columns=columns)
     if "available_from" not in history:

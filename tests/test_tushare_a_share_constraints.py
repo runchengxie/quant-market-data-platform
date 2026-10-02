@@ -421,6 +421,12 @@ def test_publish_constraint_assets_writes_immutable_versions(tmp_path: Path) -> 
         assert Path(item["version_path"]).is_file()
         assert item["sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
         assert item["source_quality_status"] == "complete"
+        manifest = json.loads(path.with_suffix(".manifest.yml").read_text())
+        assert manifest["source_quality_status"] == "complete"
+        assert (
+            manifest["lineage"]["owner_receipt_sha256"]
+            == hashlib.sha256(Path(item["receipt_path"]).read_bytes()).hexdigest()
+        )
 
     pd.DataFrame([{"ts_code": "000002.SZ"}]).to_parquet(
         source / "namechange.parquet",

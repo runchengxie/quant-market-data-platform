@@ -84,3 +84,7 @@ selects revisions. The reader verifies all partition checksums before applying f
 ### Resume THS constituent mirrors
 
 `marketdata tushare mirror-a-share-ths-member --out-dir <output> --skip-existing` explicitly reuses validated concept cache partitions and fetches remaining concepts. Nonempty output directories are rejected by default. Resume with the same fields and provider configuration; constituents represent the acquisition snapshot.
+
+### Single-file reference manifests
+
+Reference publication writes a sibling `.manifest.yml` bound to the owner receipt and payload hash, with counts, dates and source semantics. Partial constraint provenance remains `partial`. Refresh the receipt and manifest whenever the reference payload changes.
