@@ -109,3 +109,9 @@ marketdata quantzone check --config "$DATA_PLATFORM_CONFIG"
 marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG" --dry-run
 marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG"
 ```
+
+### Statement observation ledger
+
+`marketdata tushare build-a-share-statement-version-ledger --source-manifest <raw-manifest.yml> --source-manifest <supplement-receipt.json> --out-dir <new-external-directory>` retains verified financial statement observations in separate Parquet partitions. Existing output directories are never replaced. Source manifests must be completed and contain checksummed files with time zone aware retrieval timestamps.
+
+The raw download and archive commands accept repeated `--report-type` options (for example `1`, `4`, `5`). Omitting this option preserves the provider default. Normalized standard statements continue to use type `1`; other report types are retained for version audits.

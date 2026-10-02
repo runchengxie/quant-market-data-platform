@@ -144,6 +144,9 @@ def _archive_dataset(args: argparse.Namespace, root: Path, dataset: str) -> tupl
             request_interval_seconds=args.request_interval_seconds,
             page_size=args.page_size,
             max_pages=args.max_pages,
+            report_types=tuple(getattr(args, "report_types", None) or ())
+            if dataset in {"income", "balancesheet", "cashflow"}
+            else (),
         )
     )
     if raw_manifest.get("status") != "completed":
@@ -305,6 +308,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--start-date", default="20150101")
     parser.add_argument("--end-date")
     parser.add_argument("--dataset", dest="datasets", action="append")
+    parser.add_argument(
+        "--report-type",
+        dest="report_types",
+        action="append",
+        choices=[str(i) for i in range(1, 13)],
+    )
     parser.add_argument("--field-map", dest="field_mappings", action="append")
     parser.add_argument("--token-env", default="TUSHARE_TOKEN_2")
     parser.add_argument(
