@@ -273,3 +273,16 @@ print(pit.provenance_dict())
 * 构造资产引用不会遍历大型 Parquet 目录。若 manifest 需要覆盖逐文件数据校验，应由
   发布流程把对应 checksum 写入 manifest，读取器会将这些字段原样保留在完整 manifest
   和 lineage 中。
+
+## Daily-clean input snapshot receipt
+
+`a_share.daily_clean_input_snapshot.v1` records a completed, independently copied
+input attempt. It contains `status`, `created_at`, `start_date`, `end_date` and
+`datasets`. Each of daily, adj_factor, daily_basic and limit_status records its
+root-relative `source_path`, `source_manifest_sha256`, observed `rows`, and a
+`files` list of dataset-relative `path`, `bytes` and `sha256`. Per-dataset manifests
+refer to `../snapshot_receipt.json` and describe captured file/row counts. Consumers
+must require a completed receipt before using a new snapshot. The receipt is
+published only after copies and source stability checks pass. Raw writers must
+be serialized by the caller; unrelated mutable latest directories are not an
+immutable lineage contract.

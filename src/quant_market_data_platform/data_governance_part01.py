@@ -91,6 +91,9 @@ class PathUsage:
     files: int
     unique_inodes: int
     external_hardlink_inodes: int
+    symlinks: int = 0
+    directories: int = 0
+    metadata_allocated_bytes: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -159,11 +162,9 @@ def _lexists(path: Path) -> bool:
     return True
 
 
-def _regular_file_stats(path: Path) -> Iterator[os.stat_result]:
+def _entry_stats(path: Path) -> Iterator[os.stat_result]:
     root_stat = path.lstat()
-    if stat.S_ISREG(root_stat.st_mode):
-        yield root_stat
-        return
+    yield root_stat
     if not stat.S_ISDIR(root_stat.st_mode):
         return
 
@@ -174,6 +175,7 @@ def _regular_file_stats(path: Path) -> Iterator[os.stat_result]:
         with os.scandir(directory) as entries:
             for entry in entries:
                 entry_stat = entry.stat(follow_symlinks=False)
+                yield entry_stat
                 if stat.S_ISDIR(entry_stat.st_mode):
                     if entry_stat.st_dev != root_device:
                         raise OSError(
@@ -182,15 +184,24 @@ def _regular_file_stats(path: Path) -> Iterator[os.stat_result]:
                             entry.path,
                         )
                     pending.append(Path(entry.path))
-                elif stat.S_ISREG(entry_stat.st_mode):
-                    yield entry_stat
+
+
+def _regular_file_stats(path: Path) -> Iterator[os.stat_result]:
+    """Retain the legacy regular-file iterator for compatibility."""
+    yield from (entry for entry in _entry_stats(path) if stat.S_ISREG(entry.st_mode))
 
 
 def _measure_path(path: Path) -> PathUsage:
     logical_bytes = 0
     files = 0
     inodes: dict[tuple[int, int], _InodeUsage] = {}
-    for file_stat in _regular_file_stats(path):
+    symlinks = directories = metadata_allocated_bytes = 0
+    for file_stat in _entry_stats(path):
+        if not stat.S_ISREG(file_stat.st_mode):
+            symlinks += int(stat.S_ISLNK(file_stat.st_mode))
+            directories += int(stat.S_ISDIR(file_stat.st_mode))
+            metadata_allocated_bytes += file_stat.st_blocks * 512
+            continue
         files += 1
         logical_bytes += file_stat.st_size
         key = (file_stat.st_dev, file_stat.st_ino)
@@ -223,6 +234,9 @@ def _measure_path(path: Path) -> PathUsage:
         files=files,
         unique_inodes=len(inodes),
         external_hardlink_inodes=external_hardlink_inodes,
+        symlinks=symlinks,
+        directories=directories,
+        metadata_allocated_bytes=metadata_allocated_bytes,
     )
 
 
@@ -476,7 +490,9 @@ def plan_data_governance(
             items.extend(_plan_json_status(normalized_root, rule, normalized_protected_paths))
         else:
             raise TypeError(f"Unsupported governance rule: {type(rule).__name__}")
-    return items
+    from .retention_references import protect_retained_references
+
+    return protect_retained_references(normalized_root, items)
 
 
 def _validate_inventory_schema(payload: Mapping[str, object]) -> None:

@@ -102,6 +102,9 @@ def render_retention_tsv(items: Sequence[PlanItem]) -> str:
             "path",
             "reason",
             "status",
+            "symlinks",
+            "directories",
+            "metadata_allocated_bytes",
         )
     )
     for item in items:
@@ -118,6 +121,9 @@ def render_retention_tsv(items: Sequence[PlanItem]) -> str:
                 str(item.path),
                 item.reason,
                 item.status or "",
+                item.usage.symlinks,
+                item.usage.directories,
+                item.usage.metadata_allocated_bytes,
             )
         )
     return output.getvalue()

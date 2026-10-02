@@ -24,7 +24,8 @@ Environment:
   KEEP_DAILY_CLEAN_INPUTS_TOTAL     Default: 2
   MARKETDATA_CLI                    marketdata executable
 
-Only clearly versioned market-data-platform clean snapshots are eligible:
+apply fails closed; date age alone never authorizes deletion.
+Dry-run candidates are clearly versioned snapshots:
   assets/tushare/a_share/daily/a_share_all_20150101_YYYYMMDD_daily_clean
   assets/tushare/a_share/daily_clean_inputs/a_share_all_20150101_YYYYMMDD
 EOF
@@ -59,22 +60,6 @@ is_symlink_target() {
   return 1
 }
 
-is_allowed_delete_path() {
-  local path="$1" parent base
-  parent="$(dirname -- "$path")"
-  base="$(basename -- "$path")"
-  [[ "$parent" == "$DAILY_DIR" && "$base" =~ ^a_share_all_20150101_[0-9]{8}_daily_clean$ ]] && return 0
-  [[ "$parent" == "$INPUTS_DIR" && "$base" =~ ^a_share_all_20150101_[0-9]{8}$ ]] && return 0
-  return 1
-}
-
-delete_dir() {
-  local path="$1"
-  [[ -d "$path" && ! -L "$path" ]] || { echo "refusing to delete non-directory or symlink: $path" >&2; exit 1; }
-  is_allowed_delete_path "$path" || { echo "refusing to delete out-of-policy path: $path" >&2; exit 1; }
-  rm -rf --one-file-system -- "$path"
-}
-
 report_line() {
   local action="$1" bytes="$2" files="$3" path="$4" reason="$5"
   printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
@@ -94,7 +79,7 @@ scan_versioned_dirs() {
 }
 
 process_group() {
-  local label="$1" parent="$2" regex="$3" keep_total="$4" mode="$5"
+  local label="$1" parent="$2" regex="$3" keep_total="$4"
   local -a candidates sorted; local line date path index bytes files reason
   scan_versioned_dirs "$parent" "$regex" candidates
   mapfile -t sorted < <(printf '%s\n' "${candidates[@]}" | sort -r)
@@ -107,14 +92,11 @@ process_group() {
       report_line "keep" "$bytes" "$files" "$path" "$label: keep date $date within newest $keep_total"
     elif is_symlink_target "$path"; then
       report_line "keep" "$bytes" "$files" "$path" "$label: protected because a sibling symlink targets it"
+    elif awk -F '\t' -v path="$path" '$1 == "retire_candidate" && $9 == path { found=1 } END { exit !found }' "$REPORT_DIR/governance-latest.tsv"; then
+      reason="$label: older than newest $keep_total; governance candidate requires reviewed retirement"
+      report_line "would-delete" "$bytes" "$files" "$path" "$reason"
     else
-      reason="$label: older than newest $keep_total"
-      if [[ "$mode" == "apply" ]]; then
-        report_line "delete" "$bytes" "$files" "$path" "$reason"
-        delete_dir "$path"
-      else
-        report_line "would-delete" "$bytes" "$files" "$path" "$reason"
-      fi
+      report_line "keep" "$bytes" "$files" "$path" "$label: governance protected or requires review"
     fi
     index=$((index + 1))
   done
@@ -134,21 +116,24 @@ main() {
   local mode="${1:-plan}"
   case "$mode" in
     plan|dry-run) mode=dry-run ;;
-    apply) ;;
+    apply)
+      echo "apply disabled: use a reviewed retirement workflow with reference, lock, process and successor checks" >&2
+      return 2
+      ;;
     -h|--help|help) usage; return 0 ;;
     *) usage >&2; return 2 ;;
   esac
   need_cmd du; need_cmd find; need_cmd readlink; need_cmd sort
   [[ -d "$ROOT" ]] || { echo "missing market-data-platform root: $ROOT" >&2; return 1; }
   mkdir -p "$REPORT_DIR"
+  refresh_governance_report
   REPORT="$REPORT_DIR/retention-$(date -u +%Y%m%dT%H%M%SZ).tsv"
   printf 'action\tbytes\thuman_size\tfiles\tpath\treason\n' > "$REPORT"
-  process_group daily_clean "$DAILY_DIR" '^a_share_all_20150101_([0-9]{8})_daily_clean$' "$KEEP_DAILY_CLEAN_TOTAL" "$mode"
-  process_group daily_clean_inputs "$INPUTS_DIR" '^a_share_all_20150101_([0-9]{8})$' "$KEEP_DAILY_CLEAN_INPUTS_TOTAL" "$mode"
+  process_group daily_clean "$DAILY_DIR" '^a_share_all_20150101_([0-9]{8})_daily_clean$' "$KEEP_DAILY_CLEAN_TOTAL"
+  process_group daily_clean_inputs "$INPUTS_DIR" '^a_share_all_20150101_([0-9]{8})$' "$KEEP_DAILY_CLEAN_INPUTS_TOTAL"
   ln -sfn "$(basename -- "$REPORT")" "$REPORT_DIR/scheduled-latest.tsv"
   ln -sfn "$(basename -- "$REPORT")" "$REPORT_DIR/latest.tsv"
   echo "report: $REPORT"
-  refresh_governance_report
 }
 
 main "$@"

@@ -57,6 +57,15 @@ def add_governance_parser(subparsers: argparse._SubParsersAction) -> None:
         help="With --out, atomically point this symlink at the generated TSV.",
     )
 
+    snapshot = governance_subparsers.add_parser(
+        "snapshot-clean-inputs", help="Capture independent date-filtered daily-clean raw inputs."
+    )
+    snapshot.set_defaults(handler=handle_snapshot_clean_inputs)
+    snapshot.add_argument("--artifacts-root")
+    snapshot.add_argument("--start-date", required=True)
+    snapshot.add_argument("--end-date", required=True)
+    snapshot.add_argument("--out-dir", required=True)
+
 
 def _load_json_object(path: Path, *, label: str) -> dict[str, object]:
     payload = json.loads(path.read_text(encoding="utf-8"))
@@ -169,6 +178,19 @@ def handle_plan_retention(args: argparse.Namespace) -> int:
         assert output is not None
         link = _update_relative_symlink(args.latest_link, output)
         print(f"latest_link: {link}")
+    return 0
+
+
+def handle_snapshot_clean_inputs(args: argparse.Namespace) -> int:
+    from .daily_clean_snapshot import build_daily_clean_snapshot
+
+    receipt = build_daily_clean_snapshot(
+        resolve_artifacts_root(args.artifacts_root),
+        args.start_date,
+        args.end_date,
+        Path(args.out_dir),
+    )
+    print(json.dumps(receipt, indent=2, sort_keys=True))
     return 0
 
 

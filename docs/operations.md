@@ -75,3 +75,14 @@ uv run python scripts/operations/restore_minute_partition_from_quarantine.py \
 ```
 
 确认输出后追加 `--apply`。已有完整分区默认禁止回退，只有经过人工核对才使用 `--allow-regression`。
+
+## Capture daily-clean raw inputs
+
+`marketdata governance snapshot-clean-inputs --artifacts-root "$DATA_PLATFORM_ROOT"
+--start-date YYYYMMDD --end-date YYYYMMDD --out-dir NEW_PATH` creates an independent,
+date-filtered snapshot of daily, adjustment, daily-basic and limit-status inputs.
+Serialize raw writers first. The output must be a new path under the data root.
+A completed receipt pins source manifests and each captured file's SHA-256.
+Failed attempts are preserved without a completed receipt. Scheduled retention
+`apply` is disabled; use the reviewed lifecycle retirement conditions in
+[data governance](data-governance.en.md) before any data removal.
