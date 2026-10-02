@@ -81,3 +81,6 @@ For multi-vintage research inputs, use `read_statement_observations(...,
 dataset="income", columns=[...])` to project required fields. Include identity,
 disclosure, observation, availability and source-hash fields when downstream code
 selects revisions. The reader verifies all partition checksums before applying filters.
+### Resume THS constituent mirrors
+
+`marketdata tushare mirror-a-share-ths-member --out-dir <output> --skip-existing` explicitly reuses validated concept cache partitions and fetches remaining concepts. Nonempty output directories are rejected by default. Resume with the same fields and provider configuration; constituents represent the acquisition snapshot.
