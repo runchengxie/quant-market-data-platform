@@ -150,4 +150,4 @@ TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
 
 财报观测账本构建器也接受非 VIP 单证券查询的完成清单。恢复旧缓存时保留原始清单和日期声明，校验归档内容，并为恢复输入记录真实恢复时间与哈希。原始分区缺少内容校验凭证时，不要把恢复时计算的哈希与历史日期拼接成已验证旧版本。
 
-Use `--no-proxy` on either QuantZone command to connect directly when an inherited HTTP or SOCKS proxy is unsuitable. The option suppresses proxy environment variables only while constructing the SDK client and restores their original values even if construction fails. Other commands keep their inherited proxy policy.
+两个 QuantZone 命令都支持 `--no-proxy`，用于在现有 HTTP 或 SOCKS 代理不适用时直连。该选项只在创建 SDK 客户端时临时移除代理环境变量，创建失败也会恢复原值。其他命令保留原有代理设置。
