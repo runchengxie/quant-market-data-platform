@@ -247,3 +247,7 @@ Python files increase from 476 to 478, and lines from 113368 to 113832 (464 line
 Python lines increase from 113890 to 113929 (39 lines) for the maximum observed interval-bound calculation and three regression cases: a later open start, all-open memberships, and a later explicit closed boundary. File, complexity, long-function, long-line, large-file and exclusion limits are unchanged. This is an exact measured inventory allowance. Reduce it if fixtures are consolidated while preserving those three boundary cases.
 
 行业区间范围修复和三种边界回归测试增加 39 行，Python 行数从 113890 调整至 113929，与实测清单一致。文件数、复杂度、长函数、长行、大文件及排除范围限制均未提高。未来合并 fixture 时，应在保留较晚开放区间、全部开放区间和较晚已关闭区间三种边界覆盖的前提下收紧该额度。
+
+### Per-security statement observations (2026-10-02)
+
+Python lines increase from 114264 to 114313 (+49) for the non-VIP source mapping and three parameterized regressions that retain checksum and observation-visibility guards. All other debt and complexity limits remain unchanged. Remove this allowance when equivalent coverage is consolidated with fewer lines.

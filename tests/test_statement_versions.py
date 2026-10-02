@@ -136,3 +136,45 @@ def test_dataset_projection_handles_other_schemas_and_empty_partitions(tmp_path,
         read_statement_observations(
             asset_dir=str(output), as_of="20261003", dataset="income", columns=["rd_exp"]
         )
+
+
+@pytest.mark.parametrize("endpoint", ["income", "balancesheet", "cashflow"])
+def test_non_vip_statement_sources_keep_visibility_and_checksum_guards(tmp_path, endpoint):
+    raw = tmp_path / "raw.parquet"
+    pd.DataFrame(
+        {
+            "ts_code": ["000001.SZ"],
+            "end_date": ["20231231"],
+            "ann_date": ["20240301"],
+            "report_type": ["1"],
+        }
+    ).to_parquet(raw)
+    manifest = tmp_path / "receipt.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "status": "completed",
+                "parts": [
+                    {
+                        "endpoint": endpoint,
+                        "path": str(raw),
+                        "rows": 1,
+                        "content_sha256": hashlib.sha256(raw.read_bytes()).hexdigest(),
+                        "retrieved_at": "2026-10-02T08:00:00+00:00",
+                    }
+                ],
+            }
+        )
+    )
+    output = tmp_path / "ledger"
+    result = build_statement_version_ledger(source_manifests=[str(manifest)], out_dir=str(output))
+    assert result["rows"] == 1
+    assert read_statement_observations(asset_dir=str(output), as_of="20261002").empty
+    frame = read_statement_observations(asset_dir=str(output), as_of="20261003", dataset=endpoint)
+    assert frame.dataset.tolist() == [endpoint]
+    assert frame.available_from.tolist() == ["20261003"]
+    raw.write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="checksum"):
+        build_statement_version_ledger(
+            source_manifests=[str(manifest)], out_dir=str(tmp_path / "bad")
+        )
