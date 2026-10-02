@@ -127,3 +127,5 @@ selects revisions. The reader verifies all partition checksums before applying f
 ### 单文件参考资产清单
 
 参考资产发布会同步写入与 Parquet 同名的 `.manifest.yml`，从 owner receipt 绑定文件 hash、行数、日期和来源语义。约束资产的部分来源会保留 `partial` 状态。参考文件更新时必须同步更新 receipt 和 manifest。
+
+参考文件的 `version_date` 记录版本标签日期。有来源 `end_date` 时，清单的 `as_of_date` 和查询结束日期使用实际来源覆盖日期。

@@ -88,3 +88,5 @@ selects revisions. The reader verifies all partition checksums before applying f
 ### Single-file reference manifests
 
 Reference publication writes a sibling `.manifest.yml` bound to the owner receipt and payload hash, with counts, dates and source semantics. Partial constraint provenance remains `partial`. Refresh the receipt and manifest whenever the reference payload changes.
+
+Reference `version_date` records the version label date. When a source `end_date` is present, manifest freshness and query end use that actual source coverage date.
