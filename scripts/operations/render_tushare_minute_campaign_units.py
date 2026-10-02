@@ -31,6 +31,17 @@ def _atomic_write(path: Path, text: str) -> None:
 def render_units(args: argparse.Namespace) -> list[Path]:
     template_root = args.template_root.expanduser().resolve()
     replacements = {
+        "@DATA_PLATFORM_CONFIG@": str(
+            (
+                getattr(args, "data_platform_config", None)
+                or Path(
+                    os.environ.get("DATA_PLATFORM_CONFIG")
+                    or args.home / ".config" / "quant-market-data-platform" / "config.json"
+                )
+            )
+            .expanduser()
+            .absolute()
+        ),
         "@HOME@": str(args.home.expanduser().resolve()),
         # Keep the deployment's stable `current` symlink in generated units.
         # Resolving it here would pin systemd to an immutable release forever.
@@ -70,6 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--template-root", type=Path, default=repo_root / "scripts" / "systemd")
     parser.add_argument("--template-glob", default="tushare-minute-*")
+    parser.add_argument("--data-platform-config", type=Path)
     parser.add_argument("--home", type=Path, required=True)
     parser.add_argument("--mdp-dir", type=Path, default=repo_root)
     parser.add_argument("--data-platform-root", type=Path, required=True)

@@ -151,3 +151,6 @@ systemctl --user enable --now tushare-fundamentals-vintage-archive.timer
 `apply` 现在直接拒绝执行。按日期自动删除会破坏历史报告和输入血缘；
 只有证明无锁、无写入任务、存在已验证后继版本且无保留引用的退役流程才能清理。
 不要启用此 timer 期待它自动回收空间。
+
+
+Provider services require `@DATA_PLATFORM_CONFIG@` to be rendered to the single private JSON configuration path (mode `0600`). They launch jobs with the installed owner `marketdata config run` command. Render `@MDP_DIR@` to an immutable production release, never a development worktree. Other credential owners retain their own configuration.

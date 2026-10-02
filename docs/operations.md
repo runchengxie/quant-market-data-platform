@@ -87,6 +87,29 @@ Failed attempts are preserved without a completed receipt. Scheduled retention
 `apply` is disabled; use the reviewed lifecycle retirement conditions in
 [data governance](data-governance.en.md) before any data removal.
 
+
+## Private JSON configuration
+
+Use one private configuration copied from `config/config.example.json`. Keep credentials outside Git and set mode `0600`. `DATA_PLATFORM_CONFIG` selects the file; when unset, an existing `${XDG_CONFIG_HOME:-$HOME/.config}/quant-market-data-platform/config.json` is selected. An invalid selected file stops the command. Existing process variables take precedence, including empty values. Null entries are unconfigured. Only `DATA_PLATFORM_ROOT` expands `${HOME}` or `~`; secret strings remain opaque. Legacy env files are read only when no JSON is selected.
+
+```bash
+marketdata config check --config "$DATA_PLATFORM_CONFIG"
+marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python /path/to/job.py
+```
+
+`config check` reports names and configured booleans, without setting values or network requests. `config run` directly replaces the process using argv and preserves child exit status and signals. Services use an immutable installed release and a non-secret configuration path.
+
+
+## QuantZone research factors
+
+See [QuantZone operations](operations/quantzone.en.md).
+
+```bash
+marketdata quantzone check --config "$DATA_PLATFORM_CONFIG"
+marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG" --dry-run
+marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG"
+```
+
 ### Statement observation ledger
 
 `marketdata tushare build-a-share-statement-version-ledger --source-manifest <raw-manifest.yml> --source-manifest <supplement-receipt.json> --out-dir <new-external-directory>` retains verified financial statement observations in separate Parquet partitions. Existing output directories are never replaced. Source manifests must be completed and contain checksummed files with time zone aware retrieval timestamps.
