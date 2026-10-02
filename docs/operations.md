@@ -129,3 +129,9 @@ selects revisions. The reader verifies all partition checksums before applying f
 参考资产发布会同步写入与 Parquet 同名的 `.manifest.yml`，从 owner receipt 绑定文件 hash、行数、日期和来源语义。约束资产的部分来源会保留 `partial` 状态。参考文件更新时必须同步更新 receipt 和 manifest。
 
 参考文件的 `version_date` 记录版本标签日期。有来源 `end_date` 时，清单的 `as_of_date` 和查询结束日期使用实际来源覆盖日期。
+
+## 机构调研分页
+
+`marketdata tushare mirror-a-share-stk-surv` 按日使用 `limit=400` 和递增的 `offset` 请求数据，只有获得不足 400 行的末页或空页后才写入当天分区。请求间隔作用于每一页，重试沿用原有 provider 策略。重复页、超限响应、调研日期不符或达到 1000 页上限时，任务失败并写入 partial 清单。其他事件镜像行为不变。
+
+`--skip-existing` 要求存在与数据哈希、准确查询和各页行数一致的 `pagination.json` 凭证。没有凭证的旧数据应保留，并在新目录重新获取。分页完成只证明本次观察到的获取范围，不证明历史观察版本安全。[官方调研接口文档](https://tushare.pro/document/2?doc_id=275) 说明单次最多 400 行，可以循环或分页获取。重复页会触发对忽略分页的代理的拒绝，不额外声称数据源在请求期间保持稳定。

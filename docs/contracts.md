@@ -305,3 +305,7 @@ projection and its schema, visibility and integrity tests. Other debt budgets ar
 unchanged; future projection growth must pass the existing ratchet or replace code.
 
 TuShare 按交易日镜像的 `totals.rows`、`totals.symbols` 和 `totals.files` 表示资产 data 目录中全部已存储 Parquet 分区，包括本次请求范围外保留的分区。`run_totals` 单独记录本次运行写入的行数、标的数、文件数和请求日期计数。跳过分区不计入本次新写行数。query 日期仍表示请求范围，不由物理盘点推定。物理盘点不证明来源完整性。逐日 receipt 仍为准，保留的 last-known-good 文件可以同时对应不完整回执。
+
+## 机构调研完整性凭证
+
+`tushare.stk_surv.v1` 保持资产键和事件日期分区目录不变，新增的 `pagination` 节记录 `page_size`、`max_pages`、`complete`、每天的各页行数、实际行数及数据哈希。分区旁的 `pagination.json` 使用 `tushare.stk_surv.pagination.v1`，记录准确查询、末页行数和 SHA256。末页必须不足 400 行，正好 400 行时仍需后续空页。恢复时校验凭证查询、数据哈希、行数及调研日期，资产总量独立统计全部保留的实际分区，`run_totals` 统计本次写入。未验证的保留分区使资产保持 partial，清单不可读时将行数及标的数记录为未知并失败。失败时保留已完成日期，清单标记 partial 并记录失败日期及异常类型，不持久化 provider 异常文本。失败日期不获得完整性凭证。这些凭证不证明历史时点可用性或数据源不可修订。
