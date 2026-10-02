@@ -104,3 +104,9 @@ The quality ratchet budget increases by one test file and 58 Python lines for
 this conversion and its independent arithmetic regression. Existing complexity
 thresholds remain unchanged. Remove this budget only when replacing the test
 with equivalent coverage without adding source or test lines.
+
+## Institutional survey pagination
+
+`marketdata tushare mirror-a-share-stk-surv` fetches each calendar date using `limit=400` and increasing `offset`. A date is written only after a short or empty terminal page. The request interval applies to every page, and retries retain the existing provider policy. Repeated pages, oversized responses, inconsistent survey dates and the 1,000-page bound fail with a partial manifest. Other event mirrors retain their existing behavior.
+
+`--skip-existing` requires a matching `pagination.json` receipt bound to the payload hash, exact query and page counts. Existing survey payloads without that evidence must be preserved and refetched into a new directory. Completed pagination establishes observed retrieval coverage, not a revision-safe historical observation. The [official survey endpoint documentation](https://tushare.pro/document/2?doc_id=275) states the 400-row cap and supports cyclic or paginated extraction. A proxy ignoring pagination is rejected when pages repeat; no provider endpoint stability beyond the recorded responses is asserted.

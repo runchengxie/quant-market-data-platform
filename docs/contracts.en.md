@@ -209,3 +209,7 @@ ten-thousand yuan before aggregation and rolling calculations, matching
 `daily.amount / 10` from its thousand-yuan source unit. Field names remain
 stable; assets built before this correction must be rebuilt before using
 their amount features or turnover ratios. Counts and provider rates are unchanged.
+
+## Institutional survey completeness receipts
+
+The `tushare.stk_surv.v1` manifest retains its asset key and event-date partition layout. Its additive `pagination` section records `page_size`, `max_pages`, `complete` and per-date page row counts, observed rows and payload hashes. Per-file `pagination.json` uses `tushare.stk_surv.pagination.v1`, recording the exact query, terminal page counts and SHA256. A short terminal page is required, including an empty follow-up after an exact 400-row page. Resume validates receipt query, payload hash, row count and survey dates; asset totals independently count all physical retained partitions, while `run_totals` counts current writes. Unverified retained partitions keep the asset partial; unreadable inventory records unknown row/symbol totals and fails closed. On failure, completed dates remain preserved and the manifest is partial with the failed date and exception type; provider error text is not persisted. No failed date receives a completeness receipt. Receipts do not certify historical point-in-time availability or provider immutability.
