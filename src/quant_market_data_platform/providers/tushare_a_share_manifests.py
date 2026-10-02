@@ -2,7 +2,29 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
+
+import pyarrow.parquet as pq
+
+
+def _stored_partition_totals(data_dir: Path) -> dict[str, int]:
+    rows = 0
+    files = 0
+    symbols: set[str] = set()
+    for path in sorted(data_dir.rglob("*.parquet")):
+        with pq.ParquetFile(path) as parquet:
+            rows += parquet.metadata.num_rows
+            files += 1
+            symbol_column = next(
+                (name for name in ("symbol", "ts_code") if name in parquet.schema_arrow.names), None
+            )
+            if symbol_column is not None:
+                for batch in parquet.iter_batches(batch_size=65536, columns=[symbol_column]):
+                    symbols.update(
+                        str(value) for value in batch.column(0).to_pylist() if value is not None
+                    )
+    return {"rows": rows, "symbols": len(symbols), "files": files}
 
 
 def trade_date_manifest(
@@ -45,6 +67,9 @@ def trade_date_manifest(
         "skipped_trade_dates": skipped_dates,
         "empty_trade_dates": empty_dates,
     }
+    manifest["run_totals"] = dict(manifest["totals"])
+    if context["skip_existing"] or context["dataset"] == "dc_concept_cons":
+        manifest["totals"].update(_stored_partition_totals(context["data_dir"]))
     if context["dataset"] == "dc_concept_cons":
         date_completeness = {
             trade_date: partitions["date_completeness"][trade_date]
