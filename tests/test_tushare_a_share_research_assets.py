@@ -625,3 +625,39 @@ def test_a_share_pit_fundamentals_cli_round_trip(tmp_path, capsys):
     )
     validation = json.loads(capsys.readouterr().out)
     assert validation["status"] == "passed"
+
+
+@pytest.mark.parametrize(
+    ("intervals", "expected_end"),
+    [
+        ([("20240101", "20260304"), ("20260924", "")], "20260924"),
+        ([("20240101", ""), ("20260924", "")], "20260924"),
+        ([("20240101", "20260930"), ("20260924", "")], "20260930"),
+    ],
+)
+def test_industry_manifest_bounds_include_every_observed_interval_boundary(
+    tmp_path, intervals, expected_end
+):
+    pd = pytest.importorskip("pandas")
+    source = tmp_path / "industry.csv"
+    pd.DataFrame(
+        [
+            {
+                "symbol": "000001.SZ",
+                "start_date": start,
+                "end_date": end,
+                "industry_code": "851911.SI",
+                "industry_name": "银行",
+            }
+            for start, end in intervals
+        ]
+    ).to_csv(source, index=False)
+    source_bytes = source.read_bytes()
+    output = tmp_path / "industry"
+    manifest = build_a_share_industry_changes(
+        source_file=source, out_dir=output, industry_system="sw2021_l3"
+    )
+    assert manifest["query"] == {"start_date": "20240101", "end_date": expected_end}
+    assert source.read_bytes() == source_bytes
+    payload = pd.read_parquet(output / "data" / "part.parquet")
+    assert list(zip(payload["effective_date"], payload["end_date"], strict=True)) == intervals

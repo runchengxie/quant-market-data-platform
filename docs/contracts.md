@@ -317,3 +317,5 @@ TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
 ## 机构调研完整性凭证
 
 `tushare.stk_surv.v1` 保持资产键和事件日期分区目录不变，新增的 `pagination` 节记录 `page_size`、`max_pages`、`complete`、每天的各页行数、实际行数及数据哈希。分区旁的 `pagination.json` 使用 `tushare.stk_surv.pagination.v1`，记录准确查询、末页行数和 SHA256。末页必须不足 400 行，正好 400 行时仍需后续空页。恢复时校验凭证查询、数据哈希、行数及调研日期，资产总量独立统计全部保留的实际分区，`run_totals` 统计本次写入。未验证的保留分区使资产保持 partial，清单不可读时将行数及标的数记录为未知并失败。失败时保留已完成日期，清单标记 partial 并记录失败日期及异常类型，不持久化 provider 异常文本。失败日期不获得完整性凭证。这些凭证不证明历史时点可用性或数据源不可修订。
+
+行业区间清单界定实际观察到的成员日期：`query.start_date` 是最早生效日期，`query.end_date` 是全部生效日期和非空区间结束日期的最大值。较早的已关闭区间结束日期不能排除较晚的开放成员区间。这些范围由数据值决定，不采用请求刷新日期或获取版本日期。
