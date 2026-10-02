@@ -92,3 +92,8 @@ Failed attempts are preserved without a completed receipt. Scheduled retention
 `marketdata tushare build-a-share-statement-version-ledger --source-manifest <raw-manifest.yml> --source-manifest <supplement-receipt.json> --out-dir <new-external-directory>` retains verified financial statement observations in separate Parquet partitions. Existing output directories are never replaced. Source manifests must be completed and contain checksummed files with time zone aware retrieval timestamps.
 
 The raw download and archive commands accept repeated `--report-type` options (for example `1`, `4`, `5`). Omitting this option preserves the provider default. Normalized standard statements continue to use type `1`; other report types are retained for version audits.
+
+For multi-vintage research inputs, use `read_statement_observations(...,
+dataset="income", columns=[...])` to project required fields. Include identity,
+disclosure, observation, availability and source-hash fields when downstream code
+selects revisions. The reader verifies all partition checksums before applying filters.
