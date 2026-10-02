@@ -159,6 +159,7 @@ def _download_context(options: RawFundamentalsDownloadOptions) -> RawFundamental
         end_date=options.end_date,
         entitlement_mode=options.entitlement_mode,
         symbols=options.symbols,
+        report_types=options.report_types,
     )
     state_path = output / "state.json"
     failure_path = output / "failures.json"
@@ -330,6 +331,7 @@ def _raw_fundamentals_manifest(context: RawFundamentalsDownloadContext) -> dict[
             "end_date": _date_token(options.end_date),
             "query_parameters": [unit.params for unit in context.units],
             "fetch_granularity": sorted({unit.granularity for unit in context.units}),
+            "requested_report_types": list(options.report_types) or ["provider_default"],
         },
         "retrieved_at": _now(),
         "observed_vintage_dates": observed_vintage_dates[-1:],
@@ -368,6 +370,8 @@ def _completed_immutable_snapshot(
         manifest.get("dataset") == options.dataset
         and query.get("start_date") == _date_token(options.start_date)
         and query.get("end_date") == _date_token(options.end_date)
+        and query.get("requested_report_types", ["provider_default"])
+        == (list(options.report_types) or ["provider_default"])
         and manifest.get("entitlement_mode") == options.entitlement_mode
         and (options.run_id is None or manifest.get("source_run_id") == options.run_id)
     )

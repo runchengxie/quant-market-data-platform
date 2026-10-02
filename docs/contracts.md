@@ -286,3 +286,7 @@ must require a completed receipt before using a new snapshot. The receipt is
 published only after copies and source stability checks pass. Raw writers must
 be serialized by the caller; unrelated mutable latest directories are not an
 immutable lineage contract.
+
+### Statement observations v1
+
+The optional `statement-observations.v1` ledger preserves raw statement fields, `dataset`, `observed_at`, `source_sha256`, `source_manifest_sha256`, and `available_from`. Visibility is the later of the provider disclosure date and actual retrieval date in Asia/Shanghai, plus at least one calendar day. This is a conservative observation boundary, not an exchange execution calendar. Consumers must enforce it before selecting observations and must explicitly choose report semantics; type `4` and `5` are not interchangeable with standard type `1` statements. Historical revision completeness remains false. The ledger does not publish a current alias or authorize frozen holdout evaluation.

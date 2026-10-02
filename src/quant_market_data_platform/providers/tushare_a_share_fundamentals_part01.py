@@ -279,6 +279,7 @@ class RawFundamentalsDownloadOptions:
     page_size: int = 5000
     max_pages: int = 100
     stale_after_days: int | None = None
+    report_types: tuple[str, ...] = ()
 
 
 @dataclass
@@ -348,14 +349,39 @@ def _endpoint_for(spec: DatasetSpec, entitlement_mode: str) -> tuple[str, str]:
     )
 
 
-def plan_query_units(
+def plan_query_units(  # noqa: PLR0913 - preserve public query planner keywords
     *,
     dataset: str,
     start_date: str,
     end_date: str,
     entitlement_mode: str,
     symbols: Iterable[str] | None = None,
+    report_types: Iterable[str] = (),
 ) -> list[QueryUnit]:
+    selected_types = tuple(dict.fromkeys(report_types))
+    if selected_types:
+        if dataset not in {"income", "balancesheet", "cashflow"}:
+            raise ValueError("report_types apply only to the three financial statements.")
+        if any(value not in {str(number) for number in range(1, 13)} for value in selected_types):
+            raise ValueError("report_types must be provider codes 1 through 12.")
+        base = plan_query_units(
+            dataset=dataset,
+            start_date=start_date,
+            end_date=end_date,
+            entitlement_mode=entitlement_mode,
+            symbols=symbols,
+        )
+        return [
+            QueryUnit(
+                unit.dataset,
+                unit.endpoint,
+                unit.entitlement_mode,
+                unit.granularity,
+                unit.params | {"report_type": report_type},
+            )
+            for unit in base
+            for report_type in selected_types
+        ]
     spec = DATASET_SPECS[dataset]
     endpoint, granularity = _endpoint_for(spec, entitlement_mode)
     if granularity == "symbol":
@@ -377,15 +403,17 @@ def plan_query_units(
     ]
 
 
-def build_download_plan(
+def build_download_plan(  # noqa: PLR0913 - preserve public query planner keywords
     *,
     datasets: Iterable[str] | None,
     start_date: str,
     end_date: str,
     entitlement_mode: str,
     symbols: Iterable[str] | None = None,
+    report_types: Iterable[str] = (),
 ) -> dict[str, Any]:
     selected = list(dict.fromkeys(datasets or FUNDAMENTALS_DATASETS))
+    report_types = tuple(report_types)
     planned = []
     skipped = []
     for dataset in selected:
@@ -398,6 +426,7 @@ def build_download_plan(
                 end_date=end_date,
                 entitlement_mode=entitlement_mode,
                 symbols=symbols,
+                report_types=report_types,
             )
         except ValueError as exc:
             skipped.append({"dataset": dataset, "reason": str(exc)})
@@ -497,6 +526,12 @@ def _fetch_query_unit(
         if frame.empty:
             break
         _validate_fields(frame, DATASET_SPECS[unit.dataset])
+        requested_type = unit.params.get("report_type")
+        if requested_type and (
+            "report_type" not in frame
+            or not frame["report_type"].astype(str).eq(requested_type).all()
+        ):
+            raise FieldValidationError(f"{unit.unit_id} provider ignored the report_type filter.")
         signature = _frame_signature(frame)
         if signature in signatures:
             raise DuplicatePageError(f"{unit.unit_id} repeated provider page {page}.")
