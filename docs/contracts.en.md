@@ -185,3 +185,16 @@ print(pit.provenance_dict())
 The current contract selects a published version; the reader reloads the full manifest at `manifest_path` rather than treating a contract summary as the complete schema. `alias_path`, `resolved_path`, `manifest_path`, and explicit relative data paths must stay within `artifacts_root`. External absolute paths, `..` traversal, and escaping symlinks are rejected. `manifest_sha256` hashes exact file bytes; `content_fingerprint` hashes canonicalized manifest content and is stable across YAML formatting changes. `provenance_dict()` provides serializable contract/manifest hashes, schema version, lineage, and asset paths for research records.
 
 Constructing an asset reference does not traverse large Parquet directories. If publication needs per-file verification, it must put the relevant checksums in the manifest; the reader preserves them in the loaded manifest and lineage.
+
+## Daily-clean input snapshot receipt
+
+`a_share.daily_clean_input_snapshot.v1` records a completed, independently copied
+input attempt. It contains `status`, `created_at`, `start_date`, `end_date` and
+`datasets`. Each of daily, adj_factor, daily_basic and limit_status records its
+root-relative `source_path`, `source_manifest_sha256`, observed `rows`, and a
+`files` list of dataset-relative `path`, `bytes` and `sha256`. Per-dataset manifests
+refer to `../snapshot_receipt.json` and describe captured file/row counts. Consumers
+must require a completed receipt before using a new snapshot. The receipt is
+published only after copies and source stability checks pass. Raw writers must
+be serialized by the caller; unrelated mutable latest directories are not an
+immutable lineage contract.

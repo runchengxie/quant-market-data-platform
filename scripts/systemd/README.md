@@ -2,9 +2,9 @@
 
 ## 数据目录 retention
 
-`market-data-platform-retention.timer` 每日 22:05（带随机延迟）运行仓库内维护的窄策略清理器。
-它只处理带日期的 A 股 `daily_clean` 和 `daily_clean_inputs` 目录，默认各保留最新两个版本，
-保护仍被 sibling symlink 引用的目录，并在删除前写入 `scheduled-latest.tsv`。同一次运行还会调用
+`market-data-platform-retention.timer` 每日 22:05（带随机延迟）调用仓库内维护的窄策略入口（`apply` 已禁用）。
+它只盘点带日期的 A 股 `daily_clean` 和 `daily_clean_inputs` 目录，默认各标记保留最新两个版本，
+保护仍被链接、清单和历史报告引用的目录，写入只读 `scheduled-latest.tsv`。运行先调用
 `marketdata governance plan-retention`，生成独立的 `governance-latest.tsv`。治理规划本身仍是只读的。
 
 使用本仓库 renderer 安装 unit；不要让服务回退到 `$HOME/bin` 或
@@ -19,7 +19,7 @@ uv run python scripts/operations/render_tushare_minute_campaign_units.py \
   --marketdata-cli "$MDP_DIR/.venv/bin/marketdata" \
   --output-dir "$HOME/.config/systemd/user"
 systemctl --user daemon-reload
-systemctl --user enable --now market-data-platform-retention.timer
+ # apply 已禁用：保留安装模板供后续审查，不启用 timer。
 ```
 
 为期四年的替换任务已经完成。夜间、加速、尾部和硬停止 timer 仍作为历史模板保留，
@@ -147,3 +147,7 @@ systemctl --user enable --now tushare-fundamentals-vintage-archive.timer
 每日频率会形成每日修订观测阶梯，但无法证明两次采集之间发生又消失的日内修订。
 首次观测版本之前的期间仍标记为 `reconstructed_pit`。每日完整快照比原来的每周任务消耗更多供应商请求和存储空间。
 该 unit 继续使用现有的不可变、失败即关闭实现，确保提高观测频率不会削弱修订安全契约。
+
+`apply` 现在直接拒绝执行。按日期自动删除会破坏历史报告和输入血缘；
+只有证明无锁、无写入任务、存在已验证后继版本且无保留引用的退役流程才能清理。
+不要启用此 timer 期待它自动回收空间。

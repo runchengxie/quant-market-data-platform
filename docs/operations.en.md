@@ -42,3 +42,14 @@ marketdata backup-data
 ```
 
 Public CLI documentation tests derive reachable commands from the parser. When adding a command, document it in the relevant topic page and update the tests. Historical minute backfill coverage and resume limits are described in the [A-share minute guide](operations/a-share-minutes.md).
+
+## Capture daily-clean raw inputs
+
+`marketdata governance snapshot-clean-inputs --artifacts-root "$DATA_PLATFORM_ROOT"
+--start-date YYYYMMDD --end-date YYYYMMDD --out-dir NEW_PATH` creates an independent,
+date-filtered snapshot of daily, adjustment, daily-basic and limit-status inputs.
+Serialize raw writers first. The output must be a new path under the data root.
+A completed receipt pins source manifests and each captured file's SHA-256.
+Failed attempts are preserved without a completed receipt. Scheduled retention
+`apply` is disabled; use the reviewed lifecycle retirement conditions in
+[data governance](data-governance.en.md) before any data removal.

@@ -129,3 +129,15 @@ def test_build_snapshot_prefers_version_with_target_partition_over_flat_version(
     )
 
     assert receipt["datasets"]["daily"]["source_path"].endswith(partitioned.name)
+
+
+def test_report_snapshot_rejects_mutable_latest_directory(tmp_path: Path) -> None:
+    root = tmp_path / "artifacts"
+    _version(root, "daily", "a_share_all_daily_latest", "20260907")
+    with pytest.raises(SnapshotBuildError, match="no immutable version"):
+        build_snapshot(
+            artifacts_root=root,
+            target_date="20260907",
+            output_root=tmp_path / "snapshot",
+            datasets=("daily",),
+        )
