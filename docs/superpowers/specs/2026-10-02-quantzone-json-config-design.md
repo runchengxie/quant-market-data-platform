@@ -1,6 +1,7 @@
 # Unified JSON configuration and QuantZone pilot
 
-Status: proposed; implementation and production migration have not started.
+Status: accepted by the user on 2026-10-02; implementation and production
+migration have not started.
 
 ## Purpose and accepted scope
 
