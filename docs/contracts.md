@@ -299,3 +299,7 @@ for every partition, including excluded datasets. Visibility and report-type fie
 are loaded internally for filtering; projected results contain only requested fields.
 This limits retained columns when consuming multiple observed vintages. It does not
 select a financial revision or establish historical revision completeness.
+
+The maintainability baseline accounts for 100 net Python lines added by statement
+projection and its schema, visibility and integrity tests. Other debt budgets are
+unchanged; future projection growth must pass the existing ratchet or replace code.
