@@ -7,9 +7,9 @@ ConditionPathExists=@DATA_PLATFORM_ROOT@/metadata/current_assets/a_share_current
 [Service]
 Type=oneshot
 WorkingDirectory=@MDP_DIR@
-ExecStart=@MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_operational_daily.py --artifacts-root @DATA_PLATFORM_ROOT@ --token-env TUSHARE_TOKEN_2 --fallback-token-env TUSHARE_TOKEN
+ExecStart=@MDP_DIR@/.venv/bin/marketdata config run --config @DATA_PLATFORM_CONFIG@ -- @MDP_DIR@/.venv/bin/python @MDP_DIR@/scripts/operations/tushare_minute_operational_daily.py --artifacts-root @DATA_PLATFORM_ROOT@ --token-env TUSHARE_TOKEN_2 --fallback-token-env TUSHARE_TOKEN
 Environment=HOME=@HOME@
-EnvironmentFile=-@HOME@/.config/richard/projects/quant/quant-market-data-platform/config.env
+Environment=DATA_PLATFORM_CONFIG=@DATA_PLATFORM_CONFIG@
 Environment=PYTHONPATH=@MDP_DIR@/src
 Environment=PATH=@HOME@/.local/bin:@HOME@/.cargo/bin:/usr/local/bin:/usr/bin:/bin
 Environment=REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt

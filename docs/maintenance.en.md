@@ -72,6 +72,8 @@ On 2026-09-30, bilingual documentation regression coverage added one Python file
 
 On 2026-10-01, the ST event availability contract added 284 Python lines for conservative exchange-session availability, `daily_clean.v2` propagation, and regression checks for receipts and row consistency. The shared baseline increased from 109,774 to 110,058 lines; file count, complexity, long-function, and long-line budgets did not increase. Once providers and consumers complete the versioned migration, assess consolidating duplicate checks into the existing ST quality pipeline and tighten the line baseline after removing equivalent redundant code. Reconstructed history remains `revision_safe=false`.
 
+The research views now expose daily `st_available_from` to A-share and DailyWatch20 consumers. Both readers require a `daily_clean` manifest declaring schema v2 and the ST availability contract, so DuckDB cannot silently fill a missing field from an older partition with nulls. The shared baseline increased from 455 files and 110,081 lines to 456 files and 110,174 lines for the shared manifest validator and regression tests. Complexity, long-function, and long-line budgets did not increase. After consumers complete migration and published assets are confirmed to use v2, assess whether the contract check can move to a higher shared layer.
+
 See the dated Chinese audit record for the exact historical line-count changes. Those figures describe specific commits and are not current size targets.
 
 ## Compatibility decisions
@@ -91,3 +93,12 @@ The root README, `AGENTS.md`, and user-facing `docs/` are expected to reflect cu
 ## Refactoring priorities
 
 The recorded next steps are to split the daily executor and checkpoint/receipt finalizer in `tushare_a_share_mins.py::mirror_minute_bars`; break the monolithic minute-cutover test fixture into raw/full-day/Beijing receipt builders; continue reducing long minute-materialization and provider functions; further separate provider SDK adapters from frame-processing pipelines; and continue breaking down pandas-heavy `data_warehouse_*` modules while evaluating stricter per-module typing. RQData and the Hong Kong recovery control plane were retired on 2026-07-26 and do not need restoration drills.
+
+
+## QuantZone configuration size baseline — 2026-10-02
+
+The shared size baseline now records 472 Python files and 112,768 lines after adding the private JSON loader/launcher, optional QuantZone planner/adapter/artifact modules and their tests. This update accounts for the intentional feature addition. Complexity, long-function, large-file and lint-exclusion thresholds remain unchanged. There is no extra size allowance beyond the measured snapshot. Future growth requires an explained feature change or refactoring. Remove the corresponding size allowance if these modules are retired.
+
+## Configuration source split size baseline — 2026-10-02
+
+The shared size baseline accounts for the configuration-source module, its regression tests, and job-snapshot verification. Only the exact measured Python file and line totals change; all complexity, debt, long-function and large-file thresholds remain unchanged. Recalculate the size baseline if the legacy loader or split-source modules are retired or consolidated. This allowance does not authorize unrelated growth.

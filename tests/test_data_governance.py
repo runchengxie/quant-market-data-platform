@@ -319,6 +319,9 @@ def test_render_retention_tsv_has_stable_audit_columns_and_escaping(
         "path",
         "reason",
         "status",
+        "symlinks",
+        "directories",
+        "metadata_allocated_bytes",
     }
     assert rows[0]["action"] == "review"
     assert rows[0]["rule"] == "explicit\trule"
@@ -387,3 +390,84 @@ def test_rules_from_inventory_rejects_unknown_schema_and_kind() -> None:
                 "retention_rules": [{"name": "bad", "kind": "age"}],
             }
         )
+
+
+def test_symlink_tree_metadata_is_counted_without_following_targets(tmp_path: Path) -> None:
+    candidate = tmp_path / "input"
+    candidate.mkdir()
+    target = tmp_path / "large.bin"
+    target.write_bytes(b"payload" * 1000)
+    (candidate / "partition").symlink_to(target)
+    (candidate / "broken").symlink_to("missing")
+    [item] = plan_data_governance(tmp_path, [ExplicitPathRule("inputs", candidate, "review")])
+    assert item.usage.files == 0
+    assert item.usage.logical_bytes == 0
+    assert item.usage.symlinks == 2
+    assert item.usage.directories == 1
+    assert item.usage.metadata_allocated_bytes == sum(
+        p.lstat().st_blocks * 512
+        for p in (candidate, candidate / "partition", candidate / "broken")
+    )
+
+
+@pytest.mark.parametrize("reference", ["absolute", "relative", "old-root", "descendant"])
+def test_retained_evidence_protects_version(tmp_path: Path, reference: str) -> None:
+    candidate = tmp_path / "daily" / "snapshot_20260101"
+    candidate.mkdir(parents=True)
+    text = {
+        "absolute": str(candidate),
+        "relative": "daily/snapshot_20260101",
+        "old-root": "/former/data/daily/snapshot_20260101",
+        "descendant": str(candidate / "data/part.parquet"),
+    }[reference]
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "release.json").write_text(json.dumps({"input": text}))
+    [item] = plan_data_governance(
+        tmp_path, [ExplicitPathRule("input", candidate, "retire_candidate")]
+    )
+    assert item.action == "keep"
+    assert "release.json" in item.reason
+
+
+def test_cross_tree_symlink_protects_descendant(tmp_path: Path) -> None:
+    candidate = tmp_path / "raw" / "version_20260101"
+    (candidate / "data").mkdir(parents=True)
+    consumer = tmp_path / "inputs"
+    consumer.mkdir()
+    (consumer / "partition").symlink_to(candidate / "data")
+    [item] = plan_data_governance(
+        tmp_path, [ExplicitPathRule("raw", candidate, "retire_candidate")]
+    )
+    assert item.action == "keep"
+    assert "symlink" in item.reason
+
+
+def test_scheduled_apply_fails_before_deleting_or_writing(tmp_path: Path) -> None:
+    import subprocess
+
+    script = Path(__file__).parents[1] / "scripts/operations/market_data_platform_retention.sh"
+    result = subprocess.run(
+        ["bash", str(script), "apply"],
+        env={**os.environ, "DATA_PLATFORM_ROOT": str(tmp_path)},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode != 0
+    assert "reviewed retirement" in result.stderr
+    assert not (tmp_path / "metadata").exists()
+
+
+@pytest.mark.parametrize("suffix", [".csv", ".html"])
+def test_dataset_registry_csv_protects_version(tmp_path: Path, suffix: str) -> None:
+    candidate = tmp_path / "assets/version_20260101"
+    candidate.mkdir(parents=True)
+    metadata = tmp_path / "metadata"
+    metadata.mkdir()
+    (metadata / f"dataset_registry{suffix}").write_text(f"asset,path\nraw,{candidate}\n")
+    [item] = plan_data_governance(
+        tmp_path, [ExplicitPathRule("raw", candidate, "retire_candidate")]
+    )
+    assert item.action == "keep"
+    assert f"dataset_registry{suffix}" in item.reason

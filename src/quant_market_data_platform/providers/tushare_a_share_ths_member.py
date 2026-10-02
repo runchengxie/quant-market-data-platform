@@ -36,6 +36,7 @@ class ThsMemberMirrorOptions:
     request_policy: TushareRequestPolicy | None = None
     request_interval_seconds: float = 0.1
     request_options: dict[str, Any] | None = None
+    skip_existing: bool = False
 
 
 @dataclass(frozen=True)
@@ -137,7 +138,8 @@ def _fetch_filtered_ths_member_parts(
     for code in context.concept_codes:
         part_path = part_dir / f"ts_code={_safe_ts_code_partition(code)}" / "part.parquet"
         if part_path.is_file():
-            cached = context.pd.read_parquet(part_path)
+            with part_path.open("rb") as cached_file:
+                cached = context.pd.read_parquet(cached_file)
             _validate_ths_member_part(cached, concept_code=code)
             part_frames.append(cached)
             skipped_existing += 1
@@ -206,7 +208,7 @@ def _ths_member_context(
     dependencies: ThsMemberMirrorDependencies,
 ) -> ThsMemberMirrorContext:
     pd = dependencies.pandas()
-    output_dir = _prepare_output_dir(Path(options.out_dir))
+    output_dir = _prepare_output_dir(Path(options.out_dir), allow_existing=options.skip_existing)
     data_dir = output_dir / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
     pro, policy, resolved_api_url = dependencies.tushare_runtime(

@@ -5,13 +5,13 @@ ConditionPathExists=@DATA_PLATFORM_ROOT@
 [Service]
 Type=oneshot
 WorkingDirectory=@MDP_DIR@
-EnvironmentFile=-@MDP_DIR@/.env.local
+Environment=DATA_PLATFORM_CONFIG=@DATA_PLATFORM_CONFIG@
 Environment=HOME=@HOME@
 Environment=PATH=@HOME@/.local/bin:@HOME@/.cargo/bin:/usr/local/bin:/usr/bin:/bin
 Environment=MARKET_DATA_ROOT=@DATA_PLATFORM_ROOT@
 Environment=DATA_PLATFORM_ROOT=@DATA_PLATFORM_ROOT@
 Environment=MARKETDATA_CLI=@MARKETDATA_CLI@
-ExecStart=@MDP_DIR@/scripts/operations/market_data_platform_retention.sh apply
+ExecStart=@MDP_DIR@/.venv/bin/marketdata config run --config @DATA_PLATFORM_CONFIG@ -- @MDP_DIR@/scripts/operations/market_data_platform_retention.sh apply
 StandardOutput=append:@HOME@/.hermes/logs/market_data_platform_retention.log
 StandardError=append:@HOME@/.hermes/logs/market_data_platform_retention.log
 Nice=10

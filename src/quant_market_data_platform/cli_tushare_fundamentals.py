@@ -29,6 +29,7 @@ def _tushare_fundamentals_raw_handlers() -> dict[str, Callable[[argparse.Namespa
             _handle_tushare_fundamentals_validate_normalized
         ),
         "build-a-share-announcement-event-pit": _handle_tushare_announcement_event_pit,
+        "build-a-share-statement-version-ledger": _handle_statement_version_ledger,
     }
 
 
@@ -51,6 +52,7 @@ def _handle_tushare_fundamentals_plan(args: argparse.Namespace) -> int:
         end_date=args.end_date,
         entitlement_mode=args.entitlement_mode,
         symbols=symbols_from_args(args),
+        report_types=tuple(args.report_types),
     )
     return print_tushare_summary(summary)
 
@@ -152,9 +154,22 @@ def _handle_tushare_fundamentals_download(args: argparse.Namespace) -> int:
             page_size=args.page_size,
             max_pages=args.max_pages,
             stale_after_days=args.stale_after_days,
+            report_types=tuple(args.report_types),
         )
     )
     return print_tushare_summary(summary)
+
+
+def _handle_statement_version_ledger(args: argparse.Namespace) -> int:
+    from quant_market_data_platform.statement_versions import build_statement_version_ledger
+
+    return print_tushare_summary(
+        build_statement_version_ledger(
+            source_manifests=args.source_manifests,
+            out_dir=args.out_dir,
+            available_delay_days=args.available_delay_days,
+        )
+    )
 
 
 def _handle_tushare_fundamentals_pit(args: argparse.Namespace) -> int | None:

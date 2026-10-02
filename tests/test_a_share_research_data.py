@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pandas as pd
+import pytest
 
 from quant_market_data_platform.research_views.a_share_research_data import (
     AShareResearchAssets,
@@ -17,6 +18,12 @@ def test_load_a_share_research_frames_from_published_paths(tmp_path: Path) -> No
     daily_clean = tmp_path / "daily_clean"
     data_dir = daily_clean / "data"
     data_dir.mkdir(parents=True)
+    (daily_clean / "manifest.yml").write_text(
+        "schema_version: tushare.a_share.daily_clean.v2\n"
+        "status: completed\n"
+        "contracts:\n  st_availability: daily_clean.st_available_from.v1\n",
+        encoding="utf-8",
+    )
     pd.DataFrame(
         {
             "trade_date": ["2024-01-02", "2024-01-03"],
@@ -24,6 +31,10 @@ def test_load_a_share_research_frames_from_published_paths(tmp_path: Path) -> No
             "close": [10.0, 10.5],
             "turnover_rate": [1.2, 1.3],
             "total_mv": [100.0, 101.0],
+            "is_st": [False, True],
+            "st_available_from": [None, "2024-01-04"],
+            "is_suspended": [False, False],
+            "list_date": ["2010-01-01", "2010-01-01"],
         }
     ).to_parquet(data_dir / "part.parquet", index=False)
     instruments = tmp_path / "instruments.parquet"
@@ -74,3 +85,22 @@ def test_resolve_a_share_research_assets_uses_current_contract(monkeypatch, tmp_
     assert resolved.daily_clean == daily.resolved_path
     assert resolved.instruments == instruments.resolved_path
     assert resolved.daily_as_of == "20240131"
+
+
+def test_load_a_share_research_daily_rejects_pre_availability_manifest(tmp_path: Path) -> None:
+    daily_clean = tmp_path / "daily_clean"
+    daily_clean.mkdir()
+    (daily_clean / "manifest.yml").write_text(
+        "schema_version: tushare.a_share.daily_clean.v1\nstatus: completed\n",
+        encoding="utf-8",
+    )
+    assets = AShareResearchAssets(
+        data_root=tmp_path,
+        current_contract=tmp_path / "a_share_current.json",
+        daily_clean=daily_clean,
+        instruments=tmp_path / "instruments.parquet",
+        daily_as_of="20240103",
+    )
+
+    with pytest.raises(ValueError, match="unsupported schema"):
+        load_a_share_research_daily(assets)

@@ -4497,6 +4497,11 @@ qlib = [
 quality = [
     { name = "pyarrow" },
 ]
+quantzone = [
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "quantzone", marker = "python_full_version < '3.14'" },
+]
 research-features = [
     { name = "pandas" },
     { name = "pyarrow" },
@@ -4523,6 +4528,7 @@ requires-dist = [
     { name = "pandas", marker = "extra == 'etf-minute-public'", specifier = ">=2.2" },
     { name = "pandas", marker = "extra == 'minute-fusion'", specifier = ">=2.2" },
     { name = "pandas", marker = "extra == 'qlib'", specifier = ">=2.2" },
+    { name = "pandas", marker = "extra == 'quantzone'", specifier = ">=2.2" },
     { name = "pandas", marker = "extra == 'research-features'", specifier = ">=2.2" },
     { name = "pandas", marker = "extra == 'tushare'", specifier = ">=2" },
     { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.7" },
@@ -4533,6 +4539,7 @@ requires-dist = [
     { name = "pyarrow", marker = "extra == 'minute-fusion'", specifier = ">=25.0.0" },
     { name = "pyarrow", marker = "extra == 'qlib'", specifier = ">=25.0.0" },
     { name = "pyarrow", marker = "extra == 'quality'", specifier = ">=25.0.0" },
+    { name = "pyarrow", marker = "extra == 'quantzone'", specifier = ">=25.0.0" },
     { name = "pyarrow", marker = "extra == 'research-features'", specifier = ">=25.0.0" },
     { name = "pyarrow", marker = "extra == 'tushare'", specifier = ">=25.0.0" },
     { name = "pyqlib", marker = "extra == 'qlib'", specifier = ">=0.9.7" },
@@ -4540,15 +4547,43 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6" },
     { name = "python-dotenv", marker = "extra == 'dev'", specifier = ">=1" },
     { name = "pyyaml", specifier = ">=6.0" },
+    { name = "quantzone", marker = "python_full_version < '3.14' and extra == 'quantzone'", specifier = "==0.10.0" },
     { name = "research-code-quality", git = "https://github.com/runchengxie/quant-code-quality.git?rev=6daeeca7a3d405f23c8ad49c8364bfdc8e9bb661" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.16.2" },
     { name = "tushare", marker = "extra == 'tushare'", specifier = ">=1.4" },
     { name = "ty", marker = "extra == 'dev'", specifier = ">=0.0.69" },
 ]
-provides-extras = ["dev", "research-features", "quality", "duckdb", "minute-fusion", "qlib", "tushare", "etf-minute-public"]
+provides-extras = ["quantzone", "dev", "research-features", "quality", "duckdb", "minute-fusion", "qlib", "tushare", "etf-minute-public"]
 
 [package.metadata.requires-dev]
 docs = [{ name = "mkdocs-material", specifier = ">=9.6,<10" }]
+
+[[package]]
+name = "quantzone"
+version = "0.10.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pyarrow" },
+    { name = "tqdm" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f9/02/448fd19122ceb763591bffc92fa3b3d48ee4f252a043dfbcf561dbdd0dfa/quantzone-0.10.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:57cc0ea9f7b471b083633c7688a0e2991c9edb8c24b732748e7a1b8fe102610d", size = 1586002, upload-time = "2026-09-04T02:58:42.374Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/c8/c274229c1578bfa99c1a14ef00ecee48d47e4e8740e2b53b98f4679b67aa/quantzone-0.10.0-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:bbad03c835d4baf767c1b1dc3939456822e161fc80263ba6fa1427e4972e3541", size = 12220945, upload-time = "2026-09-04T02:58:44.5Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/5d/24bf8421885925e6f29207c30fcc656dfd7cb3bb6b778a21e47ba60fb958/quantzone-0.10.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ebc318bde0ba01d7b2c4c76b3e2c27cea0b55f6397dc49bf1e71acf86190a0a9", size = 12568410, upload-time = "2026-09-04T02:58:47.667Z" },
+    { url = "https://files.pythonhosted.org/packages/19/cc/4c0fdb1b115153a277e15fe69188b2bdae6e307c1db3f1b65ae91621e64c/quantzone-0.10.0-cp311-cp311-win_amd64.whl", hash = "sha256:f4b1613975f6eca1380bbf42bc94b97179b313fedfaa52cda67bacbcc7ec13df", size = 1538333, upload-time = "2026-09-04T02:58:50.029Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/a8/e358f27b5c54a10f600b09a803d5ef9d374710b46e4bf220499e65f9d38b/quantzone-0.10.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:32bb181b851e928edd181250eac6f66181efbf7d988ce344342c5ded9eb4ff03", size = 1556382, upload-time = "2026-09-04T02:58:51.746Z" },
+    { url = "https://files.pythonhosted.org/packages/43/5b/47fe77c5dae539e093535a9c381f4ce13dcb38e420463cd3a9eb4b2cf581/quantzone-0.10.0-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:54b2c88230adfc88a9627c477de295ac8311d0dbbec78326dd740a3cd8089073", size = 11769943, upload-time = "2026-09-04T02:58:53.601Z" },
+    { url = "https://files.pythonhosted.org/packages/72/e3/802437a7f4518973f28c45713886cbf0ef57f1064b466492c9f46bfd306a/quantzone-0.10.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c188c1b1dc0115996b7013fcf79442046d61fba32aa1be6f08077b8365b66aa9", size = 12289830, upload-time = "2026-09-04T02:58:56.627Z" },
+    { url = "https://files.pythonhosted.org/packages/32/85/e3dc6ac16b690153504b009280498638a45bb5acd6afad303b018f8dd8bc/quantzone-0.10.0-cp312-cp312-win_amd64.whl", hash = "sha256:5c5e7e77e9dbca5e4691aee6c69feeb3467287017dc514c4433928af7fa789ff", size = 1433835, upload-time = "2026-09-04T02:58:58.849Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/81/8d747d0201a50849b10b0500240dd90a164956c08ab5045e3b80deedf39b/quantzone-0.10.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:55da5b8815b2a0a4982fed31ed8eab2adea890e94bb7a638aac824698b0b0440", size = 1545514, upload-time = "2026-09-04T02:59:00.596Z" },
+    { url = "https://files.pythonhosted.org/packages/45/af/013d97b04edd45ad8424fbd090b67ef978b3a252ae532e7498ab115ce6f0/quantzone-0.10.0-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:103b4b9d00e84c092510aa79ddd093358184d6296b778fe61230c79780bd2290", size = 11616909, upload-time = "2026-09-04T02:59:03.08Z" },
+    { url = "https://files.pythonhosted.org/packages/96/07/5ab5d8e2f649bd1055cdf42e47038e0d05955c7cbccbd91259f1795327e1/quantzone-0.10.0-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:86be3c21b21eb01fb479ed27b26b582dfe4356f1d8ece5fa00d303eb956c8e57", size = 12161894, upload-time = "2026-09-04T02:59:06.057Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/ed/1bd3dc7a000fd4485f9ca40d09edfa8ab315737b43865759ad6d016cff43/quantzone-0.10.0-cp313-cp313-win_amd64.whl", hash = "sha256:a842722a7a66a0ec268223b15a02a0816279109cec84326eaf51da282d6d76c7", size = 1423284, upload-time = "2026-09-04T02:59:08.589Z" },
+]
 
 [[package]]
 name = "redis"

@@ -9,6 +9,9 @@ from typing import cast
 import pandas as pd
 
 from quant_market_data_platform.published_assets import PublishedAssetContract
+from quant_market_data_platform.research_views._daily_clean_contract import (
+    require_daily_clean_st_availability,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,11 +55,22 @@ def load_a_share_research_daily(
 ) -> pd.DataFrame:
     """Load the owner-published daily research columns from ``daily_clean``."""
 
+    require_daily_clean_st_availability(assets.daily_clean)
     data_dir = assets.daily_clean / "data"
     if not data_dir.is_dir() or not any(data_dir.glob("*.parquet")):
         raise FileNotFoundError(f"Published daily_clean data directory is missing: {data_dir}")
 
-    columns = ["trade_date", "symbol", "close", "turnover_rate", "total_mv"]
+    columns = [
+        "trade_date",
+        "symbol",
+        "close",
+        "turnover_rate",
+        "total_mv",
+        "is_st",
+        "st_available_from",
+        "is_suspended",
+        "list_date",
+    ]
     frame = pd.read_parquet(data_dir, columns=columns)
     frame["trade_date"] = pd.to_datetime(frame["trade_date"], errors="coerce")
     frame["symbol"] = frame["symbol"].astype(str)

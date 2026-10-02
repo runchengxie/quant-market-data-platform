@@ -154,6 +154,10 @@ def test_publish_reference_assets_writes_version_and_sha_receipt(tmp_path: Path)
         assert receipt["schema_version"] == reference.REFERENCE_RECEIPT_SCHEMA_VERSION
         assert receipt["sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
         assert receipt["version_sha256"] == receipt["sha256"]
+        manifest = json.loads(path.with_suffix(".manifest.yml").read_text())
+        assert manifest["status"] == "completed"
+        assert manifest["totals"] == {"rows": 1, "files": 1}
+        assert manifest["sha256"] == receipt["sha256"]
 
     reference.publish_reference_assets(tmp_path / "lake", raw, "20260730")
     pd.DataFrame([{"ts_code": "000002.SZ"}]).to_parquet(

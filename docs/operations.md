@@ -75,3 +75,79 @@ uv run python scripts/operations/restore_minute_partition_from_quarantine.py \
 ```
 
 确认输出后追加 `--apply`。已有完整分区默认禁止回退，只有经过人工核对才使用 `--allow-regression`。
+
+## Capture daily-clean raw inputs
+
+`marketdata governance snapshot-clean-inputs --artifacts-root "$DATA_PLATFORM_ROOT"
+--start-date YYYYMMDD --end-date YYYYMMDD --out-dir NEW_PATH` creates an independent,
+date-filtered snapshot of daily, adjustment, daily-basic and limit-status inputs.
+Serialize raw writers first. The output must be a new path under the data root.
+A completed receipt pins source manifests and each captured file's SHA-256.
+Failed attempts are preserved without a completed receipt. Scheduled retention
+`apply` is disabled; use the reviewed lifecycle retirement conditions in
+[data governance](data-governance.en.md) before any data removal.
+
+
+## Private JSON configuration
+
+Use one private configuration copied from `config/config.example.json`. Keep credentials outside Git and set mode `0600`. `DATA_PLATFORM_CONFIG` selects the file; when unset, an existing `${XDG_CONFIG_HOME:-$HOME/.config}/quant-market-data-platform/config.json` is selected. An invalid selected file stops the command. Existing process variables take precedence, including empty values. Null entries are unconfigured. Only `DATA_PLATFORM_ROOT` expands `${HOME}` or `~`; secret strings remain opaque. Legacy env files are read only when no JSON is selected.
+
+```bash
+marketdata config check --config "$DATA_PLATFORM_CONFIG"
+marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python /path/to/job.py
+```
+
+`config check` reports names and configured booleans, without setting values or network requests. `config run` directly replaces the process using argv and preserves child exit status and signals. Services use an immutable installed release and a non-secret configuration path.
+
+
+## QuantZone research factors
+
+See [QuantZone operations](operations/quantzone.en.md).
+
+```bash
+marketdata quantzone check --config "$DATA_PLATFORM_CONFIG"
+marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG" --dry-run
+marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG"
+```
+
+### Statement observation ledger
+
+`marketdata tushare build-a-share-statement-version-ledger --source-manifest <raw-manifest.yml> --source-manifest <supplement-receipt.json> --out-dir <new-external-directory>` retains verified financial statement observations in separate Parquet partitions. Existing output directories are never replaced. Source manifests must be completed and contain checksummed files with time zone aware retrieval timestamps.
+
+The raw download and archive commands accept repeated `--report-type` options (for example `1`, `4`, `5`). Omitting this option preserves the provider default. Normalized standard statements continue to use type `1`; other report types are retained for version audits.
+
+For multi-vintage research inputs, use `read_statement_observations(...,
+dataset="income", columns=[...])` to project required fields. Include identity,
+disclosure, observation, availability and source-hash fields when downstream code
+selects revisions. The reader verifies all partition checksums before applying filters.
+### 同花顺成分续传
+
+`marketdata tushare mirror-a-share-ths-member --out-dir <output> --skip-existing` 显式复用已验证的概念缓存分区，补取剩余概念。默认拒绝非空输出目录。续传必须使用相同字段和数据源配置。概念成分仅代表获取时的快照。
+
+### 单文件参考资产清单
+
+参考资产发布会同步写入与 Parquet 同名的 `.manifest.yml`，从 owner receipt 绑定文件 hash、行数、日期和来源语义。约束资产的部分来源会保留 `partial` 状态。参考文件更新时必须同步更新 receipt 和 manifest。
+
+参考文件的 `version_date` 记录版本标签日期。有来源 `end_date` 时，清单的 `as_of_date` 和查询结束日期使用实际来源覆盖日期。
+
+### 龙虎榜机构成交金额单位
+
+TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
+`sell` 和 `net_buy` 单位为元。`top_inst_events` 在聚合和滚动计算前将金额
+除以 10000，换算为万元，与原单位为千元的 `daily.amount / 10` 一致。
+字段名保持稳定。本次修正前构建的资产须重建后再使用金额特征或成交额比率。
+事件计数和数据源提供的比例不变。
+
+本次质量预算增加一个测试文件和 58 行 Python，用于单位转换和独立算术回归。
+现有复杂度阈值保持不变。只有在替代测试提供同等覆盖且减少源代码或测试行数时，
+才移除此预算。
+
+## 机构调研分页
+
+`marketdata tushare mirror-a-share-stk-surv` 按日使用 `limit=400` 和递增的 `offset` 请求数据，只有获得不足 400 行的末页或空页后才写入当天分区。请求间隔作用于每一页，重试沿用原有 provider 策略。重复页、超限响应、调研日期不符或达到 1000 页上限时，任务失败并写入 partial 清单。其他事件镜像行为不变。
+
+`--skip-existing` 要求存在与数据哈希、准确查询和各页行数一致的 `pagination.json` 凭证。没有凭证的旧数据应保留，并在新目录重新获取。分页完成只证明本次观察到的获取范围，不证明历史观察版本安全。[官方调研接口文档](https://tushare.pro/document/2?doc_id=275) 说明单次最多 400 行，可以循环或分页获取。重复页会触发对忽略分页的代理的拒绝，不额外声称数据源在请求期间保持稳定。
+
+财报观测账本构建器也接受非 VIP 单证券查询的完成清单。恢复旧缓存时保留原始清单和日期声明，校验归档内容，并为恢复输入记录真实恢复时间与哈希。原始分区缺少内容校验凭证时，不要把恢复时计算的哈希与历史日期拼接成已验证旧版本。
+
+两个 QuantZone 命令都支持 `--no-proxy`，用于在现有 HTTP 或 SOCKS 代理不适用时直连。该选项只在创建 SDK 客户端时临时移除代理环境变量，创建失败也会恢复原值。其他命令保留原有代理设置。

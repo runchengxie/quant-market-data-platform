@@ -135,6 +135,8 @@ Reconstructed ST history records effective dates separately from information ava
 
 `daily_clean` schema `tushare.a_share.daily_clean.v2` carries the matching `st_available_from` value beside `is_st`. It is null when the symbol has no active ST interval or when the source cannot establish availability. A consumer may use a positive ST value for a decision only when `st_available_from` is present and no later than that decision date; unknown availability must fail closed.
 
+The public `load_a_share_research_daily` and `load_daily_watch20_daily` views expose `is_st` and `st_available_from` from each dated daily row. Both require a completed `tushare.a_share.daily_clean.v2` manifest with the `daily_clean.st_available_from.v1` contract and reject older assets. The generic A-share view also exposes `is_suspended` and `list_date`. Consumers must use the dated ST fields for historical decisions and must not substitute current instrument metadata.
+
 `audit-a-share-st-event-timing` reads receipt-backed ST events and reconstructed ST history, auditing rows where `ann_date=trade_date`. It emits `st_event_timing_audit.parquet` and a hash receipt. Status values include `prior_dated_st_event`, `same_day_time_unknown`, `later_event_date_conflict`, and `no_active_prior_event`. Conflict candidates are limited to the same symbol and ST events effective within the following 10 calendar days and require manual review. The audit compares dates only, does not modify published `is_st`, and does not treat the `st` event endpoint as a complete daily state history.
 
 Raw reference downloads from `download-a-share-reference` create a same-directory `*.receipt.json` with query range, row count, quality status, and file SHA-256. This proves download-file integrity, not intraday announcement availability. Publication must revalidate the source hash.
@@ -183,3 +185,35 @@ print(pit.provenance_dict())
 The current contract selects a published version; the reader reloads the full manifest at `manifest_path` rather than treating a contract summary as the complete schema. `alias_path`, `resolved_path`, `manifest_path`, and explicit relative data paths must stay within `artifacts_root`. External absolute paths, `..` traversal, and escaping symlinks are rejected. `manifest_sha256` hashes exact file bytes; `content_fingerprint` hashes canonicalized manifest content and is stable across YAML formatting changes. `provenance_dict()` provides serializable contract/manifest hashes, schema version, lineage, and asset paths for research records.
 
 Constructing an asset reference does not traverse large Parquet directories. If publication needs per-file verification, it must put the relevant checksums in the manifest; the reader preserves them in the loaded manifest and lineage.
+
+## Daily-clean input snapshot receipt
+
+`a_share.daily_clean_input_snapshot.v1` records a completed, independently copied
+input attempt. It contains `status`, `created_at`, `start_date`, `end_date` and
+`datasets`. Each of daily, adj_factor, daily_basic and limit_status records its
+root-relative `source_path`, `source_manifest_sha256`, observed `rows`, and a
+`files` list of dataset-relative `path`, `bytes` and `sha256`. Per-dataset manifests
+refer to `../snapshot_receipt.json` and describe captured file/row counts. Consumers
+must require a completed receipt before using a new snapshot. The receipt is
+published only after copies and source stability checks pass. Raw writers must
+be serialized by the caller; unrelated mutable latest directories are not an
+immutable lineage contract.
+
+For TuShare trade-date mirrors, `totals.rows`, `totals.symbols`, and `totals.files` describe all stored Parquet partitions under the asset data directory, including retained partitions outside the current request. `run_totals` records rows, symbols, files, and date counters for this invocation; skipped partitions contribute no newly written rows. Query dates describe the request and are not inferred from this inventory. Physical inventory does not certify source completeness: per-date receipts remain authoritative, including incomplete receipts beside retained last-known-good files.
+
+### Institutional trading amount units
+
+TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) reports `buy`,
+`sell`, and `net_buy` in yuan. `top_inst_events` converts these amounts to
+ten-thousand yuan before aggregation and rolling calculations, matching
+`daily.amount / 10` from its thousand-yuan source unit. Field names remain
+stable; assets built before this correction must be rebuilt before using
+their amount features or turnover ratios. Counts and provider rates are unchanged.
+
+## Institutional survey completeness receipts
+
+The `tushare.stk_surv.v1` manifest retains its asset key and event-date partition layout. Its additive `pagination` section records `page_size`, `max_pages`, `complete` and per-date page row counts, observed rows and payload hashes. Per-file `pagination.json` uses `tushare.stk_surv.pagination.v1`, recording the exact query, terminal page counts and SHA256. A short terminal page is required, including an empty follow-up after an exact 400-row page. Resume validates receipt query, payload hash, row count and survey dates; asset totals independently count all physical retained partitions, while `run_totals` counts current writes. Unverified retained partitions keep the asset partial; unreadable inventory records unknown row/symbol totals and fails closed. On failure, completed dates remain preserved and the manifest is partial with the failed date and exception type; provider error text is not persisted. No failed date receives a completeness receipt. Receipts do not certify historical point-in-time availability or provider immutability.
+
+Industry interval manifests bound observed membership dates: `query.start_date` is the minimum effective date, and `query.end_date` is the maximum of all effective dates and nonempty interval end dates. A later open membership start cannot be excluded by an earlier closed interval end. These bounds are derived from payload values, not requested refresh dates or the retrieval vintage.
+
+Statement observation ledgers accept per-security `income`, `balancesheet` and `cashflow` sources alongside their `_vip` batch counterparts, mapped to the same canonical datasets. Both require content checksums, timezone-aware actual observation timestamps and statement identities; visibility remains bounded by the later observation/disclosure date plus the delay. A hash computed during recovery does not certify content at the original download date and cannot justify backdating visibility.

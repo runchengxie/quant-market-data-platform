@@ -199,6 +199,10 @@ uv run --extra dev python scripts/dev/quality_debt.py --skip-ruff --check-baseli
 
 ST 历史增加保守的交易日可用时间，并将 `st_available_from` 传播到 `daily_clean.v2`。对应校验覆盖缺失公告日期、同日公告、下一交易日、receipt 版本和逐行一致性。共享代码质量基线的 `python_lines` 从 109774 调整到 110058。文件数、复杂度、长函数和长行预算未增加。退出条件是 provider 与消费者完成版本化迁移后，评估将重复的独立校验收敛到既有 ST 质量流水线，并在删减等量冗余代码后收紧行数基线。重建历史仍标记 `revision_safe=false`。
 
+研究视图将每日 `st_available_from` 提供给 A 股和 DailyWatch20 消费者，并在缺少字段时失败，确保使用者不会静默退回旧契约。共享 `python_lines` 基线从 110058 调整至 110081，增加内容为 API 字段投影、契约测试和必要文档。文件数、函数复杂度、长函数和长行预算未增加。消费者完成迁移后，可评估将重复的逐行可用性检查集中到共享数据校验。
+
+两个研究读取接口现在校验 `daily_clean` 清单必须声明 v2 schema 和 ST availability contract，避免 DuckDB 将旧分区缺失字段补成空值后被误当成有效数据。共享基线的 `python_files` 从 455 增至 456，`python_lines` 从 110081 增至 110174，新增内容为共享清单校验器及回归测试。复杂度、长函数和长行预算未增加。消费者完成迁移并确认发布资产都使用 v2 后，可评估是否在更高层合并重复契约校验。
+
 ## 下一轮优先级
 
 
@@ -210,3 +214,40 @@ ST 历史增加保守的交易日可用时间，并将 `st_available_from` 传�
 1. `data_providers_client.py::fetch_daily` 已拆成缓存计划、range 读取、symbol 增量补数、merge/write/slice helper。下一轮继续拆分 provider SDK adapters 与 frame pipeline，逐步恢复更严格类型覆盖。
 1. 继续拆 `src/quant_market_data_platform/data_warehouse_*` 子模块中的 pandas-heavy 步骤，评估 per-module strict 覆盖。
 1. RQData 与港股恢复控制面已在 2026-07-26 完全退役，无需恢复演练。
+
+
+## QuantZone configuration size baseline — 2026-10-02
+
+The shared size baseline now records 472 Python files and 112,768 lines after adding the private JSON loader/launcher, optional QuantZone planner/adapter/artifact modules and their tests. This update accounts for the intentional feature addition. Complexity, long-function, large-file and lint-exclusion thresholds remain unchanged. There is no extra size allowance beyond the measured snapshot. Future growth requires an explained feature change or refactoring. Remove the corresponding size allowance if these modules are retired.
+
+### Recovery contract regression inventory (2026-10-02)
+
+The shared Python line inventory increases from 112768 to 112876 for explicit THS cache resume and required nullable ST availability preservation. The increment includes parser, cached-file and full-mirror regressions plus legacy/v2 ST receipt batching coverage. File, long-function, complexity and large-file limits remain unchanged. This is an exact source inventory allowance. Reduce it when these implementations or fixtures are consolidated without losing regression coverage.
+
+### Single-file receipt and ST wrapper inventory (2026-10-02)
+
+Python files increase from 472 to 476, and lines from 112976 to 113231, for hash-bound reference manifests, narrowly recognized ST availability receipts and regressions. Publication integration tests are separated to keep the existing clean test module below 800 lines. Complexity, long-function and large-file limits remain unchanged. This exact inventory allowance can be reduced when receipt helpers or fixtures are consolidated while preserving provenance and failure-path coverage.
+
+### Reference coverage dates (2026-10-02)
+
+Python lines increase from 113231 to 113260 to distinguish immutable version labels from verified source coverage, with a regression. All other limits are unchanged. Reduce this exact allowance if the receipt fixture is consolidated while retaining the different-date case.
+
+### Resumed trade-date mirror inventory (2026-10-02)
+
+Python lines increase from 113260 to 113368 for bounded physical partition inventory and regressions covering six mirror datasets, retained files, empty refreshes and unreadable inventory. The change separates asset totals from per-run counters without changing source completeness or request dates. All other budgets remain unchanged. Reduce this exact allowance if inventory or fixtures are consolidated while preserving resume and incomplete-source coverage.
+
+### Institutional survey pagination inventory (2026-10-02)
+
+Python files increase from 476 to 478, and lines from 113368 to 113832 (464 lines), for the endpoint-specific bounded survey pagination adapter and failure/resume regressions. This exact measured allowance covers the documented 400-row cap, terminal-page proofs, hash-bound retained partitions, independent physical totals and partial-source handling. The existing generic event mirror is split at dispatch to preserve the long-function budget. No complexity, long-function, large-file, long-line or exclusion limits increase. Reduce this allowance when pagination or fixtures are consolidated while preserving ignored-offset, terminal-cap and stale-receipt coverage.
+
+机构调研分页新增专用适配器及失败、恢复回归测试，Python 文件数从 476 调整至 478，行数从 113368 调整至 113832，增加 464 行，额度与实测清单一致。通用事件镜像在分派处拆分，保持长函数预算。复杂度、长函数、大文件、长行和排除范围限制均未提高。未来合并分页实现或测试 fixture 时，应在保留忽略 offset、末页限额及陈旧凭证回归覆盖的前提下收紧对应额度。
+
+### Industry interval bounds regression inventory (2026-10-02)
+
+Python lines increase from 113890 to 113929 (39 lines) for the maximum observed interval-bound calculation and three regression cases: a later open start, all-open memberships, and a later explicit closed boundary. File, complexity, long-function, long-line, large-file and exclusion limits are unchanged. This is an exact measured inventory allowance. Reduce it if fixtures are consolidated while preserving those three boundary cases.
+
+行业区间范围修复和三种边界回归测试增加 39 行，Python 行数从 113890 调整至 113929，与实测清单一致。文件数、复杂度、长函数、长行、大文件及排除范围限制均未提高。未来合并 fixture 时，应在保留较晚开放区间、全部开放区间和较晚已关闭区间三种边界覆盖的前提下收紧该额度。
+
+### Per-security statement observations (2026-10-02)
+
+Python lines increase from 114264 to 114313 (+49) for the non-VIP source mapping and three parameterized regressions that retain checksum and observation-visibility guards. All other debt and complexity limits remain unchanged. Remove this allowance when equivalent coverage is consolidated with fewer lines.

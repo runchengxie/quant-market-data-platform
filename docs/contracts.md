@@ -181,6 +181,12 @@ marketdata contract inspect \
 消费者只有在 `st_available_from` 存在且不晚于决策日时，才能将正向 ST 状态用于该决策，
 可用时间未知时必须按不具备资格处理。
 
+公开读取接口 `load_a_share_research_daily` 和 `load_daily_watch20_daily` 会在每日记录中提供
+`is_st` 与 `st_available_from`。通用 A 股研究视图还提供 `is_suspended` 和 `list_date`。
+两个接口都要求已完成的 `tushare.a_share.daily_clean.v2` 清单及
+`daily_clean.st_available_from.v1` 契约，旧版资产会被拒绝。历史决策必须使用对应日期的
+ST 字段，不能用当前 instruments 元数据替代。
+
 `audit-a-share-st-event-timing` 读取带下载回执的 `st` 事件源及重建 ST 历史，审计 `ann_date=trade_date` 的行。输出 `st_event_timing_audit.parquet` 和哈希回执。状态为 `prior_dated_st_event`、`same_day_time_unknown`、`later_event_date_conflict` 或 `no_active_prior_event`。冲突候选仅限同一股票、之后 10 个自然日内生效的 ST 事件，仍需人工核对。该审计只比较日期，不修改已发布的 `is_st`，也不将 `st` 事件视为完整的每日 ST 状态。
 
 `download-a-share-reference` 下载的原始参考数据会在同目录写入同名 `*.receipt.json`。回执包含查询区间、行数、质量状态和文件 SHA-256。原始回执只证明下载文件完整，不证明公告日内的可用时刻。发布流程仍需重新校验来源哈希。
@@ -267,3 +273,51 @@ print(pit.provenance_dict())
 * 构造资产引用不会遍历大型 Parquet 目录。若 manifest 需要覆盖逐文件数据校验，应由
   发布流程把对应 checksum 写入 manifest，读取器会将这些字段原样保留在完整 manifest
   和 lineage 中。
+
+## Daily-clean input snapshot receipt
+
+`a_share.daily_clean_input_snapshot.v1` records a completed, independently copied
+input attempt. It contains `status`, `created_at`, `start_date`, `end_date` and
+`datasets`. Each of daily, adj_factor, daily_basic and limit_status records its
+root-relative `source_path`, `source_manifest_sha256`, observed `rows`, and a
+`files` list of dataset-relative `path`, `bytes` and `sha256`. Per-dataset manifests
+refer to `../snapshot_receipt.json` and describe captured file/row counts. Consumers
+must require a completed receipt before using a new snapshot. The receipt is
+published only after copies and source stability checks pass. Raw writers must
+be serialized by the caller; unrelated mutable latest directories are not an
+immutable lineage contract.
+
+### Statement observations v1
+
+The optional `statement-observations.v1` ledger preserves raw statement fields, `dataset`, `observed_at`, `source_sha256`, `source_manifest_sha256`, and `available_from`. Visibility is the later of the provider disclosure date and actual retrieval date in Asia/Shanghai, plus at least one calendar day. This is a conservative observation boundary, not an exchange execution calendar. Consumers must enforce it before selecting observations and must explicitly choose report semantics; type `4` and `5` are not interchangeable with standard type `1` statements. Historical revision completeness remains false. The ledger does not publish a current alias or authorize frozen holdout evaluation.
+
+The shared quality baseline adds two small Python files and 277 lines for the statement ledger and its contract tests. Structural debt thresholds (large functions, large files, complexity exclusions) are unchanged. This growth is retained while the observation contract is supported; remove the module and tests together if that contract is retired.
+
+Statement observation reads accept an optional `dataset` (`income`, `balancesheet`, or
+`cashflow`) and non-empty, unique `columns` projection. Checksums remain mandatory
+for every partition, including excluded datasets. Visibility and report-type fields
+are loaded internally for filtering; projected results contain only requested fields.
+This limits retained columns when consuming multiple observed vintages. It does not
+select a financial revision or establish historical revision completeness.
+
+The maintainability baseline accounts for 100 net Python lines added by statement
+projection and its schema, visibility and integrity tests. Other debt budgets are
+unchanged; future projection growth must pass the existing ratchet or replace code.
+
+TuShare 按交易日镜像的 `totals.rows`、`totals.symbols` 和 `totals.files` 表示资产 data 目录中全部已存储 Parquet 分区，包括本次请求范围外保留的分区。`run_totals` 单独记录本次运行写入的行数、标的数、文件数和请求日期计数。跳过分区不计入本次新写行数。query 日期仍表示请求范围，不由物理盘点推定。物理盘点不证明来源完整性。逐日 receipt 仍为准，保留的 last-known-good 文件可以同时对应不完整回执。
+
+### 龙虎榜机构成交金额单位
+
+TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
+`sell` 和 `net_buy` 单位为元。`top_inst_events` 在聚合和滚动计算前将金额
+除以 10000，换算为万元，与原单位为千元的 `daily.amount / 10` 一致。
+字段名保持稳定。本次修正前构建的资产须重建后再使用金额特征或成交额比率。
+事件计数和数据源提供的比例不变。
+
+## 机构调研完整性凭证
+
+`tushare.stk_surv.v1` 保持资产键和事件日期分区目录不变，新增的 `pagination` 节记录 `page_size`、`max_pages`、`complete`、每天的各页行数、实际行数及数据哈希。分区旁的 `pagination.json` 使用 `tushare.stk_surv.pagination.v1`，记录准确查询、末页行数和 SHA256。末页必须不足 400 行，正好 400 行时仍需后续空页。恢复时校验凭证查询、数据哈希、行数及调研日期，资产总量独立统计全部保留的实际分区，`run_totals` 统计本次写入。未验证的保留分区使资产保持 partial，清单不可读时将行数及标的数记录为未知并失败。失败时保留已完成日期，清单标记 partial 并记录失败日期及异常类型，不持久化 provider 异常文本。失败日期不获得完整性凭证。这些凭证不证明历史时点可用性或数据源不可修订。
+
+行业区间清单界定实际观察到的成员日期：`query.start_date` 是最早生效日期，`query.end_date` 是全部生效日期和非空区间结束日期的最大值。较早的已关闭区间结束日期不能排除较晚的开放成员区间。这些范围由数据值决定，不采用请求刷新日期或获取版本日期。
+
+财报观测账本接受 `income`、`balancesheet`、`cashflow` 单证券来源和对应的 `_vip` 批量来源，映射到相同的标准数据集。两种来源均要求内容哈希、带时区的真实观测时间和财报身份字段。可见日期仍不得早于实际观测日和披露日的较晚者加延迟。恢复时补算的哈希不证明原始下载日期的内容，不能据此倒填历史可见日期。

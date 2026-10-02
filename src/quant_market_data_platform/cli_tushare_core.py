@@ -160,6 +160,7 @@ def _handle_ths_member(args: argparse.Namespace) -> int:
     summary = mirror_tushare_a_share_ths_member(
         ThsMemberMirrorOptions(
             out_dir=args.out_dir,
+            skip_existing=getattr(args, "skip_existing", False),
             fields=args.fields,
             token_env=args.token_env,
             api_url=args.api_url,

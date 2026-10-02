@@ -209,3 +209,14 @@ uv run --extra dev python scripts/dev/maintainability_metrics.py --check-baselin
 `quant_market_data_platform.cli.build_parser()` 可达的所有公开叶子命令都会被治理测试扫描。
 新增、移除或重命名 `marketdata` 命令时，必须同步更新 `docs/` 下用户可见文档（包含命令示例或
 `--help` 文本片段），否则 `test_public_marketdata_cli_commands_are_documented` 将阻塞本地 full gate。
+
+## 生命周期捕获的 baseline 更新（2026-10-02）
+
+共享检查的文件和行数清单从 456 个文件、110,174 行增至 459 个文件、110,790 行。
+增加内容为保留引用扫描、独立输入捕获模块及行为测试。长行、复杂度、函数大小和文件大小
+上限保持不变。只有完整测试、原有结构门禁和独立审查均通过才能接受本次增量。
+以后删除或合并这些实现时，应同步降低文件和行数清单，本次调整不豁免复杂度要求。
+
+## QuantZone 直连选项清单（2026-10-03）
+
+CLI 直连选项及环境恢复测试增加 83 行 Python（114,313 → 114,396），未增加文件，也未调整复杂度、长行或函数/文件大小预算。删除该选项或合并相关测试时必须相应降低清单基线。

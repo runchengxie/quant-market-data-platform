@@ -28,6 +28,7 @@ def _add_tushare_fundamentals_plan_parsers(subparsers: argparse._SubParsersActio
     plan.add_argument("--entitlement-mode", choices=ENTITLEMENT_MODES, default="vip_batch")
     plan.add_argument("--symbol", dest="symbols", action="append")
     plan.add_argument("--symbols-file")
+    plan.add_argument("--report-type", dest="report_types", action="append", default=[])
 
     download = subparsers.add_parser(
         "download-a-share-fundamentals",
@@ -40,6 +41,7 @@ def _add_tushare_fundamentals_plan_parsers(subparsers: argparse._SubParsersActio
     download.add_argument("--entitlement-mode", choices=ENTITLEMENT_MODES, default="vip_batch")
     download.add_argument("--symbol", dest="symbols", action="append")
     download.add_argument("--symbols-file")
+    download.add_argument("--report-type", dest="report_types", action="append", default=[])
     download.add_argument("--run-id")
     download.add_argument("--retry-attempts", type=int, default=3)
     download.add_argument("--retry-backoff-seconds", type=float, default=0.0)
@@ -99,6 +101,15 @@ def _add_tushare_fundamentals_state_parsers(subparsers: argparse._SubParsersActi
 
 
 def _add_tushare_fundamentals_asset_parsers(subparsers: argparse._SubParsersAction) -> None:
+    ledger = subparsers.add_parser(
+        "build-a-share-statement-version-ledger",
+        help="Retain verified financial statement observations with strict visibility bounds.",
+    )
+    ledger.add_argument(
+        "--source-manifest", dest="source_manifests", action="append", required=True
+    )
+    ledger.add_argument("--out-dir", required=True)
+    ledger.add_argument("--available-delay-days", type=int, default=1)
     normalize = subparsers.add_parser(
         "normalize-a-share-fundamentals",
         help="Build normalized TuShare A 股基本面 assets while preserving raw provenance.",

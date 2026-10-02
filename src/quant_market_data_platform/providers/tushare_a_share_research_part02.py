@@ -144,7 +144,10 @@ def build_a_share_industry_changes(  # noqa: PLR0913
         "query": {
             "start_date": str(output["effective_date"].min()),
             "end_date": str(
-                effective_end.max() if not effective_end.empty else output["effective_date"].max()
+                max(
+                    output["effective_date"].max(),
+                    effective_end.max() if not effective_end.empty else "",
+                )
             ),
         },
         "semantics": {

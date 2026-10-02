@@ -352,7 +352,10 @@ def test_dc_concept_cons_empty_refresh_preserves_last_known_good_partition(tmp_p
     output = tmp_path / "dc_concept_cons"
     part_path = output / "data" / "trade_date=20260522" / "part.parquet"
     part_path.parent.mkdir(parents=True)
-    part_path.write_text("stale", encoding="utf-8")
+    pd.DataFrame({"symbol": ["000001.SZ"], "trade_date": ["20260522"]}).to_parquet(
+        part_path, index=False
+    )
+    prior_bytes = part_path.read_bytes()
 
     manifest = tushare_a_share.mirror_a_share_dc_concept_cons(
         out_dir=output,
@@ -361,7 +364,9 @@ def test_dc_concept_cons_empty_refresh_preserves_last_known_good_partition(tmp_p
         client=EmptyClient(),
     )
 
-    assert part_path.read_text(encoding="utf-8") == "stale"
+    assert part_path.read_bytes() == prior_bytes
+    assert manifest["totals"]["rows"] == 1
+    assert manifest["run_totals"]["rows"] == 0
     assert manifest["complete"] is False
     written = yaml.safe_load((output / "manifest.yml").read_text(encoding="utf-8"))
     assert written["completeness"]["trade_dates"]["20260522"]["complete"] is False
@@ -397,3 +402,81 @@ def test_auction_mirrors_use_query_fallback_and_are_exposed(tmp_path):
     assert parsed.tushare_command == "mirror-a-share-stk-auction-open"
     parsed = parser.parse_args(["tushare", "mirror-a-share-stk-auction-close", *required])
     assert parsed.tushare_command == "mirror-a-share-stk-auction-close"
+
+
+@pytest.mark.parametrize(
+    "dataset",
+    ["ths_hot", "dc_concept", "dc_concept_cons", "kpl_list", "kpl_concept_cons", "limit_step"],
+)
+def test_trade_date_resume_reports_stored_totals_and_separate_run_counts(tmp_path, dataset):
+    pd = pytest.importorskip("pandas")
+    out = tmp_path / dataset
+    for date, symbols in (("20260521", ["000001.SZ", "000002.SZ"]), ("20260522", ["000001.SZ"])):
+        part = out / "data" / f"trade_date={date}" / "part.parquet"
+        part.parent.mkdir(parents=True)
+        pd.DataFrame({"symbol": symbols, "trade_date": date}).to_parquet(part, index=False)
+    client = ConceptConsClient(pd)
+    manifest = getattr(tushare_a_share, f"mirror_a_share_{dataset}")(
+        out_dir=out,
+        start_date="20260522",
+        end_date="20260522",
+        client=client,
+        skip_existing=True,
+    )
+    assert client.query_calls == []
+    assert manifest["totals"]["rows"] == 3
+    assert manifest["totals"]["files"] == 2
+    assert manifest["totals"]["symbols"] == 2
+    assert manifest["run_totals"]["rows"] == 0
+    assert manifest["run_totals"]["files"] == 0
+    assert manifest["run_totals"]["symbols"] == 0
+    assert manifest["run_totals"]["trade_dates_skipped"] == 1
+    assert manifest["query"]["start_date"] == "20260522"
+    assert manifest["query"]["end_date"] == "20260522"
+    if dataset == "dc_concept_cons":
+        assert manifest["complete"] is False
+        assert (
+            manifest["completeness"]["trade_dates"]["20260522"]["source"]
+            == "skipped_existing_unverified"
+        )
+
+
+def test_trade_date_resume_counts_retained_and_new_partitions(tmp_path):
+    pd = pytest.importorskip("pandas")
+    out = tmp_path / "kpl_concept_cons"
+    part = out / "data/trade_date=20260521/part.parquet"
+    part.parent.mkdir(parents=True)
+    pd.DataFrame({"ts_code": ["000002.SZ"], "trade_date": ["20260521"]}).to_parquet(
+        part, index=False
+    )
+    manifest = tushare_a_share.mirror_a_share_kpl_concept_cons(
+        out_dir=out,
+        start_date="20260522",
+        end_date="20260522",
+        client=ConceptConsClient(pd),
+        skip_existing=True,
+    )
+    assert manifest["totals"]["rows"] == 2
+    assert manifest["totals"]["symbols"] == 2
+    assert manifest["totals"]["files"] == 2
+    assert manifest["run_totals"]["rows"] == 1
+    assert manifest["run_totals"]["files"] == 1
+
+
+def test_trade_date_resume_rejects_unreadable_inventory_before_manifest_write(tmp_path):
+    pd = pytest.importorskip("pandas")
+    out = tmp_path / "kpl_concept_cons"
+    part = out / "data/trade_date=20260522/part.parquet"
+    part.parent.mkdir(parents=True)
+    part.write_bytes(b"corrupt")
+    manifest = out / "manifest.yml"
+    manifest.write_text("status: prior\n")
+    with pytest.raises(pytest.importorskip("pyarrow").ArrowInvalid, match="Parquet file size"):
+        tushare_a_share.mirror_a_share_kpl_concept_cons(
+            out_dir=out,
+            start_date="20260522",
+            end_date="20260522",
+            client=ConceptConsClient(pd),
+            skip_existing=True,
+        )
+    assert manifest.read_text() == "status: prior\n"

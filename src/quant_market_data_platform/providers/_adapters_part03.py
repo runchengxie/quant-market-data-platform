@@ -62,6 +62,14 @@ def mirror_a_share_date_range_event_dataset(
 ) -> dict[str, Any]:
     """Mirror TuShare event-style APIs by calendar day."""
     options = _coerce_options(options, DateRangeEventMirrorOptions, kwargs)
+    if options.dataset == "stk_surv" and options.api_name == "stk_surv":
+        from .tushare_stk_surv_pagination import mirror_stk_surv
+
+        return mirror_stk_surv(options, runtime=_tushare_runtime)
+    return _mirror_date_range_event_dataset_impl(options)
+
+
+def _mirror_date_range_event_dataset_impl(options: DateRangeEventMirrorOptions) -> dict[str, Any]:
     start = _validate_date(options.start_date)
     end = _validate_date(options.end_date)
     pro, policy, resolved_api_url = _tushare_runtime(

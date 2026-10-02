@@ -47,7 +47,9 @@ def _load_st_keys(
         if not path.is_file() or not receipt_path.is_file():
             raise ValueError("dated ST history source or receipt is missing")
         receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-        if receipt.get("schema_version") != "market-data-platform.reconstructed-st-history.v2":
+        from quant_market_data_platform.st_history_contract import has_st_availability_contract
+
+        if not has_st_availability_contract(receipt):
             raise ValueError("dated ST history receipt does not include the availability contract")
         if (
             receipt.get("quality_status") != "complete"

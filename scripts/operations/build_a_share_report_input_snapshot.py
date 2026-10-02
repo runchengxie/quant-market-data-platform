@@ -61,7 +61,12 @@ def _select_version(dataset_root: Path, target: date) -> tuple[Path, dict[str, A
     candidates: list[tuple[str, str, Path, dict[str, Any]]] = []
     if dataset_root.is_dir():
         for path in sorted(dataset_root.iterdir()):
-            if not path.is_dir() or path.is_symlink() or "quarantine" in path.name:
+            if (
+                not path.is_dir()
+                or path.is_symlink()
+                or "quarantine" in path.name
+                or "latest" in path.name.split("_")
+            ):
                 continue
             payload = _manifest(path)
             if payload is None or payload.get("status") not in {None, "completed"}:

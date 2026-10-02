@@ -424,11 +424,11 @@ def test_build_and_validate_a_share_top_inst_events_asset(tmp_path):
     first_part = data[data["trade_date"] == "20260420"]
     first = first_part[first_part["symbol"] == "600519.SH"].iloc[0]
     assert first["top_inst_event_count"] == 2.0
-    assert first["top_inst_buy"] == pytest.approx(100.0)
-    assert first["top_inst_sell"] == pytest.approx(70.0)
-    assert first["top_inst_net_buy"] == pytest.approx(30.0)
+    assert first["top_inst_buy"] == pytest.approx(100.0 / 10000.0)
+    assert first["top_inst_sell"] == pytest.approx(70.0 / 10000.0)
+    assert first["top_inst_net_buy"] == pytest.approx(30.0 / 10000.0)
     assert first["top_inst_exalter_count"] == 2
-    assert first["top_inst_net_buy_to_amount"] == pytest.approx(30.0 / 1000.0)
+    assert first["top_inst_net_buy_to_amount"] == pytest.approx(30.0 / 10000.0 / 1000.0)
 
     middle = data[data["trade_date"] == "20260421"]
     middle_maotai = middle[middle["symbol"] == "600519.SH"].iloc[0]
@@ -438,7 +438,7 @@ def test_build_and_validate_a_share_top_inst_events_asset(tmp_path):
 
     latest = data[data["trade_date"] == "20260422"]
     latest_maotai = latest[latest["symbol"] == "600519.SH"].iloc[0]
-    assert latest_maotai["top_inst_net_buy_3d"] == pytest.approx(50.0)
+    assert latest_maotai["top_inst_net_buy_3d"] == pytest.approx(50.0 / 10000.0)
     assert latest_maotai["top_inst_buy_count_3d"] == pytest.approx(2.0)
     assert latest_maotai["top_inst_sell_count_3d"] == pytest.approx(2.0)
     assert latest_maotai["top_inst_days_since_event"] == 0.0

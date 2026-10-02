@@ -64,7 +64,7 @@ marketdata governance plan-retention \
   --latest-link "$DATA_PLATFORM_ROOT/metadata/retention/governance-latest.tsv"
 ```
 
-The command scans assets and writes a report. It does not delete, move, or rename data. The existing systemd retention task continues to use its narrower policy, with separate schemas: governance output uses `governance-latest.tsv`, the scheduled task uses `scheduled-latest.tsv`, and `latest.tsv` remains a legacy compatibility entry point that may contain `action=delete`. Lifecycle review uses `governance-latest.tsv` only.
+The command scans assets and writes a report. It does not delete, move, or rename data. The existing systemd retention task now refuses `apply`; its dry run uses the narrower date policy plus governance protections, with separate schemas: governance output uses `governance-latest.tsv`, the scheduled task uses `scheduled-latest.tsv`, and `latest.tsv` remains a legacy compatibility entry point that may contain `action=delete`. Lifecycle review uses `governance-latest.tsv` only.
 
 Timestamped reports are not overwritten by default. `--latest-link` atomically replaces an existing symlink and rejects a regular file with the same name. Publish each run under a new timestamped filename.
 
@@ -158,3 +158,41 @@ Before any cleanup, verify each condition:
 7. Explicit human approval has been recorded.
 
 The current implementation stops at the dry-run stage.
+
+## Retained references and input captures
+
+Retention plans scan retained text evidence and cross-tree symlinks without
+following symlinks. A reference to a version's basename protects that version,
+including historical evidence using a former root. Evidence inside the candidate
+itself is not an external reference. The generated retention and lifecycle
+inventories are excluded from the reference scan; current contracts, snapshot
+receipts and reports are not. An unreadable or oversized text record makes
+unreferenced candidates `review`, never permission to delete.
+
+`symlinks`, `directories` and `metadata_allocated_bytes` are appended to the TSV.
+The existing byte and inode columns still measure regular payload files only.
+Directory and link metadata do not include target payload bytes and are not a
+promise of immediately reclaimable space.
+
+Scheduled `apply` now fails closed before changing data or writing reports.
+The scheduled dry run only identifies candidates also accepted by governance.
+A reviewed retirement must establish terminal receipts, validated successors,
+no active locks or writers, and no retained current, rollback or report
+references. Date age and an apparently empty regular-file count are insufficient.
+
+For new daily-clean input captures, serialize raw writers and run:
+
+```bash
+marketdata governance snapshot-clean-inputs \
+  --artifacts-root "$DATA_PLATFORM_ROOT" \
+  --start-date 20150101 --end-date 20260930 \
+  --out-dir "$DATA_PLATFORM_ROOT/assets/tushare/a_share/daily_clean_inputs/attempt-unique-id"
+```
+
+This command copies the four raw datasets into a new date-filtered directory.
+It uses independent inodes (reflinks where supported, ordinary copies otherwise),
+checks source stability and per-file SHA-256 hashes, and publishes a completed
+`snapshot_receipt.json` last. An existing output is never overwritten. A failed
+attempt has no completed receipt and remains available for inspection. Old input
+trees are retained as historical evidence; capturing their current link targets
+does not reconstruct the bytes used by a previous run.
