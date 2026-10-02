@@ -107,14 +107,13 @@ marketdata governance plan-retention \
   --latest-link "$DATA_PLATFORM_ROOT/metadata/retention/governance-latest.tsv"
 ```
 
-命令只读扫描资产并写报告，不提供删除、移动或重命名动作。现有 systemd retention 定时任务继续运行
-窄策略。窄策略脚本现已由本仓库维护，并通过统一 renderer 注入 canonical data root 和本仓库的
+命令只读扫描资产并写报告，不提供删除、移动或重命名动作。现有 systemd retention 入口的 `apply` 直接拒绝执行。dry-run 使用日期窄策略与治理保护。窄策略脚本现已由本仓库维护，并通过统一 renderer 注入 canonical data root 和本仓库的
 `marketdata` CLI。治理规划与窄策略报告分别写入 `governance-latest.tsv` 和
 `scheduled-latest.tsv`，不应将两种 schema 混用。
 
 时间戳报告默认不可覆盖，`--latest-link` 也只会原子替换已有软链接。同名普通文件会触发拒绝。每次发布应使用新的时间戳文件名。
 
-`governance-latest.tsv` 指向新版 dry-run。现有定时任务另写 `scheduled-latest.tsv`。`latest.tsv` 继续作为旧 schema 的兼容入口，定时任务完成后可能包含 `action=delete`。生命周期复核只使用 `governance-latest.tsv`。
+`governance-latest.tsv` 指向新版 dry-run。现有定时任务另写 `scheduled-latest.tsv`。`latest.tsv` 继续作为旧 schema 的兼容入口，旧报告可能包含 `action=delete`，新入口不会执行删除。生命周期复核只使用 `governance-latest.tsv`。
 
 ### retention systemd 定时任务
 
@@ -132,7 +131,7 @@ uv run python scripts/operations/render_tushare_minute_campaign_units.py \
   --output-dir "$HOME/.config/systemd/user"
 
 systemctl --user daemon-reload
-systemctl --user enable --now market-data-platform-retention.timer
+# apply 已禁用，不启用 timer 进行自动清理。
 ```
 
 正式迁移前应先执行 `market_data_platform_retention.sh dry-run`，并确认已有
@@ -262,3 +261,29 @@ manifest 与 rollback 证据成组归档。报告不会自动处理这些对象�
 1. 获得明确人工批准。
 
 当前实现停在 dry-run 阶段。
+
+## 保留引用与独立输入
+
+治理规划会扫描保留的 JSON、YAML、CSV、TSV、HTML、XML、日志和 Markdown 等文本证据，
+以及跨目录链接。版本目录名出现在外部证据中时保留该版本，因此旧根路径的历史引用也会生效。
+候选自身的证据、生成的 retention 报告和 lifecycle 清单不作为外部引用。
+证据无法读取或超过扫描上限时，未确认候选降为 review。
+
+TSV 追加 `symlinks`、`directories` 与 `metadata_allocated_bytes`。原有字节和 inode 列
+仍只计算普通文件，不把链接目标的数据重复计算。元数据量不等于承诺可回收容量。
+
+定时入口的 `apply` 在写报告或修改数据前失败。dry-run 仅接受治理规划也接受的候选。
+退役前必须证明 receipt 已终结、后继版本已验证、无锁和写入任务、无当前或回滚及历史报告引用。
+
+串行化原始数据写入后，可用新的 owner CLI 捕获四类原始输入：
+
+```bash
+marketdata governance snapshot-clean-inputs \
+  --artifacts-root "$DATA_PLATFORM_ROOT" \
+  --start-date 20150101 --end-date 20260930 \
+  --out-dir "$DATA_PLATFORM_ROOT/assets/tushare/a_share/daily_clean_inputs/attempt-unique-id"
+```
+
+捕获使用独立 inode，优先采用 reflink，否则复制普通文件。每个文件与来源 manifest
+均记录 SHA-256，并在完成前重新核对来源。已有输出不会被覆盖，完成 receipt 最后原子发布。
+失败尝试保留用于检查，旧输入树继续作为历史证据。复制旧链接的当前目标无法重建过去运行的字节。

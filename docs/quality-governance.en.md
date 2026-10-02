@@ -78,3 +78,13 @@ uv run --extra dev python scripts/dev/architecture_governance.py --check
 `--complexity` alone reports Ruff rules `C90`, `PLR0911`, `PLR0912`, `PLR0913`, and `PLR0915`. The full local gate also passes `--check-ratchet` to prevent complexity debt from exceeding the accepted baseline. `ty` directly blocks type diagnostics, so there is no separate type-debt inventory.
 
 The public workflows run snapshot-boundary checks, shared quality ratchets, Ruff, pytest, and `pip-audit` on pull requests and `main`. Documentation changes also run strict MkDocs builds and publish Pages from `main`. Pull-request CI is a merge gate. Before a release, run coverage for the affected module.
+
+## Lifecycle capture baseline update (2026-10-02)
+
+The shared ratchet's file/line inventory increased from 456 files / 110,174
+lines to 459 files / 110,790 lines for the new reference scanner, independent
+input capture module and its behavior tests. Existing long-line, complexity,
+function-size and file-size ceilings are unchanged. Acceptance requires the
+complete test suite, the unchanged structural budgets and independent review
+to pass. Future removal or consolidation of this functionality must lower the
+file/line inventory accordingly; this adjustment grants no complexity waiver.
