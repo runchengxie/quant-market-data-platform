@@ -115,3 +115,7 @@ marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG"
 `marketdata tushare build-a-share-statement-version-ledger --source-manifest <raw-manifest.yml> --source-manifest <supplement-receipt.json> --out-dir <new-external-directory>` retains verified financial statement observations in separate Parquet partitions. Existing output directories are never replaced. Source manifests must be completed and contain checksummed files with time zone aware retrieval timestamps.
 
 The raw download and archive commands accept repeated `--report-type` options (for example `1`, `4`, `5`). Omitting this option preserves the provider default. Normalized standard statements continue to use type `1`; other report types are retained for version audits.
+
+### 同花顺成分续传
+
+`marketdata tushare mirror-a-share-ths-member --out-dir <output> --skip-existing` 显式复用已验证的概念缓存分区，补取剩余概念。默认拒绝非空输出目录。续传必须使用相同字段和数据源配置。概念成分仅代表获取时的快照。

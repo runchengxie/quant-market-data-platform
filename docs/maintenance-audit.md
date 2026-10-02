@@ -219,3 +219,7 @@ ST 历史增加保守的交易日可用时间，并将 `st_available_from` 传�
 ## QuantZone configuration size baseline — 2026-10-02
 
 The shared size baseline now records 472 Python files and 112,768 lines after adding the private JSON loader/launcher, optional QuantZone planner/adapter/artifact modules and their tests. This update accounts for the intentional feature addition. Complexity, long-function, large-file and lint-exclusion thresholds remain unchanged. There is no extra size allowance beyond the measured snapshot. Future growth requires an explained feature change or refactoring. Remove the corresponding size allowance if these modules are retired.
+
+### Recovery contract regression inventory (2026-10-02)
+
+The shared Python line inventory increases from 112768 to 112876 for explicit THS cache resume and required nullable ST availability preservation. The increment includes parser, cached-file and full-mirror regressions plus legacy/v2 ST receipt batching coverage. File, long-function, complexity and large-file limits remain unchanged. This is an exact source inventory allowance. Reduce it when these implementations or fixtures are consolidated without losing regression coverage.

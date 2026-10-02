@@ -280,6 +280,7 @@ def _add_tushare_hotspot_mirror_parsers(
     )
     ths_member.add_argument("--out-dir", required=True)
     ths_member.add_argument("--fields", nargs="+")
+    ths_member.add_argument("--skip-existing", action="store_true")
     ths_member.add_argument("--request-interval-seconds", type=float, default=0.1)
     add_token_env_argument(ths_member)
     add_provider_runtime_arguments(ths_member)
