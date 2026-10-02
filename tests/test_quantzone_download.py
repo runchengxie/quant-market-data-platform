@@ -267,3 +267,20 @@ def test_wire_queries_use_verified_bare_stock_identifiers(tmp_path: Path) -> Non
     client = DownloadClient()
     api.run_factor_download(batch_plan(tmp_path), client)
     assert client.factor_queries[0]["ukeys"] == ["000001", "600519"]
+
+
+def test_run_archives_secret_free_job_snapshot_and_checks_it_before_resume(tmp_path: Path) -> None:
+    api = importlib.import_module("quant_market_data_platform.quantzone_download")
+    plan = batch_plan(tmp_path)
+    run = api.run_factor_download(plan, DownloadClient())
+    snapshot = json.loads((run / "job.json").read_text())
+    assert snapshot == plan.snapshot
+    receipt = json.loads((run / "receipt.json").read_text())
+    assert receipt["job_snapshot"]["path"] == "job.json"
+    assert receipt["job_snapshot"]["sha256"]
+    assert not any(key.startswith(("TUSHARE_", "QUANTZONE_")) for key in snapshot)
+    (run / "job.json").write_text("{}")
+    client = DownloadClient()
+    with pytest.raises(api.ArtifactError, match="snapshot"):
+        api.run_factor_download(plan, client, resume=run)
+    assert client.factor_queries == [] and client.closed

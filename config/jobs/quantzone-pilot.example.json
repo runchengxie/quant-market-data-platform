@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "quantzone": {
+    "query": {
+      "ukeys": [
+        "000001.XSHE",
+        "600519.XSHG"
+      ],
+      "factor": [
+        "trend_dominance_factor"
+      ],
+      "start_date": "2024-01-02",
+      "end_date": "2024-01-05"
+    },
+    "batch": {
+      "calendar_days": 7,
+      "max_symbols": 100,
+      "max_factors": 20
+    },
+    "retry": {
+      "max_attempts": 1
+    },
+    "output": {
+      "relative_directory": "research/quantzone-pilot",
+      "format": "parquet",
+      "immutable_runs": true
+    },
+    "evidence": {
+      "pit_availability": "unknown",
+      "revision_safety": "unknown",
+      "public_redistribution": "not_authorized"
+    }
+  }
+}

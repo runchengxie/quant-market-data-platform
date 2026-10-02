@@ -98,3 +98,7 @@ The recorded next steps are to split the daily executor and checkpoint/receipt f
 ## QuantZone configuration size baseline — 2026-10-02
 
 The shared size baseline now records 472 Python files and 112,768 lines after adding the private JSON loader/launcher, optional QuantZone planner/adapter/artifact modules and their tests. This update accounts for the intentional feature addition. Complexity, long-function, large-file and lint-exclusion thresholds remain unchanged. There is no extra size allowance beyond the measured snapshot. Future growth requires an explained feature change or refactoring. Remove the corresponding size allowance if these modules are retired.
+
+## Configuration source split size baseline — 2026-10-02
+
+The shared size baseline accounts for the configuration-source module, its regression tests, and job-snapshot verification. Only the exact measured Python file and line totals change; all complexity, debt, long-function and large-file thresholds remain unchanged. Recalculate the size baseline if the legacy loader or split-source modules are retired or consolidated. This allowance does not authorize unrelated growth.

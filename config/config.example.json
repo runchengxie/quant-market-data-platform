@@ -1,48 +1,27 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "environment": {
     "DATA_PLATFORM_ROOT": "${HOME}/data/quant/quant-market-data-platform",
-    "TUSHARE_TOKEN": null,
-    "TUSHARE_TOKEN_2": null,
     "TUSHARE_API_URL_2": null,
     "TUSHARE_MINUTE_PROVIDER_NO_DATA_EXCEPTIONS": null,
-    "QUANTZONE_ACCESS_KEY": null,
-    "QUANTZONE_SIGN_SECRET": null,
     "QUANTZONE_BASE_URL": "https://api.quantzone.tech"
   },
-  "downloads": {
+  "credentials": {
+    "path": "${HOME}/.config/quant/shared/api_keys.json",
+    "keys": {
+      "TUSHARE_TOKEN": "tushare_token",
+      "TUSHARE_TOKEN_2": "tushare_token_2",
+      "QUANTZONE_ACCESS_KEY": "quantzone_access_key",
+      "QUANTZONE_SIGN_SECRET": "quantzone_sign_secret"
+    }
+  },
+  "providers": {
     "quantzone": {
       "sdk_version": "0.10.0",
-      "timeout_seconds": 60,
-      "query": {
-        "ukeys": [
-          "000001.XSHE",
-          "600519.XSHG"
-        ],
-        "factor": [
-          "trend_dominance_factor"
-        ],
-        "start_date": "2024-01-02",
-        "end_date": "2024-01-05"
-      },
-      "batch": {
-        "calendar_days": 7,
-        "max_symbols": 100,
-        "max_factors": 20
-      },
-      "retry": {
-        "max_attempts": 1
-      },
-      "output": {
-        "relative_directory": "research/quantzone-pilot",
-        "format": "parquet",
-        "immutable_runs": true
-      },
-      "evidence": {
-        "pit_availability": "unknown",
-        "revision_safety": "unknown",
-        "public_redistribution": "not_authorized"
-      }
+      "timeout_seconds": 60
     }
+  },
+  "jobs": {
+    "quantzone": "jobs/quantzone-pilot.json"
   }
 }

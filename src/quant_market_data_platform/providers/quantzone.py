@@ -49,7 +49,9 @@ def safe_supplier_error(error: Exception) -> ConfigurationError:
     )
 
 
-def create_client(config: PlatformConfig, inherited: Mapping[str, str]) -> FactorClient:
+def create_client(
+    config: PlatformConfig, inherited: Mapping[str, str], *, plan: FactorDownloadPlan | None = None
+) -> FactorClient:
     environment = resolve_environment(config, inherited)
     access, secret = (
         environment.get("QUANTZONE_ACCESS_KEY"),
@@ -68,7 +70,7 @@ def create_client(config: PlatformConfig, inherited: Mapping[str, str]) -> Facto
         or parsed.fragment
     ):
         raise ConfigurationError("QuantZone base URL requires an explicit HTTPS service address")
-    plan = build_factor_plan(config, inherited)
+    plan = plan if plan is not None else build_factor_plan(config, inherited)
     sdk = importlib.import_module("quantzone")
     if version("quantzone") != SDK_VERSION:
         raise ConfigurationError("Installed QuantZone SDK does not match the pinned version")

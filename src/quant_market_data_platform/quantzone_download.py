@@ -110,8 +110,26 @@ def _load_receipt(run: Path, plan: FactorDownloadPlan) -> dict[str, Any]:
             safe_artifact_path(run, item["path"])
         ) != item.get("sha256"):
             raise ArtifactError("Resume artifact hash mismatch")
+    _verify_job_snapshot(run, receipt, plan)
     _verify_run_state(run, receipt, entries)
     return receipt
+
+
+def _verify_job_snapshot(run: Path, receipt: dict[str, Any], plan: FactorDownloadPlan) -> None:
+    path = safe_artifact_path(run, "job.json")
+    entry = receipt.get("job_snapshot")
+    if entry is None and not path.exists():
+        return  # Runs created before separate job snapshots remain resumable.
+    if not isinstance(entry, dict) or entry.get("path") != "job.json":
+        raise ArtifactError("Resume job snapshot metadata mismatch")
+    if file_hash(path) != entry.get("sha256"):
+        raise ArtifactError("Resume job snapshot hash mismatch")
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, ValueError):
+        raise ArtifactError("Cannot read resume job snapshot") from None
+    if payload != plan.snapshot:
+        raise ArtifactError("Resume job snapshot settings mismatch")
 
 
 def _verify_run_state(run: Path, receipt: dict[str, Any], entries: list[dict[str, Any]]) -> None:
@@ -228,6 +246,11 @@ def run_factor_download(
             receipt = _new_receipt(plan) if resume is None else _load_receipt(run, plan)
             if receipt["status"] != "complete":
                 if resume is None:
+                    atomic_json(run / "job.json", plan.snapshot)
+                    receipt["job_snapshot"] = {
+                        "path": "job.json",
+                        "sha256": file_hash(run / "job.json"),
+                    }
                     atomic_json(run / "receipt.json", receipt)
                 _acquire(run, plan, client, receipt)
         return run

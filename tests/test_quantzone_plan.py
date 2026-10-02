@@ -12,7 +12,9 @@ from quant_market_data_platform.configuration import load_config
 
 
 def fixture_config(tmp_path: Path, section: str | None = None, **updates: object) -> Any:
-    payload = json.loads((Path(__file__).parents[1] / "config/config.example.json").read_text())
+    payload = json.loads(
+        (Path(__file__).parents[1] / "tests/fixtures/platform-config-v1.json").read_text()
+    )
     payload["environment"]["DATA_PLATFORM_ROOT"] = str(tmp_path / "data")
     if section:
         payload["downloads"]["quantzone"][section].update(updates)

@@ -31,7 +31,7 @@ def _check(args: argparse.Namespace) -> int:
     print(
         json.dumps(
             {
-                "schema_version": 1,
+                "schema_version": config.schema_version,
                 "valid": True,
                 "configured": {
                     name: bool(environment.get(name)) for name in sorted(config.environment)

@@ -22,6 +22,9 @@ class PlatformConfig:
     path: Path
     environment: Mapping[str, str | None] = field(repr=False)
     downloads: Mapping[str, object] = field(repr=False)
+    providers: Mapping[str, object] = field(default_factory=dict, repr=False)
+    jobs: Mapping[str, str] = field(default_factory=dict, repr=False)
+    schema_version: int = 1
 
 
 def resolve_config_path(environment: Mapping[str, str]) -> Path | None:
@@ -99,6 +102,14 @@ def load_config(path: Path) -> PlatformConfig:
         )
     except json.JSONDecodeError:
         raise ConfigurationError("Selected configuration contains invalid JSON") from None
+    if (
+        isinstance(payload, dict)
+        and type(payload.get("schema_version")) is int
+        and payload["schema_version"] == 2
+    ):
+        from quant_market_data_platform.configuration_sources import load_split_config
+
+        return load_split_config(path, payload)
     if not isinstance(payload, dict) or set(payload) != {
         "schema_version",
         "environment",
