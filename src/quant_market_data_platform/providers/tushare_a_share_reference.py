@@ -535,7 +535,21 @@ def publish_reference_asset(
     raw_path: Path,
     asset_path: Path,
     target_date: str,
+    *,
+    receipt_lineage: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    allowed_lineage = {
+        "source_receipt_sha256",
+        "source_receipt_schema_version",
+        "source_quality_status",
+        "pit_class",
+        "revision_safe",
+        "start_date",
+        "end_date",
+        "semantics",
+    }
+    if set(receipt_lineage or {}) - allowed_lineage:
+        raise ValueError("unsupported reference receipt lineage fields")
     pd = pandas()
     frame = pd.read_parquet(raw_path)
     if frame.empty:
@@ -591,8 +605,14 @@ def publish_reference_asset(
             else 0
         ),
     }
+    receipt.update(receipt_lineage or {})
     receipt_path = asset_path.with_suffix(".receipt.json")
     _atomic_json(receipt_path, receipt)
+    from quant_market_data_platform.providers.tushare_reference_manifest import (
+        write_reference_manifest,
+    )
+
+    write_reference_manifest(asset_path, receipt_path)
     return {**receipt, "receipt_path": str(receipt_path)}
 
 

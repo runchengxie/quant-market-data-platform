@@ -223,3 +223,7 @@ The shared size baseline now records 472 Python files and 112,768 lines after ad
 ### Recovery contract regression inventory (2026-10-02)
 
 The shared Python line inventory increases from 112768 to 112876 for explicit THS cache resume and required nullable ST availability preservation. The increment includes parser, cached-file and full-mirror regressions plus legacy/v2 ST receipt batching coverage. File, long-function, complexity and large-file limits remain unchanged. This is an exact source inventory allowance. Reduce it when these implementations or fixtures are consolidated without losing regression coverage.
+
+### Single-file receipt and ST wrapper inventory (2026-10-02)
+
+Python files increase from 472 to 476, and lines from 112976 to 113231, for hash-bound reference manifests, narrowly recognized ST availability receipts and regressions. Publication integration tests are separated to keep the existing clean test module below 800 lines. Complexity, long-function and large-file limits remain unchanged. This exact inventory allowance can be reduced when receipt helpers or fixtures are consolidated while preserving provenance and failure-path coverage.

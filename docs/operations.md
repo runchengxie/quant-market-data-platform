@@ -123,3 +123,7 @@ selects revisions. The reader verifies all partition checksums before applying f
 ### 同花顺成分续传
 
 `marketdata tushare mirror-a-share-ths-member --out-dir <output> --skip-existing` 显式复用已验证的概念缓存分区，补取剩余概念。默认拒绝非空输出目录。续传必须使用相同字段和数据源配置。概念成分仅代表获取时的快照。
+
+### 单文件参考资产清单
+
+参考资产发布会同步写入与 Parquet 同名的 `.manifest.yml`，从 owner receipt 绑定文件 hash、行数、日期和来源语义。约束资产的部分来源会保留 `partial` 状态。参考文件更新时必须同步更新 receipt 和 manifest。
