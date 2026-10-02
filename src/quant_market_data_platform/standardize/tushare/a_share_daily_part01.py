@@ -473,7 +473,10 @@ def _write_daily_clean_staging_batch(
     if not frames:
         return 0
     chunk = pd.concat(
-        [frame.dropna(axis=1, how="all") for frame in frames],
+        [
+            frame.loc[:, frame.notna().any() | frame.columns.isin(["st_available_from"])]
+            for frame in frames
+        ],
         ignore_index=True,
         sort=False,
     )

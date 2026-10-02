@@ -76,3 +76,7 @@ marketdata quantzone check --config "$DATA_PLATFORM_CONFIG"
 marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG" --dry-run
 marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG"
 ```
+
+### Resume THS constituent mirrors
+
+`marketdata tushare mirror-a-share-ths-member --out-dir <output> --skip-existing` explicitly reuses validated concept cache partitions and fetches remaining concepts. Nonempty output directories are rejected by default. Resume with the same fields and provider configuration; constituents represent the acquisition snapshot.
