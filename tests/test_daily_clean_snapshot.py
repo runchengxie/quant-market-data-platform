@@ -92,3 +92,57 @@ def test_snapshot_rejects_source_change_without_completed_receipt(
     with pytest.raises(ValueError, match="source changed"):
         build_daily_clean_snapshot(tmp_path, "20260929", "20260930", output)
     assert not (output / "snapshot_receipt.json").exists()
+
+
+def test_snapshot_rejects_output_under_symlink_ancestor(tmp_path: Path) -> None:
+    sources = _sources(tmp_path)
+    alias = tmp_path / "output-alias"
+    alias.symlink_to(sources["daily"], target_is_directory=True)
+    with pytest.raises(ValueError, match="alias indirection"):
+        build_daily_clean_snapshot(tmp_path, "20260929", "20260930", alias / "attempt")
+    assert not (sources["daily"] / "attempt").exists()
+
+
+def test_copy_uses_independent_fallback_when_reflink_unavailable(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import subprocess
+
+    from quant_market_data_platform import daily_clean_snapshot as module
+
+    source = tmp_path / "source"
+    destination = tmp_path / "destination"
+    source.write_bytes(b"payload")
+    monkeypatch.setattr(module.shutil, "which", lambda _: "/non-gnu/cp")
+    monkeypatch.setattr(
+        module.subprocess, "run", lambda *a, **kw: subprocess.CompletedProcess(a, 1)
+    )
+    module._copy_file(source, destination)
+    assert source.read_bytes() == destination.read_bytes()
+    assert source.stat().st_ino != destination.stat().st_ino
+
+
+def test_snapshot_detects_rewrite_even_with_restored_mtime(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import os
+
+    from quant_market_data_platform import daily_clean_snapshot as module
+
+    sources = _sources(tmp_path)
+    output = tmp_path / "inputs"
+    copy = module._copy_file
+    original = sources["daily"] / "data/trade_date=20260929/part.parquet"
+    stamp = original.stat()
+
+    def mutate(source: Path, destination: Path) -> None:
+        copy(source, destination)
+        if source == original:
+            payload = original.read_bytes()
+            original.write_bytes(payload[:-1] + bytes([payload[-1] ^ 1]))
+            os.utime(original, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+
+    monkeypatch.setattr(module, "_copy_file", mutate)
+    with pytest.raises(ValueError, match="source changed"):
+        build_daily_clean_snapshot(tmp_path, "20260929", "20260930", output)
+    assert not (output / "snapshot_receipt.json").exists()

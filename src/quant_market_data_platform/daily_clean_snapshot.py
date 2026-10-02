@@ -20,9 +20,9 @@ from .paths import candidate_asset_paths
 DATASETS = ("daily", "adj_factor", "daily_basic", "limit_status")
 
 
-def _stamp(path: Path) -> tuple[int, int, int, int]:
+def _stamp(path: Path) -> tuple[int, int, int, int, int]:
     info = path.stat()
-    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns
+    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
 
 
 def _hash_file(path: Path) -> str:
@@ -37,7 +37,13 @@ def _copy_file(source: Path, destination: Path) -> None:
     # A reflink shares blocks, never an inode: overwriting raw data cannot
     # mutate captured inputs. Ordinary copying is the portable fallback.
     if shutil.which("cp") and os.name == "posix":
-        subprocess.run(["cp", "--reflink=auto", "--", str(source), str(destination)], check=True)
+        result = subprocess.run(
+            ["cp", "--reflink=auto", "--", str(source), str(destination)],
+            check=False,
+            capture_output=True,
+        )
+        if result.returncode:
+            shutil.copyfile(source, destination)
     else:
         shutil.copyfile(source, destination)
     if _hash_file(source) != _hash_file(destination):
@@ -98,21 +104,24 @@ def _capture_dataset(dataset: str, state: dict[str, Any], output: Path) -> dict[
     source: Path = state["path"]
     target = output / dataset
     records = []
+    captured_hashes: dict[Path, str] = {}
     rows = 0
     for original in state["files"]:
         relative = original.relative_to(source)
         captured = target / relative
         captured.parent.mkdir(parents=True, exist_ok=True)
         _copy_file(original, captured)
+        captured_hashes[original] = _hash_file(captured)
         rows += pq.ParquetFile(captured).metadata.num_rows
         records.append(
             {
                 "path": relative.as_posix(),
                 "bytes": captured.stat().st_size,
-                "sha256": _hash_file(captured),
+                "sha256": captured_hashes[original],
             }
         )
         captured.chmod(0o444)
+    state["captured_hashes"] = captured_hashes
     return {
         "source_path": source.as_posix(),
         "source_manifest_sha256": state["manifest_sha256"],
@@ -128,6 +137,7 @@ def _verify_sources(sources: dict[str, dict[str, Any]], start: str, end: str) ->
             or _hash_file(state["manifest"]) != state["manifest_sha256"]
             or _source_inventory(state["path"], start, end) != state["files"]
             or any(_stamp(path) != stamp for path, stamp in state["stamps"].items())
+            or any(_hash_file(path) != digest for path, digest in state["captured_hashes"].items())
         ):
             raise ValueError(f"source changed during snapshot capture: {state['path']}")
 
@@ -167,7 +177,12 @@ def build_daily_clean_snapshot(
     _dates(start_date, end_date)
     root = root.expanduser().resolve(strict=True)
     output = output.expanduser().absolute()
-    if not output.resolve().is_relative_to(root) or output == root or output.is_symlink():
+    if (
+        not output.resolve().is_relative_to(root)
+        or output == root
+        or output.is_symlink()
+        or output != output.resolve()
+    ):
         raise ValueError(
             "snapshot output must be below the artifacts root without alias indirection"
         )
@@ -195,8 +210,12 @@ def build_daily_clean_snapshot(
         "end_date": end_date,
         "datasets": entries,
     }
-    with (output / "snapshot_receipt.json").open("x", encoding="utf-8") as handle:
+    pending_receipt = output / "snapshot_receipt.json.pending"
+    with pending_receipt.open("x", encoding="utf-8") as handle:
         json.dump(receipt, handle, indent=2, sort_keys=True)
         handle.write("\n")
-    (output / "snapshot_receipt.json").chmod(0o444)
+        handle.flush()
+        os.fsync(handle.fileno())
+    pending_receipt.chmod(0o444)
+    pending_receipt.rename(output / "snapshot_receipt.json")
     return receipt

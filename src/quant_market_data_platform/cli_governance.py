@@ -190,7 +190,17 @@ def handle_snapshot_clean_inputs(args: argparse.Namespace) -> int:
         args.end_date,
         Path(args.out_dir),
     )
-    print(json.dumps(receipt, indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "status": receipt["status"],
+                "receipt": str(Path(args.out_dir) / "snapshot_receipt.json"),
+                "start_date": args.start_date,
+                "end_date": args.end_date,
+            },
+            sort_keys=True,
+        )
+    )
     return 0
 
 

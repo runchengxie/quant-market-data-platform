@@ -11,7 +11,20 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .data_governance_part01 import PlanItem
 
-_TEXT_SUFFIXES = {".json", ".jsonl", ".yaml", ".yml", ".md", ".txt"}
+_TEXT_SUFFIXES = {
+    ".json",
+    ".jsonl",
+    ".yaml",
+    ".yml",
+    ".md",
+    ".txt",
+    ".csv",
+    ".tsv",
+    ".html",
+    ".htm",
+    ".xml",
+    ".log",
+}
 _EXCLUDED = {Path("metadata/retention"), Path("metadata/lifecycle")}
 _MAX_TEXT_BYTES = 16 * 1024 * 1024
 

@@ -457,3 +457,17 @@ def test_scheduled_apply_fails_before_deleting_or_writing(tmp_path: Path) -> Non
     assert result.returncode != 0
     assert "reviewed retirement" in result.stderr
     assert not (tmp_path / "metadata").exists()
+
+
+@pytest.mark.parametrize("suffix", [".csv", ".html"])
+def test_dataset_registry_csv_protects_version(tmp_path: Path, suffix: str) -> None:
+    candidate = tmp_path / "assets/version_20260101"
+    candidate.mkdir(parents=True)
+    metadata = tmp_path / "metadata"
+    metadata.mkdir()
+    (metadata / f"dataset_registry{suffix}").write_text(f"asset,path\nraw,{candidate}\n")
+    [item] = plan_data_governance(
+        tmp_path, [ExplicitPathRule("raw", candidate, "retire_candidate")]
+    )
+    assert item.action == "keep"
+    assert f"dataset_registry{suffix}" in item.reason
