@@ -6,10 +6,10 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from quant_market_data_platform.configuration import (
     ConfigurationError,
@@ -41,6 +41,7 @@ class FactorDownloadPlan:
     root: Path
     timeout: int
     sdk_version: str = SDK_VERSION
+    snapshot: dict[str, Any] = field(default_factory=dict, repr=False)
 
 
 def object_setting(value: object, name: str) -> dict[str, object]:
@@ -121,8 +122,12 @@ def _batches(query: dict[str, object], settings: dict[str, object]) -> tuple[Fac
     return tuple(batches)
 
 
-def build_factor_plan(config: PlatformConfig, inherited: Mapping[str, str]) -> FactorDownloadPlan:
-    settings = object_setting(config.downloads.get("quantzone"), "downloads.quantzone")
+def build_factor_plan(
+    config: PlatformConfig, inherited: Mapping[str, str], *, job: Path | None = None
+) -> FactorDownloadPlan:
+    from quant_market_data_platform.configuration_sources import quantzone_settings
+
+    settings = quantzone_settings(config, job)
     if settings.get("sdk_version") != SDK_VERSION:
         raise ConfigurationError("QuantZone requires the pinned supported SDK version")
     timeout = positive_integer(settings.get("timeout_seconds"), "timeout_seconds", 60)
@@ -142,4 +147,25 @@ def build_factor_plan(config: PlatformConfig, inherited: Mapping[str, str]) -> F
             sort_keys=True,
         ).encode()
     ).hexdigest()
-    return FactorDownloadPlan(identity, batches, root, timeout)
+    snapshot = {
+        key: settings[key]
+        for key in (
+            "sdk_version",
+            "timeout_seconds",
+            "query",
+            "batch",
+            "retry",
+            "output",
+            "evidence",
+        )
+    }
+    fields = {
+        "query": {"ukeys", "factor", "start_date", "end_date"},
+        "batch": {"calendar_days", "max_symbols", "max_factors"},
+        "retry": {"max_attempts"},
+        "output": {"relative_directory", "format", "immutable_runs"},
+    }
+    for name, keys in fields.items():
+        if set(object_setting(snapshot[name], name)) != keys:
+            raise ConfigurationError("Unexpected acquisition job field")
+    return FactorDownloadPlan(identity, batches, root, timeout, snapshot=snapshot)

@@ -2,9 +2,15 @@
 
 [中文页面](credentials.md)
 
-## One private JSON configuration
+## Credentials, connection settings and jobs
 
-Copy the public [example](https://github.com/runchengxie/quant-market-data-platform/blob/main/config/config.example.json) to a private location outside Git. Set file permissions to `0600` and credential-only directory permissions to `0700`. Fill its `environment` entries and select it with `DATA_PLATFORM_CONFIG`. The portable default, used only when that file exists and no explicit path is set, is `${XDG_CONFIG_HOME:-$HOME/.config}/quant-market-data-platform/config.json`.
+Version 2 of the public [configuration example](https://github.com/runchengxie/quant-market-data-platform/blob/main/config/config.example.json) separates three sources:
+
+- A shared private API-key registry holds credential values. Reuse the existing registry; add only missing supplier entries using [the credential example](https://github.com/runchengxie/quant-market-data-platform/blob/main/config/api_keys.example.json). Preserve other services' entries.
+- The project configuration holds non-secret `environment`, `providers`, a `credentials.path` and environment-name-to-registry-key references, and default `jobs` paths. It contains no credential values or download query.
+- A separate [QuantZone job example](https://github.com/runchengxie/quant-market-data-platform/blob/main/config/jobs/quantzone-pilot.example.json) defines query, batching, retry, output and evidence settings. Copy it to the configured `jobs/quantzone-pilot.json` path.
+
+Keep editable definitions under the private configuration directory. Execution snapshots, receipts, Parquet and logs belong under the external data root. They are retained run artifacts, not active configuration sources. Shared credential registries, project configuration and selected job files require mode `0600`; credential-only directories require `0700`.
 
 ```bash
 export DATA_PLATFORM_CONFIG=/private/path/config.json
@@ -12,9 +18,11 @@ marketdata config check --config "$DATA_PLATFORM_CONFIG"
 marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python /path/to/job.py
 ```
 
-`config check` reports configured booleans without values or network requests. `config run` directly replaces the process with the provided argv, preserving child exit status and signals. It supplies credentials only in the child process environment, without writing another credential file.
+`config check` reports configured booleans without values or network requests. `config run` directly replaces the process with the provided argv, preserving child exit status and signals. It reads only referenced credential entries and supplies them in the child environment; it does not open job files or write another credential file.
 
-Existing process variables take precedence, including explicitly empty values. Null JSON values are unconfigured. Secrets remain opaque; only `DATA_PLATFORM_ROOT` expands `${HOME}` or a leading `~`. Invalid, missing, symlinked, incorrectly owned or incorrectly permissioned selected JSON fails closed. Legacy `.env.local`, `.env`, and portable `config.env` are compatibility sources only when no JSON is selected. Keep exactly one active credential source; inactive rollback backups remain restricted.
+Existing process variables take precedence, including explicitly empty values. Null registry entries are unconfigured; missing referenced keys fail closed. Secrets remain opaque. `DATA_PLATFORM_ROOT` and file references expand `${HOME}` or a leading `~`; relative references resolve from the project configuration directory. Credentials cannot appear both in `environment` and `credentials.keys`. Invalid, missing, duplicate-key, symlinked, incorrectly owned or incorrectly permissioned selected files fail closed.
+
+Version 1 inline `environment`/`downloads` configurations remain compatible for migration. Legacy env files are compatibility sources only when no JSON is selected. Keep one active copy of each credential; inactive rollback backups remain restricted. The portable project default is `${XDG_CONFIG_HOME:-$HOME/.config}/quant-market-data-platform/config.json`, selected only when it exists and no explicit path is set.
 
 ## Variables
 
@@ -31,16 +39,7 @@ Existing process variables take precedence, including explicitly empty values. N
 
 Set the data root to a stable external location such as `${HOME}/data/quant/quant-market-data-platform`. CI and deployments may inject process variables through their secret manager. Do not store populated examples in Git.
 
-TuShare API overrides select the supplier endpoint, independently of local HTTP proxies. For a token requiring a proxy endpoint, use JSON environment entries such as:
-
-```json
-{
-  "TUSHARE_TOKEN_2": null,
-  "TUSHARE_API_URL_2": "https://proxy-a.example.com"
-}
-```
-
-This snippet belongs inside `environment`; populate the null credential privately. A single command may select `--token-env TUSHARE_TOKEN_2 --api-url https://proxy-b.example.com`. Machines relying on mihomo, Clash or another local proxy require `--use-proxy` for supported TuShare commands.
+TuShare API overrides select the supplier endpoint, independently of local HTTP proxies. For a token requiring a proxy endpoint, reference `TUSHARE_TOKEN_2` through `credentials.keys` and set the non-secret `TUSHARE_API_URL_2` in `environment`. A single command may select `--token-env TUSHARE_TOKEN_2 --api-url https://proxy-b.example.com`. Machines relying on mihomo, Clash or another local proxy require `--use-proxy` for supported TuShare commands.
 
 ## Inspect paths
 

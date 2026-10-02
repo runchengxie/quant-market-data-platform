@@ -6,7 +6,7 @@ QuantZone 是研究因子数据的可选供应商。market-data-platform 负责�
 
 ## 配置和环境
 
-将 `config/config.example.json` 复制到仓库外的单一私有 JSON，文件权限设为 `0600`，并用 `DATA_PLATFORM_CONFIG` 指定。在 `environment` 中填写 `QUANTZONE_ACCESS_KEY`、`QUANTZONE_SIGN_SECRET` 和账户确认的 `QUANTZONE_BASE_URL`。`null` 凭证表示尚未配置。
+按 [凭证说明](credentials.md) 使用版本 2 项目配置和已有共享 API key 注册表。通过引用映射加载 `QUANTZONE_ACCESS_KEY` 和 `QUANTZONE_SIGN_SECRET`。账户确认的 `QUANTZONE_BASE_URL` 放在 `environment`，SDK 版本和超时放在 `providers.quantzone`。查询、分批、重试、输出和证据设置放在 `jobs.quantzone` 引用的独立 JSON 中。注册表条目为 `null` 表示尚未配置。
 
 ```bash
 uv sync --locked --extra quantzone --python 3.13
@@ -42,3 +42,9 @@ marketdata quantzone download-factors --config "$DATA_PLATFORM_CONFIG" --resume 
 产物保留 `pit_availability=unknown`、`revision_safety=unknown` 和 `public_redistribution=not_authorized`。股票目录是当前标识映射，不能证明历史 PIT 股票池。本试验未授权公开 observatory 投影或数据再分发。供应商数据使用权需要独立确认。
 
 官方参考：[QuantZone](https://quantzone.tech/) 与 [SDK 分发](https://pypi.org/project/quantzone/0.10.0/)。
+
+## 独立任务与运行归档
+
+两个 QuantZone 命令都支持 `--job /private/path/jobs/quantzone-pilot.json`，用于覆盖默认任务路径。任务不能覆盖连接设置。普通配置检查和 TuShare 启动不读取任务文件。
+
+每次下载在数据目录的独立运行文件夹中写入 `job.json`，记录解析后的非敏感执行参数。`receipt.json` 记录它的 SHA-256。恢复下载前校验快照、哈希和当前任务是否一致。凭证及共享注册表内容不会进入运行归档。旧版无快照的运行保留恢复兼容。

@@ -15,8 +15,8 @@ from quant_market_data_platform.quantzone_plan import EVIDENCE, build_factor_pla
 
 def _check(args: argparse.Namespace) -> int:
     config = selected_config(args.config)
-    plan = build_factor_plan(config, os.environ)
-    client = create_client(config, os.environ)
+    plan = build_factor_plan(config, os.environ, job=args.job)
+    client = create_client(config, os.environ, plan=plan)
     try:
         print(json.dumps(check_quantzone(client, plan), sort_keys=True))
     finally:
@@ -26,7 +26,7 @@ def _check(args: argparse.Namespace) -> int:
 
 def _download(args: argparse.Namespace) -> int:
     config = selected_config(args.config)
-    plan = build_factor_plan(config, os.environ)
+    plan = build_factor_plan(config, os.environ, job=args.job)
     if args.dry_run:
         print(
             json.dumps(
@@ -44,7 +44,7 @@ def _download(args: argparse.Namespace) -> int:
         "quant_market_data_platform.quantzone_download"
     ).run_factor_download
 
-    client = create_client(config, os.environ)
+    client = create_client(config, os.environ, plan=plan)
     print(run_factor_download(plan, client, resume=args.resume))
     return 0
 
@@ -55,6 +55,7 @@ def add_quantzone_parser(subparsers: argparse._SubParsersAction) -> None:
     for name, handler in (("check", _check), ("download-factors", _download)):
         command = commands.add_parser(name)
         command.add_argument("--config", type=Path)
+        command.add_argument("--job", type=Path, help="Separate acquisition job JSON")
         if name == "download-factors":
             command.add_argument("--dry-run", action="store_true")
             command.add_argument("--resume", type=Path)
