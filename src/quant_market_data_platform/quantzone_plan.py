@@ -99,6 +99,8 @@ def _output_root(
 def _batches(query: dict[str, object], settings: dict[str, object]) -> tuple[FactorBatch, ...]:
     ukeys = _identifiers(query.get("ukeys"), r"\d{6}\.(XSHE|XSHG)")
     factors = _identifiers(query.get("factor"), r"[A-Za-z_][A-Za-z0-9_]*")
+    if set(factors) & {"symbol", "trade_date", "ukey", "date"}:
+        raise ConfigurationError("Factor name conflicts with research projection identifiers")
     start, end = fixed_date(query.get("start_date")), fixed_date(query.get("end_date"))
     if end < start:
         raise ConfigurationError("Query end_date must not precede start_date")

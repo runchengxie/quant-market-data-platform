@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import math
 import re
 from collections.abc import Mapping
 from importlib.metadata import version
@@ -135,7 +136,11 @@ def check_quantzone(client: FactorClient, plan: FactorDownloadPlan) -> dict[str,
     except Exception as error:
         raise safe_supplier_error(error) from None
     available = quota.get("available_bytes")
-    if (not isinstance(available, (int, float)) or isinstance(available, bool)) or available <= 0:
+    if (
+        (not isinstance(available, (int, float)) or isinstance(available, bool))
+        or not math.isfinite(available)
+        or available <= 0
+    ):
         raise ConfigurationError("QuantZone available quota must be positive")
     return {
         "quota_available": True,

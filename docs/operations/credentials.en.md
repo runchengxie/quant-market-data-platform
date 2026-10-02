@@ -58,4 +58,4 @@ marketdata config check --config "$DATA_PLATFORM_CONFIG"
 marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python /path/to/job.py
 ```
 
-Selected JSON fails closed. Legacy `.env.local`, `.env`, and `config.env` are compatibility sources only when no JSON is selected. Keep credentials in one active private JSON; backup files must remain inactive and restricted. Credential values are opaque and never substituted. Only the declared `DATA_PLATFORM_ROOT` supports `${HOME}` and `~`. Diagnostics report configured booleans only. See the [configuration example](../../config/config.example.json).
+Selected JSON fails closed. Legacy `.env.local`, `.env`, and `config.env` are compatibility sources only when no JSON is selected. Keep credentials in one active private JSON; backup files must remain inactive and restricted. Credential values are opaque and never substituted. Only the declared `DATA_PLATFORM_ROOT` supports `${HOME}` and `~`. Diagnostics report configured booleans only. See the [configuration example](https://github.com/runchengxie/quant-market-data-platform/blob/main/config/config.example.json).

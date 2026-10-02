@@ -67,6 +67,7 @@ nav:
       - Research integrity: research-integrity.en.md
   - Sources and operations:
       - Operations overview: operations.en.md
+      - QuantZone research factors: operations/quantzone.en.md
       - A-share TuShare: operations/a-share-tushare.en.md
       - A-share minute data: operations/a-share-minutes.en.md
       - ETF minute data: operations/etf-minutes.en.md
