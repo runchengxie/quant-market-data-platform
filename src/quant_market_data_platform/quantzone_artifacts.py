@@ -7,6 +7,8 @@ import json
 import os
 import tempfile
 from collections.abc import Mapping
+from decimal import Decimal
+from numbers import Real
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +21,12 @@ from quant_market_data_platform.quantzone_plan import FactorBatch
 
 class ArtifactError(ConfigurationError):
     """A sanitized local artifact validation failure."""
+
+
+def _numeric_or_null(value: object) -> bool:
+    if value is None or value is pd.NA or value is pd.NaT:
+        return True
+    return isinstance(value, (Real, Decimal)) and not isinstance(value, (bool, np.bool_))
 
 
 def validate_factor_batch(
@@ -42,8 +50,8 @@ def validate_factor_batch(
         if ((dates.dt.date < batch.start_date) | (dates.dt.date > batch.end_date)).any():
             raise ValueError("outside query")
         result["date"] = dates
-        if any(isinstance(value, (bool, np.bool_, complex)) for value in result["value"]):
-            raise ValueError("boolean value")
+        if any(not _numeric_or_null(value) for value in result["value"]):
+            raise ValueError("unsupported numeric scalar")
         values = pd.to_numeric(result["value"], errors="raise").astype("float64")
         if np.isinf(values.to_numpy()).any():
             raise ValueError("infinite value")

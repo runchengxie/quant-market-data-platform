@@ -34,11 +34,15 @@ class FakeClient:
 
     def list_factors(self) -> list[dict[str, str]]:
         return [
-            {"factor": "trend_dominance_factor", "startDate": "2020-01-01", "endDate": "2026-01-01"}
+            {
+                "factorname": "trend_dominance_factor",
+                "startDate": "2020-01-01",
+                "endDate": "2026-01-01",
+            }
         ]
 
     def list_stocks(self) -> pd.DataFrame:
-        return pd.DataFrame({"ukey": ["000001.XSHE", "600519.XSHG"]})
+        return pd.DataFrame({"ukey": ["000001.SZ", "600519.SH", "430001.BJ"]})
 
     def close(self) -> None:
         self.closed = True
@@ -148,7 +152,13 @@ def test_dry_run_never_constructs_sdk(
     "catalog",
     [
         [],
-        [{"factor": "trend_dominance_factor", "startDate": "2025-01-01", "endDate": "2026-01-01"}],
+        [
+            {
+                "factorname": "trend_dominance_factor",
+                "startDate": "2025-01-01",
+                "endDate": "2026-01-01",
+            }
+        ],
     ],
 )
 def test_catalog_coverage_fails_before_acquisition(

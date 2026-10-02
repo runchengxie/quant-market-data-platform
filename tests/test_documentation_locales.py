@@ -29,6 +29,7 @@ def test_mkdocs_uses_english_and_translated_pages_link_both_ways() -> None:
         ("data-governance.en.md", "data-governance.md"),
         ("quality-governance.en.md", "quality-governance.md"),
         ("operations/credentials.en.md", "operations/credentials.md"),
+        ("operations/quantzone.en.md", "operations/quantzone.md"),
         ("operations/backup-and-dev.en.md", "operations/backup-and-dev.md"),
         ("operations/package-publishing.en.md", "operations/package-publishing.md"),
         ("operations/testing.en.md", "operations/testing.md"),

@@ -227,7 +227,7 @@ def test_factor_chunk_projection_joins_without_loss(
     client = DownloadClient()
     original = client.list_factors()
     monkeypatch.setattr(
-        client, "list_factors", lambda: [*original, {**original[0], "factor": "other_factor"}]
+        client, "list_factors", lambda: [*original, {**original[0], "factorname": "other_factor"}]
     )
 
     def frame(**kwargs: object) -> pd.DataFrame:
@@ -247,3 +247,23 @@ def test_factor_chunk_projection_joins_without_loss(
         "trend_dominance_factor",
         "other_factor",
     }
+
+
+@pytest.mark.parametrize(
+    "value", ["", " ", pd.Timestamp("2024-01-02"), pd.Timedelta("1 day"), 1 + 2j]
+)
+def test_rejects_nonnumeric_scalars_before_pandas_coercion(tmp_path: Path, value: object) -> None:
+    api = importlib.import_module("quant_market_data_platform.quantzone_artifacts")
+    frame = observations().astype(object)
+    frame["value"] = [value, value]
+    with pytest.raises(ValueError):
+        api.validate_factor_batch(
+            frame, batch_plan(tmp_path).batches[0], {"000001": "000001.SZ", "600519": "600519.SH"}
+        )
+
+
+def test_wire_queries_use_verified_bare_stock_identifiers(tmp_path: Path) -> None:
+    api = importlib.import_module("quant_market_data_platform.quantzone_download")
+    client = DownloadClient()
+    api.run_factor_download(batch_plan(tmp_path), client)
+    assert client.factor_queries[0]["ukeys"] == ["000001", "600519"]

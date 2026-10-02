@@ -1,5 +1,7 @@
 # QuantZone factor acquisition
 
+[中文页面](quantzone.md)
+
 QuantZone is an optional supplier for bounded research factor artifacts. The data owner downloads and validates them; research consumers use frozen Parquet runs through the existing local artifact interface. These runs do not update production assets or current aliases.
 
 ## Configuration and runtime
@@ -19,7 +21,7 @@ The extra pins QuantZone `0.10.0`. Its supplied wheels support Python 3.11–3.1
 
 Queries require fixed inclusive ISO dates, explicit stock identifiers with `.XSHE`/`.XSHG` suffixes, and explicit factor names. The example uses `trend_dominance_factor`; authenticate and confirm its catalog coverage before acquisition. Catalog names do not establish a factor formula, historical availability or revision guarantees.
 
-The owner batches by seven calendar days by default, at most 100 stocks and 20 factors per request. Calendar windows may be configured up to 365 days. Timeout is a positive integer at most 60 seconds. Only one request attempt is allowed; automatic retries may charge quota twice. Dry-run is offline. The authenticated check verifies positive available quota, factor coverage and unambiguous stock mappings without requesting factor observations.
+The owner batches by seven calendar days by default, at most 100 stocks and 20 factors per request. Calendar windows may be configured up to 365 days. Timeout is a positive integer at most 60 seconds. Only one request attempt is allowed; automatic retries may charge quota twice. Dry-run is offline. The authenticated check verifies positive available quota, factor coverage and unambiguous stock mappings (including SDK `.SZ`/`.SH` catalog identifiers) without requesting factor observations.
 
 ## Evidence and publication
 

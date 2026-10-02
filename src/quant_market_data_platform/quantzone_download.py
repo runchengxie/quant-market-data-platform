@@ -185,7 +185,7 @@ def _acquire(
         atomic_json(run / "receipt.json", receipt)
         try:
             frame = client.get_factors(
-                ukeys=list(batch.ukeys),
+                ukeys=[identifier.split(".")[0] for identifier in batch.ukeys],
                 factor=list(batch.factors),
                 start_date=str(batch.start_date),
                 end_date=str(batch.end_date),

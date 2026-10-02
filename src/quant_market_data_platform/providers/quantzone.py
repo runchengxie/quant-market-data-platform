@@ -88,10 +88,20 @@ def _symbol_map(stocks: Any, requested: set[str]) -> dict[str, str]:
         raise ConfigurationError("QuantZone stock catalog lacks ukey identifiers")
     matches: dict[str, set[str]] = {}
     for identifier in stocks["ukey"]:
-        if not isinstance(identifier, str) or not re.fullmatch(r"\d{6}\.(XSHE|XSHG)", identifier):
+        if not isinstance(identifier, str) or not re.fullmatch(
+            r"\d{6}\.(XSHE|XSHG|SZ|SH|BJ|XBSE)", identifier
+        ):
             raise ConfigurationError("Invalid stock catalog identifier")
         code, exchange = identifier.split(".")
-        matches.setdefault(code, set()).add(code + (".SZ" if exchange == "XSHE" else ".SH"))
+        suffix = {
+            "XSHE": ".SZ",
+            "XSHG": ".SH",
+            "SZ": ".SZ",
+            "SH": ".SH",
+            "BJ": ".BJ",
+            "XBSE": ".BJ",
+        }[exchange]
+        matches.setdefault(code, set()).add(code + suffix)
     result: dict[str, str] = {}
     for identifier in requested:
         code, exchange = identifier.split(".")
@@ -111,7 +121,7 @@ def _factor_coverage(
     requested = {factor for batch in plan.batches for factor in batch.factors}
     result: dict[str, dict[str, str]] = {}
     for entry in catalog:
-        factor = entry.get("factor")
+        factor = entry.get("factorname")
         if factor not in requested:
             continue
         if factor in result:
