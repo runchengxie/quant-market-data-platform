@@ -214,3 +214,8 @@ ST 历史增加保守的交易日可用时间，并将 `st_available_from` 传�
 1. `data_providers_client.py::fetch_daily` 已拆成缓存计划、range 读取、symbol 增量补数、merge/write/slice helper。下一轮继续拆分 provider SDK adapters 与 frame pipeline，逐步恢复更严格类型覆盖。
 1. 继续拆 `src/quant_market_data_platform/data_warehouse_*` 子模块中的 pandas-heavy 步骤，评估 per-module strict 覆盖。
 1. RQData 与港股恢复控制面已在 2026-07-26 完全退役，无需恢复演练。
+
+
+## QuantZone configuration size baseline — 2026-10-02
+
+The shared size baseline now records 472 Python files and 112,768 lines after adding the private JSON loader/launcher, optional QuantZone planner/adapter/artifact modules and their tests. This update accounts for the intentional feature addition. Complexity, long-function, large-file and lint-exclusion thresholds remain unchanged. There is no extra size allowance beyond the measured snapshot. Future growth requires an explained feature change or refactoring. Remove the corresponding size allowance if these modules are retired.
