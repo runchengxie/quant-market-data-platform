@@ -231,3 +231,7 @@ Python files increase from 472 to 476, and lines from 112976 to 113231, for hash
 ### Reference coverage dates (2026-10-02)
 
 Python lines increase from 113231 to 113260 to distinguish immutable version labels from verified source coverage, with a regression. All other limits are unchanged. Reduce this exact allowance if the receipt fixture is consolidated while retaining the different-date case.
+
+### Resumed trade-date mirror inventory (2026-10-02)
+
+Python lines increase from 113260 to 113368 for bounded physical partition inventory and regressions covering six mirror datasets, retained files, empty refreshes and unreadable inventory. The change separates asset totals from per-run counters without changing source completeness or request dates. All other budgets remain unchanged. Reduce this exact allowance if inventory or fixtures are consolidated while preserving resume and incomplete-source coverage.

@@ -198,3 +198,5 @@ must require a completed receipt before using a new snapshot. The receipt is
 published only after copies and source stability checks pass. Raw writers must
 be serialized by the caller; unrelated mutable latest directories are not an
 immutable lineage contract.
+
+For TuShare trade-date mirrors, `totals.rows`, `totals.symbols`, and `totals.files` describe all stored Parquet partitions under the asset data directory, including retained partitions outside the current request. `run_totals` records rows, symbols, files, and date counters for this invocation; skipped partitions contribute no newly written rows. Query dates describe the request and are not inferred from this inventory. Physical inventory does not certify source completeness: per-date receipts remain authoritative, including incomplete receipts beside retained last-known-good files.

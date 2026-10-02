@@ -303,3 +303,5 @@ select a financial revision or establish historical revision completeness.
 The maintainability baseline accounts for 100 net Python lines added by statement
 projection and its schema, visibility and integrity tests. Other debt budgets are
 unchanged; future projection growth must pass the existing ratchet or replace code.
+
+TuShare 按交易日镜像的 `totals.rows`、`totals.symbols` 和 `totals.files` 表示资产 data 目录中全部已存储 Parquet 分区，包括本次请求范围外保留的分区。`run_totals` 单独记录本次运行写入的行数、标的数、文件数和请求日期计数。跳过分区不计入本次新写行数。query 日期仍表示请求范围，不由物理盘点推定。物理盘点不证明来源完整性。逐日 receipt 仍为准，保留的 last-known-good 文件可以同时对应不完整回执。
