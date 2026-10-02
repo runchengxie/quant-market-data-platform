@@ -173,3 +173,58 @@ def test_catalog_coverage_fails_before_acquisition(
     with pytest.raises(ValueError):
         api.check_quantzone(client, plan_api.build_factor_plan(fixture_config(tmp_path), {}))
     assert client.factor_queries == []
+
+
+@pytest.mark.parametrize("command", ["check", "download-factors"])
+@pytest.mark.parametrize("no_proxy", [False, True])
+def test_explicit_direct_mode_scopes_proxy_environment_to_client_construction(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, no_proxy: bool, command: str
+) -> None:
+    import os
+
+    from quant_market_data_platform.cli import main
+
+    config = fixture_config(tmp_path)
+    monkeypatch.setenv("DATA_PLATFORM_CONFIG", str(config.path))
+    monkeypatch.setenv("ALL_PROXY", "socks5://fixture.invalid:1080")
+    monkeypatch.setenv("https_proxy", "")
+    seen = []
+
+    def factory(*args: object, **kwargs: object) -> FakeClient:
+        seen.append({key: os.environ.get(key) for key in ("ALL_PROXY", "https_proxy")})
+        return FakeClient()
+
+    monkeypatch.setattr("quant_market_data_platform.cli_quantzone.create_client", factory)
+    monkeypatch.setattr(
+        "quant_market_data_platform.quantzone_download.run_factor_download",
+        lambda *args, **kwargs: tmp_path,
+    )
+    assert main(["quantzone", command, *(["--no-proxy"] if no_proxy else [])]) == 0
+    assert seen == [
+        {"ALL_PROXY": None, "https_proxy": None}
+        if no_proxy
+        else {"ALL_PROXY": "socks5://fixture.invalid:1080", "https_proxy": ""}
+    ]
+    assert os.environ["ALL_PROXY"] == "socks5://fixture.invalid:1080"
+    assert os.environ["https_proxy"] == ""
+
+
+def test_direct_mode_restores_proxy_environment_when_client_construction_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import os
+
+    from quant_market_data_platform.cli import main
+    from quant_market_data_platform.configuration import ConfigurationError
+
+    config = fixture_config(tmp_path)
+    monkeypatch.setenv("DATA_PLATFORM_CONFIG", str(config.path))
+    monkeypatch.setenv("ALL_PROXY", "socks5://fixture.invalid:1080")
+
+    def factory(*args: object, **kwargs: object) -> FakeClient:
+        assert "ALL_PROXY" not in os.environ
+        raise ConfigurationError("fixture client unavailable")
+
+    monkeypatch.setattr("quant_market_data_platform.cli_quantzone.create_client", factory)
+    assert main(["quantzone", "check", "--no-proxy"]) == 2
+    assert os.environ["ALL_PROXY"] == "socks5://fixture.invalid:1080"

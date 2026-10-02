@@ -88,3 +88,7 @@ function-size and file-size ceilings are unchanged. Acceptance requires the
 complete test suite, the unchanged structural budgets and independent review
 to pass. Future removal or consolidation of this functionality must lower the
 file/line inventory accordingly; this adjustment grants no complexity waiver.
+
+## QuantZone direct connection inventory (2026-10-03)
+
+The explicit CLI proxy option and its restoration tests add 83 Python lines (114,313 to 114,396), with no new files and no changes to complexity, long-line or function/file-size budgets. Removing this option or consolidating its tests must lower the inventory accordingly.
