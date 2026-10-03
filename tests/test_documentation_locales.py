@@ -13,7 +13,8 @@ def test_mkdocs_uses_english_and_translated_pages_link_both_ways() -> None:
     assert "[English README](README.md)" in chinese_readme
     config = yaml.safe_load((root / "mkdocs.yml").read_text(encoding="utf-8"))
     assert config["theme"]["language"] == "en"
-    assert "Migration and topics" in config["nav"][-1]
+    assert any("Migration and topics" in group for group in config["nav"])
+    assert config["nav"][-1].get("简体中文")
     assert "Switch to dark mode" in (root / "mkdocs.yml").read_text(encoding="utf-8")
     assert "Switch to light mode" in (root / "mkdocs.yml").read_text(encoding="utf-8")
 
@@ -85,7 +86,8 @@ def test_mkdocs_uses_english_and_translated_pages_link_both_ways() -> None:
 def test_currently_translated_navigation_entries_use_english_pages() -> None:
     root = Path(__file__).resolve().parents[1]
     nav = yaml.safe_load((root / "mkdocs.yml").read_text(encoding="utf-8"))["nav"]
-    rendered = str(nav)
+    english_nav = nav[:-1]
+    rendered = str(english_nav)
 
     def page_paths(node: object) -> list[str]:
         if isinstance(node, dict):
@@ -95,7 +97,7 @@ def test_currently_translated_navigation_entries_use_english_pages() -> None:
         return [node] if isinstance(node, str) and node.endswith(".md") else []
 
     canonical_page = "data-lifecycle-architecture.md"
-    pages = page_paths(nav)
+    pages = page_paths(english_nav)
     assert all(path in {canonical_page, "index.md"} or path.endswith(".en.md") for path in pages)
     for path in (
         "architecture/quant-repo-boundaries.en.md",
