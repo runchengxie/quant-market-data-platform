@@ -35,6 +35,9 @@ theme:
 plugins:
   - search
 
+hooks:
+  - project_tools/locale_navigation.py
+
 exclude_docs: |
   README.md
   migration/legacy-materials/
@@ -82,7 +85,6 @@ nav:
   - Developer reference:
       - Compatibility layer: compatibility.en.md
       - Publishing and packaging: operations/package-publishing.en.md
-      - Test entry points: operations/testing.en.md
       - Documentation style: documentation-style.en.md
       - Research data IO: research-parquet-io.en.md
       - Quota rendering: quota-rendering.en.md
@@ -100,3 +102,48 @@ nav:
       - Context data: operations/context-data.en.md
       - Hong Kong archive recovery: operations/hk-archive-restore.en.md
       - Current-assets closeout snapshot: migration/current-assets-closeout-20260918.en.md
+  - 简体中文:
+      - 文档首页: index.zh-CN.md
+      - 架构与边界:
+          - 量化仓库职责边界: architecture/quant-repo-boundaries.md
+          - 数据代码生命周期分层: data-lifecycle-architecture.zh-CN.md
+          - DailyWatch20 数据归属: ownership-migration.md
+          - 系统集成: integrations.md
+      - 数据契约:
+          - 共享数据契约: contracts.md
+          - 数据目录、标准层与 DuckDB 查询: data-warehouse.md
+          - 研究数据读取适配器: research-data-interface.md
+          - 研究数据完整性边界: research-integrity.md
+      - 数据源与运维:
+          - 操作手册: operations.md
+          - QuantZone 因子下载: operations/quantzone.md
+          - A 股 TuShare 运维: operations/a-share-tushare.md
+          - A 股分钟数据: operations/a-share-minutes.md
+          - 公共源 ETF 分钟数据: operations/etf-minutes.md
+          - 凭证和环境变量: operations/credentials.md
+          - 备份和本地开发: operations/backup-and-dev.md
+      - 质量与治理:
+          - 数据目录与生命周期治理: data-governance.md
+          - L2 数据接入门禁和数据集契约: l2-ingestion-gate.md
+          - 质量治理与维护债务: quality-governance.md
+          - 测试脚本说明: operations/testing.md
+      - 开发参考:
+          - 兼容层与清理计划: compatibility.md
+          - Python 包发布: operations/package-publishing.md
+          - 文档写作与生命周期规则: documentation-style.md
+          - Research Parquet 文件读取: research-parquet-io.md
+          - 服务商配额展示: quota-rendering.md
+          - AFML 研究数据特征: afml-research-features.md
+          - A 股研究资产口径: a-share-research-profile.md
+          - A 股基本面 raw-to-PIT 运维: a-share-fundamentals.md
+          - A 股资金流和持仓类特征: a-share-flow-ownership-features.md
+          - A 股公募基金前十大重仓 PIT 特征: a-share-fund-top10-ownership-features.md
+          - L2 特殊事件语义: l2-special-event-semantics.md
+      - 迁移与专题:
+          - 历史行业标签: concepts/historical-industry-labels.md
+          - current_assets 读取审计: migration/current-assets-consumer-audit.md
+          - current_assets 迁移状态: migration/current-assets-migration-status.md
+          - current_assets 发布与回滚检查清单: migration/current-assets-publish-rollback-checklist.md
+          - 中国宏观与产业情境数据: operations/context-data.md
+          - 港股归档恢复（已退役）: operations/hk-archive-restore.md
+          - current_assets 清理收尾记录: migration/current-assets-closeout-20260918.md

@@ -39,6 +39,8 @@ jobs:
         run: uv sync --locked --only-group docs
       - name: Build documentation strictly
         run: uv run mkdocs build --strict
+      - name: Check language-specific navigation
+        run: uv run python project_tools/check_locale_navigation.py
       - name: Upload preview artifact
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
