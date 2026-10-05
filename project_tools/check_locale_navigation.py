@@ -11,6 +11,18 @@ def primary_navigation(path: str) -> str:
 
 
 def main() -> None:
+    english_html = (SITE / "index.html").read_text(encoding="utf-8")
+    chinese_html = (SITE / "index.zh-CN/index.html").read_text(encoding="utf-8")
+    english_detail_html = (SITE / "operations/credentials.en/index.html").read_text(
+        encoding="utf-8"
+    )
+    chinese_detail_html = (SITE / "operations/credentials/index.html").read_text(
+        encoding="utf-8"
+    )
+    assert '<html lang="en"' in english_html
+    assert '<html lang="zh-CN"' in chinese_html
+    assert '<html lang="en"' in english_detail_html
+    assert '<html lang="zh-CN"' in chinese_detail_html
     english = primary_navigation("index.html")
     chinese = primary_navigation("index.zh-CN/index.html")
     english_page = primary_navigation("operations/credentials.en/index.html")
