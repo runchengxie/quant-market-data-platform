@@ -49,3 +49,10 @@ def on_page_context(context, page, config, nav):
     pages = [item for item in nav.pages if _is_chinese(item) == chinese]
     context["nav"] = Navigation(flattened, pages)
     return context
+
+
+def on_post_page(output, page, config):
+    """Set the document language to match the page selected for rendering."""
+    if _is_chinese(page):
+        return output.replace('<html lang="en"', '<html lang="zh-CN"', 1)
+    return output
