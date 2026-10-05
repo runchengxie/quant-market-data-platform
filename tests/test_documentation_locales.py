@@ -82,6 +82,13 @@ def test_mkdocs_uses_english_and_translated_pages_link_both_ways() -> None:
         assert f"[English page]({Path(english).name})" in chinese_page
 
 
+def test_documentation_workflow_runs_for_locale_hook_changes() -> None:
+    root = Path(__file__).resolve().parents[1]
+    workflow = (root / ".github/workflows/docs.yml").read_text(encoding="utf-8")
+
+    assert workflow.count('- "project_tools/**"') == 2
+
+
 def test_currently_translated_navigation_entries_use_english_pages() -> None:
     root = Path(__file__).resolve().parents[1]
     nav = yaml.safe_load((root / "mkdocs.yml").read_text(encoding="utf-8"))["nav"]
