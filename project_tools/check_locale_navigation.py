@@ -16,9 +16,7 @@ def main() -> None:
     english_detail_html = (SITE / "operations/credentials.en/index.html").read_text(
         encoding="utf-8"
     )
-    chinese_detail_html = (SITE / "operations/credentials/index.html").read_text(
-        encoding="utf-8"
-    )
+    chinese_detail_html = (SITE / "operations/credentials/index.html").read_text(encoding="utf-8")
     assert '<html lang="en"' in english_html
     assert '<html lang="zh-CN"' in chinese_html
     assert '<html lang="en"' in english_detail_html

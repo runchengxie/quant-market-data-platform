@@ -251,3 +251,18 @@ Python lines increase from 113890 to 113929 (39 lines) for the maximum observed 
 ### Per-security statement observations (2026-10-02)
 
 Python lines increase from 114264 to 114313 (+49) for the non-VIP source mapping and three parameterized regressions that retain checksum and observation-visibility guards. All other debt and complexity limits remain unchanged. Remove this allowance when equivalent coverage is consolidated with fewer lines.
+
+## setuptools 临时维护流程（2026-10-07）
+
+Dependabot 的 uv 更新器目前不能正确处理 setuptools 同时作为构建工具和间接依赖的情况。修复上线前，通过独立分支和 PR 更新锁文件。[上游问题 #14118](https://github.com/dependabot/dependabot-core/issues/14118) 和[修复 PR #14421](https://github.com/dependabot/dependabot-core/pull/14421) 记录了该缺陷；本流程记录时修复尚未合并。
+
+日常依赖维护时检查新版；出现相关安全提醒时及时处理。在干净的任务 worktree 中执行：
+
+```bash
+uv lock --upgrade-package setuptools
+uv sync --locked --extra dev
+```
+
+核对差异是否只涉及 setuptools，按[本地测试与依赖审计要求](operations/testing.md)完成验证，再通过 PR 合入 main。其他依赖若同时变化，需要单独说明并验证。更新锁文件不会自动部署，也不应直接改动运行中的生产环境。
+
+保持普通 Dependabot 更新和安全提醒开启。GitHub 部署上游修复后，确认一次新的 setuptools 更新任务成功修改 uv.lock，再结束手动维护；上游 PR 合并本身不能证明托管更新器已上线。本次将锁定版本从 83.0.0 更新至 84.0.0，没有新增忽略规则或改写构建依赖要求。
