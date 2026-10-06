@@ -102,3 +102,18 @@ The shared size baseline now records 472 Python files and 112,768 lines after ad
 ## Configuration source split size baseline — 2026-10-02
 
 The shared size baseline accounts for the configuration-source module, its regression tests, and job-snapshot verification. Only the exact measured Python file and line totals change; all complexity, debt, long-function and large-file thresholds remain unchanged. Recalculate the size baseline if the legacy loader or split-source modules are retired or consolidated. This allowance does not authorize unrelated growth.
+
+## Temporary setuptools update procedure — 2026-10-07
+
+Keep setuptools current through a scoped lockfile PR while Dependabot's uv updater cannot handle its combined build-system and transitive dependency roles. [Upstream issue #14118](https://github.com/dependabot/dependabot-core/issues/14118) and [proposed fix #14421](https://github.com/dependabot/dependabot-core/pull/14421) track the updater defect. The fix was still unmerged when this procedure was recorded.
+
+Check for new releases during regular dependency maintenance and whenever a security alert affects setuptools. In a clean task worktree, run:
+
+```bash
+uv lock --upgrade-package setuptools
+uv sync --locked --extra dev
+```
+
+Inspect the lock diff for setuptools-only changes, then run the [local quality and dependency audit gates](operations/testing.en.md). If another package changes, explain and validate that dependency change separately. Open a PR targeting main and merge only after required checks pass. A lock update does not promote production or replace a live environment.
+
+Leave ordinary Dependabot updates and security alerts enabled. After GitHub deploys the upstream fix, verify that a fresh setuptools update job successfully changes uv.lock before retiring this manual procedure. Upstream PR merge alone is not evidence that the hosted updater has deployed the fix. The October update replaces locked setuptools 83.0.0 with 84.0.0 without adding an ignore rule or changing the build requirement.
