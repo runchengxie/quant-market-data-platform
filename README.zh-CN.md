@@ -17,8 +17,8 @@
 项目使用 `uv` 管理 Python 环境：
 
 ```bash
-uv sync --extra dev
-marketdata --help
+uv sync --locked --extra dev
+uv run --locked marketdata --help
 ```
 
 若要读取或构建真实数据，还需要配置数据目录和数据源凭证。请先阅读[本地开发与操作说明](docs/operations/backup-and-dev.md)和[凭证配置](docs/operations/credentials.md)。
