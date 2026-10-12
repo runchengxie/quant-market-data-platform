@@ -15,8 +15,8 @@ The current Qlib integration provides a read-only DataLoader adapter for publish
 The project uses `uv` to manage its Python environment:
 
 ```bash
-uv sync --extra dev
-marketdata --help
+uv sync --locked --extra dev
+uv run --locked marketdata --help
 ```
 
 To read or build real data, configure the data root and provider credentials. Start with [local development and operations](docs/operations/backup-and-dev.en.md) and [credential configuration](docs/operations/credentials.en.md).

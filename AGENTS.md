@@ -18,7 +18,7 @@
 4. PR review 和必需检查完成后，将 PR 合并到 `main`。
 5. 确认 PR 已合并且 worktree 没有唯一未保存内容后，先移除 worktree，再删除本地和远端旧分支。只清理本任务资源，遇到未保存或未合并改动时保留现场并报告。
 
-不要让多个 agent 直接修改同一个工作树，也不要在 `main` 上直接提交。跨仓库改动先完成 owner 仓库的 PR，再更新上游仓库中的 gitlink 或迁移说明。
+不要让多个 agent 直接修改同一个工作树，也不要在 `main` 上直接提交。跨仓库改动先完成 owner 仓库的 PR，再更新消费者的依赖版本或接口说明。只有实际存在 submodule 的消费者才更新 gitlink，独立仓库不创建 submodule。
 
 本文件说明 `quant-market-data-platform` 的协作边界。
 
@@ -170,12 +170,10 @@ uv sync --extra dev --extra duckdb
    git push origin --delete feat/<主题>
    ```
 
-本仓提交推送合并完成后，再回到 `research-workspace` 更新 gitlink。
-本仓作为 `research-workspace` 子模块工作时，`core.hooksPath` 指向工作区共享的
-`.githooks`。共享 pre-push 会校验分支、提交、工作树和仓库本地门禁。同一仓库的多个
-worktree 共享主工作树的 hook 配置，不要在独立 worktree 内重装或改写 hook。安装或
-修复 hook 使用工作区根目录的安装脚本，不在子模块内复制另一套 hook。新的并行任务
-必须新建 worktree，不要直接在主检出目录的 `main` 上提交改动。
+本仓是独立仓库，`research-workspace` 只用于历史复现。不要为了本仓交付修改历史工作区的 gitlink。
+检查实际的 `core.hooksPath` 和现有 hook，不假定历史工作区的 `.githooks` 仍为当前配置。
+同一仓库的多个 worktree 共享 hook 配置，不要在任务 worktree 内重装或改写 hook。
+新的并行任务必须新建 worktree，不要直接在主检出目录的 `main` 上提交改动。
 
 ## Worktree-first 目录规范
 
