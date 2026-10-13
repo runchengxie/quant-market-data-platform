@@ -43,11 +43,12 @@ Qlib 当前只通过 `quant_market_data_platform.integrations.qlib` 提供条件
 适配器。常规开发依赖和标准门禁不安装 `pyqlib`。核心数据契约、生产命令和发布链路应保持
 可独立导入和运行。
 
-修改 Qlib 适配器时，除常规门禁外还要运行真实运行时定点测试：
+当前锁定的 `pyqlib 0.9.7` 使用 Python 3.12 验证。同步 Qlib 依赖和运行定点测试时
+显式选择同一解释器。修改 Qlib 适配器时，除常规门禁外还要运行真实运行时定点测试：
 
 ```bash
-uv sync --locked --extra dev --extra qlib
-uv run --locked --extra dev --extra qlib python -m pytest \
+uv sync --locked --python 3.12 --extra dev --extra qlib
+uv run --locked --python 3.12 --extra dev --extra qlib python -m pytest \
   tests/test_published_assets.py -k qlib -q
 ```
 
