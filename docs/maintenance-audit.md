@@ -5,7 +5,7 @@
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent
-> last_verified: 2026-09-25
+> last_verified: 2026-09-30
 > source_of_truth: yes
 > superseded_by: n/a
 

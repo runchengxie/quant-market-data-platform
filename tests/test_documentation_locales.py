@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import yaml
@@ -137,3 +138,14 @@ def test_currently_translated_navigation_entries_use_english_pages() -> None:
         "maintenance.en.md",
     ):
         assert path in rendered
+
+
+def test_maintenance_audit_verification_date_matches_localization() -> None:
+    root = Path(__file__).resolve().parents[1]
+    english = (root / "docs/maintenance.en.md").read_text(encoding="utf-8")
+    chinese = (root / "docs/maintenance-audit.md").read_text(encoding="utf-8")
+    english_date = re.search(r"^> - last_verified: (\S+)$", english, re.MULTILINE)
+    chinese_date = re.search(r"^> last_verified: (\S+)$", chinese, re.MULTILINE)
+    assert english_date is not None
+    assert chinese_date is not None
+    assert chinese_date.group(1) == english_date.group(1)
