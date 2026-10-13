@@ -460,3 +460,4 @@ DailyWatch20 的 TuShare-native 特征已生成并与 Guan 版本完成共同日
 特征可用性，但不把特征数值视为等价。对照结果登记在
 `metadata/minute_operational/acceptance/daily_watch20_tushare_native_rebaseline_v1.json`。
 模型重训和 release-grade 回测仍需以 TuShare-native 特征为输入后单独完成。
+本次传输修复的质量预算增加一个测试文件和 110 行 Python，用于 TLS EOF 重试、证书错误停止和不确定请求计费的回归覆盖。复杂度阈值不变。只有在以等效测试替换这些覆盖且源代码与测试行数减少时，才收回该预算。
