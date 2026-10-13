@@ -5,7 +5,7 @@
 > status: active
 > owner: quant-market-data-platform
 > audience: human and agent
-> last_verified: 2026-09-06
+> last_verified: 2026-10-13
 > source_of_truth: yes
 > superseded_by: n/a
 
@@ -62,11 +62,12 @@ uv sync --extra dev --extra duckdb
 依赖时的错误信息。真实 Qlib DataLoader 用例通过 `pytest.importorskip` 检测运行时，未安装
 `pyqlib` 时会明确跳过。
 
-需要验证真实运行时时，额外安装 `qlib` extra 并运行定点测试：
+当前锁定的 `pyqlib 0.9.7` 使用 Python 3.12 验证。同步依赖和运行测试时都显式
+指定同一解释器。需要验证真实运行时时，额外安装 `qlib` extra 并运行定点测试：
 
 ```bash
-uv sync --locked --extra dev --extra qlib
-uv run --locked --extra dev --extra qlib python -m pytest \
+uv sync --locked --python 3.12 --extra dev --extra qlib
+uv run --locked --python 3.12 --extra dev --extra qlib python -m pytest \
   tests/test_published_assets.py -k qlib -q
 ```
 
