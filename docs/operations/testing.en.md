@@ -47,11 +47,13 @@ Add DuckDB query support with `uv sync --extra dev --extra duckdb`.
 
 ## Optional integrations
 
+The locked `pyqlib 0.9.7` runtime is tested with Python 3.12. Select the same interpreter for both dependency synchronization and test execution.
+
 The standard `dev` gate does not install `pyqlib`. Default tests check native DataFrame equivalence, delayed imports, and missing-dependency errors. Real DataLoader tests use `pytest.importorskip` and skip clearly when `pyqlib` is absent. Run the real runtime case with:
 
 ```bash
-uv sync --locked --extra dev --extra qlib
-uv run --locked --extra dev --extra qlib python -m pytest \
+uv sync --locked --python 3.12 --extra dev --extra qlib
+uv run --locked --python 3.12 --extra dev --extra qlib python -m pytest \
   tests/test_published_assets.py -k qlib -q
 ```
 
