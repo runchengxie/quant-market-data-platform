@@ -16,6 +16,7 @@ This page is the operations index. Detailed procedures are maintained by topic s
 | Create local snapshot backups and run development/governance checks | [Backup and development](operations/backup-and-dev.en.md) |
 | Build a publishable Python package | [Package publishing](operations/package-publishing.en.md) |
 | Audit current/latest paths and plan a retention dry run | [Data governance](data-governance.en.md) |
+| Prepare unpublished suspension and dividend research inputs | [Execution input readiness](operations/execution-input-readiness.en.md) |
 | Understand test scripts and coverage | [Testing operations](operations/testing.en.md) |
 
 ## Common command groups
