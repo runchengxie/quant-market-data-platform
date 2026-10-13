@@ -225,6 +225,24 @@ def _promotion_evidence(tmp_path: Path) -> tuple[Path, Path, Path, str]:
     return provider_root, guan_deal_dir, promotion_receipt, _file_sha256(promotion_receipt)
 
 
+def _fixture_source(tmp_path: Path, trade_date: str, *, bj: bool = False) -> dict[str, Any]:
+    prefix = "bj" if bj else "full"
+    root = tmp_path / ("bj" if bj else "all-a") / f"trade_date={trade_date}"
+    return {
+        "partition_path": str(root / "part-00000.parquet"),
+        "sidecar_path": str(root / "_minute_mirror.json"),
+        "partition_sha256": hashlib.sha256(f"{prefix}-partition-{trade_date}".encode()).hexdigest(),
+        "sidecar_sha256": hashlib.sha256(f"{prefix}-sidecar-{trade_date}".encode()).hexdigest(),
+        "universe_hash": hashlib.sha256(f"{prefix}-universe-{trade_date}".encode()).hexdigest(),
+        "universe_rule": "dynamic-daily-universe:v1" + (":exchange=BJ" if bj else ""),
+        "expected_bars_per_symbol": 241,
+        **({} if bj else {"selected_market_scope": "SH_SZ_BJ"}),
+        "flow_diagnostics" if bj else "price_flow_diagnostics": _empty_price_flow_diagnostics(),
+        "accepted_diagnostics": {},
+        "tushare_price_flow_validation": dict(tushare_price_flow_policy()),
+    }
+
+
 def _full_day_fixture_receipt(
     tmp_path: Path,
     version: Path,
@@ -365,25 +383,7 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
                     "output_sha256": hashlib.sha256(content).hexdigest(),
                 }
             )
-            full_day_sources[trade_date] = {
-                "partition_path": str(
-                    tmp_path / "all-a" / f"trade_date={trade_date}" / "part-00000.parquet"
-                ),
-                "sidecar_path": str(
-                    tmp_path / "all-a" / f"trade_date={trade_date}" / "_minute_mirror.json"
-                ),
-                "partition_sha256": hashlib.sha256(
-                    f"full-partition-{trade_date}".encode()
-                ).hexdigest(),
-                "sidecar_sha256": hashlib.sha256(f"full-sidecar-{trade_date}".encode()).hexdigest(),
-                "universe_hash": hashlib.sha256(f"full-universe-{trade_date}".encode()).hexdigest(),
-                "universe_rule": "dynamic-daily-universe:v1",
-                "expected_bars_per_symbol": 241,
-                "selected_market_scope": "SH_SZ_BJ",
-                "price_flow_diagnostics": _empty_price_flow_diagnostics(),
-                "accepted_diagnostics": {},
-                "tushare_price_flow_validation": dict(tushare_price_flow_policy()),
-            }
+            full_day_sources[trade_date] = _fixture_source(tmp_path, trade_date)
         if is_overlay:
             overlay_dates.append(trade_date)
             output_sha256 = hashlib.sha256(content).hexdigest()
@@ -397,24 +397,12 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
                     "output_sha256": output_sha256,
                 }
             )
-            source_receipts[trade_date] = {
-                "partition_path": str(
-                    tmp_path / "bj" / f"trade_date={trade_date}" / "part-00000.parquet"
-                ),
-                "sidecar_path": str(
-                    tmp_path / "bj" / f"trade_date={trade_date}" / "_minute_mirror.json"
-                ),
-                "partition_sha256": hashlib.sha256(
-                    f"bj-partition-{trade_date}".encode()
-                ).hexdigest(),
-                "sidecar_sha256": hashlib.sha256(f"bj-sidecar-{trade_date}".encode()).hexdigest(),
-                "universe_hash": hashlib.sha256(f"bj-universe-{trade_date}".encode()).hexdigest(),
-                "universe_rule": "dynamic-daily-universe:v1:exchange=BJ",
-                "expected_bars_per_symbol": 241,
-                "flow_diagnostics": _empty_price_flow_diagnostics(),
-                "accepted_diagnostics": {},
-                "tushare_price_flow_validation": dict(tushare_price_flow_policy()),
-            }
+            source_receipts[trade_date] = _fixture_source(tmp_path, trade_date, bj=True)
+        accepted_diagnostics = (
+            {"zero_volume_nonzero_amount_rows": 136_246, "positive_volume_zero_amount_rows": 1}
+            if index == 0
+            else {}
+        )
         daily.append(
             {
                 "date": trade_date,
@@ -429,23 +417,9 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
                 "file_size": file_stat.st_size,
                 "file_mtime_ns": file_stat.st_mtime_ns,
                 "content_sha256": hashlib.sha256(content).hexdigest(),
-                "accepted_diagnostics": (
-                    {
-                        "zero_volume_nonzero_amount_rows": 136_246,
-                        "positive_volume_zero_amount_rows": 1,
-                    }
-                    if index == 0
-                    else {}
-                ),
+                "accepted_diagnostics": dict(accepted_diagnostics),
                 "accepted_diagnostics_by_source": {
-                    "guan": (
-                        {
-                            "zero_volume_nonzero_amount_rows": 136_246,
-                            "positive_volume_zero_amount_rows": 1,
-                        }
-                        if index == 0
-                        else {}
-                    ),
+                    "guan": dict(accepted_diagnostics),
                     "tushare": {},
                 },
             }
