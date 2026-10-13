@@ -37,10 +37,18 @@ uv run --extra dev python -m pytest tests/<file>.py \
 依赖审计和静态安全扫描按仓库运行：
 
 ```bash
-uv run --extra dev pip-audit
+uv run --locked --extra dev pip-audit --strict --no-deps --disable-pip \
+  -r <(uv export --locked --all-extras --format requirements-txt \
+    --no-hashes --no-emit-project --no-emit-local \
+    --no-emit-package research-code-quality)
 uvx deptry .
 uvx bandit -q -r src -lll
 ```
+
+依赖审计使用锁定版本，覆盖全部 extras，包括未安装的 Qlib 依赖。审计直接查询这些
+精确版本的已知漏洞，使用 `--no-deps --disable-pip` 可以省去各平台可选运行时的下载。
+真实运行时另按下方命令验证。`research-code-quality` 来自固定完整 SHA 的 Git 源码，
+其源码、构建来源和依赖由 owner 仓库单独验证，PyPI 审计覆盖它的注册表依赖。
 
 带 DuckDB 查询能力：
 
