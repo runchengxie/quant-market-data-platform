@@ -22,16 +22,26 @@ The full suite accumulates memory in one pytest process. `run_pytest_isolated.py
 
 ```bash
 uv run --extra dev python -m pytest tests/<file>.py \
-  --cov=market_data_platform --cov-report=term-missing
+  --cov=quant_market_data_platform --cov-report=term-missing
 ```
 
 Dependency and static security checks:
 
 ```bash
-uv run --extra dev pip-audit
+uv run --locked --extra dev pip-audit --strict --no-deps --disable-pip \
+  -r <(uv export --locked --all-extras --format requirements-txt \
+    --no-hashes --no-emit-project --no-emit-local \
+    --no-emit-package research-code-quality)
 uvx deptry .
 uvx bandit -q -r src -lll
 ```
+
+The audit queries exact locked versions across all extras, including uninstalled Qlib
+dependencies, without downloading platform-specific optional runtimes. The flags
+`--no-deps --disable-pip` bypass installation and resolution; they do not verify runtime
+behavior. The Git-sourced `research-code-quality` package is pinned to a full commit SHA
+and is outside the PyPI audit. Its owner repository validates the source, build provenance,
+and dependencies separately.
 
 Add DuckDB query support with `uv sync --extra dev --extra duckdb`.
 
