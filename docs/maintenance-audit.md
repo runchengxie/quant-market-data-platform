@@ -266,3 +266,10 @@ uv sync --locked --extra dev
 核对差异是否只涉及 setuptools，按[本地测试与依赖审计要求](operations/testing.md)完成验证，再通过 PR 合入 main。其他依赖若同时变化，需要单独说明并验证。更新锁文件不会自动部署，也不应直接改动运行中的生产环境。
 
 保持普通 Dependabot 更新和安全提醒开启。GitHub 部署上游修复后，确认一次新的 setuptools 更新任务成功修改 uv.lock，再结束手动维护。上游 PR 合并本身不能证明托管更新器已上线。本次将锁定版本从 83.0.0 更新至 84.0.0，没有新增忽略规则或改写构建依赖要求。
+
+
+## 执行研究输入审计规模基线（2026-10-13）
+
+新增独立执行输入审计入口和五项行为测试，使 Python 文件数从 481 增加到 483，行数从 114396 增加到 114848，共增加 452 行。额度等于合并当前 main 后的实测清单，覆盖暂停事件切片、实施分红版本保留、经济冲突阻断和缺失结算日期检查。复杂度、长函数、大文件、长行和排除范围限制均未提高。未来整合入口或测试时，应在保留原始版本、等价事件归并和缺失信息阻断覆盖的前提下减少对应额度。
+
+The execution input audit and five behavioral tests add two Python files and 452 lines. The shared size baseline changes from 481 files / 114396 lines to the measured 483 files / 114848 lines after integrating current main. Other maintainability and exclusion limits stay fixed. Reduce this exact allowance when the entry point or fixtures are consolidated while preserving source versions, equivalent-event resolution, conflict rejection and missing-settlement coverage.
