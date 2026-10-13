@@ -28,7 +28,7 @@ jobs:
       - run: PYTHONPATH=. uv run --locked --extra dev pytest -q
       - name: Audit public dependencies
         run: >-
-          uvx --from pip-audit pip-audit --strict
-          -r <(uv export --locked --extra dev --format requirements-txt
+          uv run --locked --extra dev pip-audit --strict --no-deps --disable-pip
+          -r <(uv export --locked --all-extras --format requirements-txt
           --no-hashes --no-emit-project --no-emit-local
           --no-emit-package research-code-quality)
