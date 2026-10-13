@@ -116,10 +116,22 @@ def _is_retryable_provider_error(error: Exception) -> bool:
         return False
     if isinstance(error, OSError) and _provider_error_text(error).strip().upper() == "ERROR.":
         return True
+    message = _provider_error_text(error).lower()
+    if any(
+        fragment in message
+        for fragment in (
+            "certificate_verify_failed",
+            "certificate verify failed",
+            "hostname mismatch",
+        )
+    ):
+        return False
     if _is_quota_error(error):
         return True
-    message = _provider_error_text(error).lower()
     retryable_fragments = (
+        "ssleoferror",
+        "eof occurred in violation of protocol",
+        "unexpected_eof_while_reading",
         "timed out",
         "timeout",
         "proxyerror",

@@ -351,6 +351,10 @@ systemctl --user start tushare-minute-reverse-backfill.service
 和下载回执仍保留 `partial`，完整市场验收和生产晋级规则保持独立。沪深缺失、北交所格式异常、
 请求异常及文件损坏继续导致任务未完成。传入 `--bj-missing-policy error` 可恢复严格模式。
 
+TLS 连接意外关闭（`SSLEOFError`）按现有请求次数和退避上限重试。分钟接口每次实际尝试
+仍分别计入共享额度。未确认的请求保留为 `uncertain`。证书验证失败和主机名不匹配不重试，
+也不切换备用端点。证书验证保持启用。下载中断时，对已落盘分区独立验收。
+
 调度器会跳过已完整下载或已按北交所缺失策略接受的日期。`--max-dates` 是单次计划的日期上限，
 已有未完成计划优先续跑，调大上限不会向旧计划追加日期。旧计划全部日期尚未验收时，本次
 运行可能少于新上限。若旧计划混有已验收日期，则保留旧计划和回执，并为尚未验收的候选日期
@@ -456,3 +460,4 @@ DailyWatch20 的 TuShare-native 特征已生成并与 Guan 版本完成共同日
 特征可用性，但不把特征数值视为等价。对照结果登记在
 `metadata/minute_operational/acceptance/daily_watch20_tushare_native_rebaseline_v1.json`。
 模型重训和 release-grade 回测仍需以 TuShare-native 特征为输入后单独完成。
+本次传输修复的质量预算增加一个测试文件和 110 行 Python，用于 TLS EOF 重试、证书错误停止和不确定请求计费的回归覆盖。复杂度阈值不变。只有在以等效测试替换这些覆盖且源代码与测试行数减少时，才收回该预算。
