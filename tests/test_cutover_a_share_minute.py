@@ -225,6 +225,104 @@ def _promotion_evidence(tmp_path: Path) -> tuple[Path, Path, Path, str]:
     return provider_root, guan_deal_dir, promotion_receipt, _file_sha256(promotion_receipt)
 
 
+def _full_day_fixture_receipt(
+    tmp_path: Path,
+    version: Path,
+    dates: list[str],
+    actions: list[dict[str, Any]],
+    sources: dict[str, dict[str, Any]],
+) -> tuple[Path, Path, dict[str, Any]]:
+    full_day_policy = {
+        "replacement_unit": "whole_trade_date",
+        "intraday_source_merge": "forbidden",
+        "eligible_input_tiers": [
+            "guan_partial_session",
+            "missing",
+            "tushare_partial_top200",
+        ],
+        "source_requirement": "bound_complete_full_universe_sidecar",
+        "market_scope": "SH_SZ_BJ",
+        "tushare_price_flow_validation": dict(tushare_price_flow_policy()),
+    }
+    full_day_plan = tmp_path / "full-day-plan.json"
+    _write_manifest(
+        full_day_plan,
+        {
+            "schema_version": "a_share.minute_tushare_full_day_plan.v1",
+            "phase": "production",
+            "dates": dates,
+        },
+    )
+    full_day_receipt = tmp_path / "full-day-receipt.json"
+    _write_manifest(
+        full_day_receipt,
+        {
+            "schema_version": "a_share.minute_tushare_full_day_receipt.v2",
+            "status": "passed",
+            "phase": "production",
+            "plan_sha256": _file_sha256(full_day_plan),
+            "output_dir": str(version),
+            "policy": full_day_policy,
+            "dates": dates,
+            "summary": {
+                "date_count": len(dates),
+                "guan_partial_session_replacement_dates": 58,
+                "top200_replacement_dates": 28,
+                "missing_replacement_dates": 3,
+            },
+            "actions": actions,
+            "source_receipts": sources,
+        },
+    )
+    return full_day_plan, full_day_receipt, full_day_policy
+
+
+def _bj_overlay_fixture_receipt(
+    tmp_path: Path,
+    version: Path,
+    dates: list[str],
+    actions: list[dict[str, Any]],
+    sources: dict[str, dict[str, Any]],
+) -> tuple[Path, Path, dict[str, Any]]:
+    overlay_policy = {
+        "operation": "append_disjoint_exchange_whole_day_rows",
+        "eligible_base_tiers": ["annual_full_sh_sz", "deal_full_sh_sz"],
+        "required_universe_rule": "dynamic-daily-universe:v1:exchange=BJ",
+        "bars_per_symbol": 241,
+        "same_security_intraday_merge": "forbidden",
+        "tushare_full_a_share_dates": "reject_already_contains_bj",
+        "market_scope_after_overlay": "SH_SZ_BJ",
+        "source_validation": "passed",
+        "tushare_price_flow_validation": dict(tushare_price_flow_policy()),
+    }
+    overlay_plan = tmp_path / "bj-overlay-plan.json"
+    _write_manifest(
+        overlay_plan,
+        {
+            "schema_version": "a_share.minute_tushare_bj_overlay_plan.v1",
+            "phase": "production",
+            "dates": dates,
+        },
+    )
+    overlay_receipt = tmp_path / "bj-overlay-receipt.json"
+    _write_manifest(
+        overlay_receipt,
+        {
+            "schema_version": "a_share.minute_tushare_bj_overlay_receipt.v2",
+            "status": "passed",
+            "phase": "production",
+            "plan_sha256": _file_sha256(overlay_plan),
+            "output_dir": str(version),
+            "policy": overlay_policy,
+            "dates": dates,
+            "summary": {"date_count": len(dates)},
+            "actions": actions,
+            "source_receipts": sources,
+        },
+    )
+    return overlay_plan, overlay_receipt, overlay_policy
+
+
 def _fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
     parent = tmp_path / "a_share"
     current = parent / "minute_1m"
@@ -355,83 +453,11 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
 
     assert len(full_day_dates) == 89
     assert len(overlay_dates) == 1_041
-    full_day_policy = {
-        "replacement_unit": "whole_trade_date",
-        "intraday_source_merge": "forbidden",
-        "eligible_input_tiers": [
-            "guan_partial_session",
-            "missing",
-            "tushare_partial_top200",
-        ],
-        "source_requirement": "bound_complete_full_universe_sidecar",
-        "market_scope": "SH_SZ_BJ",
-        "tushare_price_flow_validation": dict(tushare_price_flow_policy()),
-    }
-    full_day_plan = tmp_path / "full-day-plan.json"
-    _write_manifest(
-        full_day_plan,
-        {
-            "schema_version": "a_share.minute_tushare_full_day_plan.v1",
-            "phase": "production",
-            "dates": full_day_dates,
-        },
+    full_day_plan, full_day_receipt, full_day_policy = _full_day_fixture_receipt(
+        tmp_path, version, full_day_dates, full_day_actions, full_day_sources
     )
-    full_day_receipt = tmp_path / "full-day-receipt.json"
-    _write_manifest(
-        full_day_receipt,
-        {
-            "schema_version": "a_share.minute_tushare_full_day_receipt.v2",
-            "status": "passed",
-            "phase": "production",
-            "plan_sha256": _file_sha256(full_day_plan),
-            "output_dir": str(version),
-            "policy": full_day_policy,
-            "dates": full_day_dates,
-            "summary": {
-                "date_count": len(full_day_dates),
-                "guan_partial_session_replacement_dates": 58,
-                "top200_replacement_dates": 28,
-                "missing_replacement_dates": 3,
-            },
-            "actions": full_day_actions,
-            "source_receipts": full_day_sources,
-        },
-    )
-    overlay_policy = {
-        "operation": "append_disjoint_exchange_whole_day_rows",
-        "eligible_base_tiers": ["annual_full_sh_sz", "deal_full_sh_sz"],
-        "required_universe_rule": "dynamic-daily-universe:v1:exchange=BJ",
-        "bars_per_symbol": 241,
-        "same_security_intraday_merge": "forbidden",
-        "tushare_full_a_share_dates": "reject_already_contains_bj",
-        "market_scope_after_overlay": "SH_SZ_BJ",
-        "source_validation": "passed",
-        "tushare_price_flow_validation": dict(tushare_price_flow_policy()),
-    }
-    overlay_plan = tmp_path / "bj-overlay-plan.json"
-    _write_manifest(
-        overlay_plan,
-        {
-            "schema_version": "a_share.minute_tushare_bj_overlay_plan.v1",
-            "phase": "production",
-            "dates": overlay_dates,
-        },
-    )
-    overlay_receipt = tmp_path / "bj-overlay-receipt.json"
-    _write_manifest(
-        overlay_receipt,
-        {
-            "schema_version": "a_share.minute_tushare_bj_overlay_receipt.v2",
-            "status": "passed",
-            "phase": "production",
-            "plan_sha256": _file_sha256(overlay_plan),
-            "output_dir": str(version),
-            "policy": overlay_policy,
-            "dates": overlay_dates,
-            "summary": {"date_count": len(overlay_dates)},
-            "actions": overlay_actions,
-            "source_receipts": source_receipts,
-        },
+    overlay_plan, overlay_receipt, overlay_policy = _bj_overlay_fixture_receipt(
+        tmp_path, version, overlay_dates, overlay_actions, source_receipts
     )
     provider_root, guan_deal_dir, promotion_receipt, promotion_sha256 = _promotion_evidence(
         tmp_path
