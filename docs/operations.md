@@ -25,6 +25,7 @@
 | 做本地快照备份、本地开发检查和治理脚本 | [operations/backup-and-dev.md](operations/backup-and-dev.md) |
 | 构建可发布 Python 包 | [operations/package-publishing.md](operations/package-publishing.md) |
 | 审计 current/latest 路径并生成退役 dry-run | [data-governance.md](data-governance.md) |
+| 准备独立停复牌与分红执行研究输入 | [执行研究输入审计](operations/execution-input-readiness.md) |
 | 测试脚本与测试范围说明 | [operations/testing.md](operations/testing.md) |
 
 ## 常用命令族
