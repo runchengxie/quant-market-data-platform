@@ -1,3 +1,5 @@
+import pytest
+
 from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
 from quant_market_data_platform.tushare_minute_backfill_part01 import _policy_payload
 from quant_market_data_platform.tushare_minute_reverse_backfill import (
@@ -62,3 +64,104 @@ def test_resume_keeps_incomplete_plan_within_scheduler_window(tmp_path) -> None:
 
 def test_legacy_request_policy_payload_keeps_original_shape() -> None:
     assert "request_timeout_seconds" not in _policy_payload(TushareRequestPolicy())
+
+
+@pytest.mark.parametrize("enable_burst", [False, True])
+def test_reverse_burst_is_opt_in_at_shared_quota_gate(tmp_path, monkeypatch, enable_burst):
+    import json
+
+    from quant_market_data_platform import tushare_minute_reverse_backfill as scheduler
+    from quant_market_data_platform.tushare_minute_quota import (
+        MinuteQuotaConfig,
+        MinuteQuotaExceeded,
+        MinuteQuotaLedger,
+        MinuteQuotaRequestPolicy,
+    )
+
+    metadata = tmp_path / "metadata/minute_backfill/reverse_scheduler"
+    (metadata / "plans").mkdir(parents=True)
+    (metadata / "plans/reverse_20220207_20220207.plan.json").write_text(
+        json.dumps({"identity": {"segments": [{"dates": ["20220207"]}]}})
+    )
+    database = tmp_path / "metadata/tushare/minute_quota/minute_quota.sqlite3"
+    config = MinuteQuotaConfig(
+        mode="enforce",
+        database_path=database,
+        consumer="reverse_backfill",
+        request_policy=MinuteQuotaRequestPolicy(
+            gate="requests", limit_requests=10, burst_limit_requests=20, safety_requests=1
+        ),
+    )
+    ledger = MinuteQuotaLedger(config, token="fixture")
+    for _ in range(10):
+        ledger.reserve(1).commit(1)
+
+    def provider_step(options):
+        burst_ledger = MinuteQuotaLedger(
+            MinuteQuotaConfig(
+                mode="enforce",
+                database_path=database,
+                consumer="reverse_backfill",
+                request_policy=MinuteQuotaRequestPolicy(
+                    gate="requests",
+                    limit_requests=10,
+                    burst_limit_requests=20,
+                    safety_requests=1,
+                    allow_burst=options.minute_quota_allow_burst,
+                ),
+            ),
+            token="fixture",
+        )
+        burst_ledger.reserve(1).commit(1)
+        return {"status": "complete", "summary": {"dates": 1, "rows": 1}}
+
+    monkeypatch.setattr(scheduler, "run_minute_backfill", provider_step)
+    options = scheduler.ReverseBackfillOptions(
+        artifacts_root=tmp_path,
+        bj_missing_policy="error",
+        **({"minute_quota_allow_burst": True} if enable_burst else {}),
+    )
+    if enable_burst:
+        assert scheduler.run_reverse_backfill(options)["status"] == "complete"
+        assert ledger.status()["committed_requests"] == 11
+    else:
+        with pytest.raises(MinuteQuotaExceeded):
+            scheduler.run_reverse_backfill(options)
+        assert ledger.status()["committed_requests"] == 10
+
+
+def test_reverse_cli_passes_response_size_and_pacing_to_scheduler(monkeypatch, capsys):
+    import json
+
+    from scripts.operations import tushare_minute_reverse_backfill as command
+
+    def planned_step(options):
+        return {
+            "status": "dry_run",
+            "batch_size": options.batch_size,
+            "cooldown_seconds": options.cooldown_seconds,
+            "allow_burst": options.minute_quota_allow_burst,
+        }
+
+    monkeypatch.setattr(command, "run_reverse_backfill", planned_step)
+    assert (
+        command.main(
+            [
+                "--artifacts-root",
+                "/fixture",
+                "--batch-size",
+                "33",
+                "--cooldown-seconds",
+                "1.2",
+                "--minute-quota-allow-burst",
+                "--dry-run",
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out) == {
+        "status": "dry_run",
+        "batch_size": 33,
+        "cooldown_seconds": 1.2,
+        "allow_burst": True,
+    }

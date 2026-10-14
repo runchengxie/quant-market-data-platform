@@ -40,6 +40,7 @@ class ReverseBackfillOptions:
     minute_quota_limit_requests: int = 10_000
     minute_quota_burst_limit_requests: int = 20_000
     minute_quota_safety_requests: int = 500
+    minute_quota_allow_burst: bool = False
     minute_quota_limit_rows: int = 160_000_000
     minute_quota_safety_rows: int = 4_000_000
 
@@ -252,7 +253,7 @@ def run_reverse_backfill(options: ReverseBackfillOptions) -> dict[str, Any]:
             minute_quota_limit_requests=options.minute_quota_limit_requests,
             minute_quota_burst_limit_requests=options.minute_quota_burst_limit_requests,
             minute_quota_safety_requests=options.minute_quota_safety_requests,
-            minute_quota_allow_burst=False,
+            minute_quota_allow_burst=options.minute_quota_allow_burst,
             minute_quota_limit_rows=options.minute_quota_limit_rows,
             minute_quota_safety_rows=options.minute_quota_safety_rows,
         )
