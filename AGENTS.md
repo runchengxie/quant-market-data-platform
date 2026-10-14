@@ -70,10 +70,12 @@ DataHandler、模型训练、实验记录和回测适配器属于下游研究仓
 
 A 股是当前活跃主线。下游系统只读消费本仓发布的数据资产。
 
-港股生产模块与 RQData 已随 2026-07-26 退役。`freeze-hk`、`hydrate-hk` 等迁移命令与
-`metadata/current_assets/hk_current.json` 契约均已移除，恢复历史资产使用
-`hk-freeze-20260613` 标签或私有归档仓库。新增港股生产逻辑前需要单独评估归档边界和
-维护责任。
+港股生产模块与 RQData 已随 2026-07-26 退役，`freeze-hk`、`hydrate-hk` 等迁移命令已移除。
+当前生产契约不再包含港股。`SUPPORTED_MARKETS` 也不接受 `hk`。为读取历史记录，
+`current_contract_path(..., market="hk")` 仍会构造旧路径
+`metadata/current_assets/hk_current.json`。这个 helper 只拼接路径，不检查文件是否存在，
+也不会启用港股数据消费或生产能力。历史复现使用 `hk-freeze-20260613` 标签或私有归档仓库。
+新增港股生产逻辑前需要单独评估归档边界和维护责任。
 
 ## 环境和凭证
 
