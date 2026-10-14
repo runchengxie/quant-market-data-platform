@@ -27,7 +27,6 @@ To read or build real data, configure the data root and provider credentials. St
 - [Operations overview](docs/operations.en.md): data commands and routine workflows
 - [Data contracts](docs/contracts.en.md): published asset formats and conventions
 - [Downstream integration](docs/integrations.en.md): how other projects consume published assets
-- [Documentation index](docs/index.md): technical references by topic
 
 ## Repository boundaries
 
