@@ -1,5 +1,15 @@
 # Shared Data Contracts
 
+SH/SZ historical minute data uses the separate contract
+`metadata/current_assets/a_share_sh_sz_minute_current.json`. Select it explicitly
+with `PublishedAssetContract.load(path).asset("minute_1m_tushare_sh_sz_historical")`.
+The published scope is `SH_SZ`, with `full_market_publication_allowed: false`.
+It does not replace `minute_1m`, `minute_1m_tushare`, or `a_share_current.json`.
+Each immutable version retains a `_publication_receipt.json` with coverage,
+per-date hashes and exclusions; `coverage_exclusions` lists excluded dates.
+Coverage bounds do not imply a contiguous history: consumers must check the
+actual partitions and gaps. The default full-market `load_current` is unchanged.
+
 [中文页面](contracts.md)
 
 > - status: active
