@@ -112,3 +112,16 @@ def test_maintenance_audit_verification_date_matches_localization() -> None:
     assert english_date is not None
     assert chinese_date is not None
     assert chinese_date.group(1) == english_date.group(1)
+
+
+def test_english_operations_index_links_to_english_topic_pages() -> None:
+    root = Path(__file__).resolve().parents[1]
+    operations = (root / "docs/operations.en.md").read_text(encoding="utf-8")
+    for target in (
+        "operations/a-share-tushare.en.md",
+        "operations/context-data.en.md",
+        "a-share-fund-top10-ownership-features.en.md",
+        "operations/a-share-minutes.en.md",
+    ):
+        assert f"]({target})" in operations
+    assert "[A-share minute guide](operations/a-share-minutes.en.md)" in operations
