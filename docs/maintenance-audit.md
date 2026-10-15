@@ -273,3 +273,7 @@ uv sync --locked --extra dev
 新增独立执行输入审计入口和五项行为测试，使 Python 文件数从 481 增加到 483，行数从 114396 增加到 114848，共增加 452 行。额度等于合并当前 main 后的实测清单，覆盖暂停事件切片、实施分红版本保留、经济冲突阻断和缺失结算日期检查。复杂度、长函数、大文件、长行和排除范围限制均未提高。未来整合入口或测试时，应在保留原始版本、等价事件归并和缺失信息阻断覆盖的前提下减少对应额度。
 
 The execution input audit and five behavioral tests add two Python files and 452 lines. The shared size baseline changes from 481 files / 114396 lines to the measured 483 files / 114848 lines after integrating current main. Other maintainability and exclusion limits stay fixed. Reduce this exact allowance when the entry point or fixtures are consolidated while preserving source versions, equivalent-event resolution, conflict rejection and missing-settlement coverage.
+
+## 2026-10-15 英文运维索引语言路由测试
+
+英文运维索引新增 13 行回归测试，确认四个专题链接指向英文 canonical 页面，并检查 A-share minute guide 的明确链接文本。共享 `python_lines` 基线从 115068 调整至实测的 115081；Python 文件数、复杂度、长函数、长行和排除范围限制均不变。若这些断言并入现有文档契约检查且保留英文目标校验，应重新测量并收紧该额度。
