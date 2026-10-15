@@ -29,7 +29,6 @@ uv run --locked marketdata --help
 - [操作总览](docs/operations.md)：查找数据命令与日常操作
 - [数据契约](docs/contracts.md)：了解已发布数据的格式和约定
 - [下游接入](docs/integrations.md)：了解其他项目如何读取发布资产
-- [文档首页](docs/index.zh-CN.md)：按主题查找技术说明
 
 ## 项目边界
 

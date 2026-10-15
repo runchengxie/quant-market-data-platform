@@ -76,6 +76,10 @@ The research views now expose daily `st_available_from` to A-share and DailyWatc
 
 See the dated Chinese audit record for the exact historical line-count changes. Those figures describe specific commits and are not current size targets.
 
+## English operations-link regression budget — 2026-10-15
+
+The English operations index adds 13 regression-test lines to ensure four topic links target English canonical pages and the A-share minute guide keeps its explicit link label. The shared `python_lines` baseline increases from 115,068 to the measured 115,081. File count, complexity, long-function, long-line, and exclusion limits remain unchanged. Recalculate and tighten this allowance if the assertions are consolidated into the existing documentation contract checks without losing English-target validation.
+
 ## Compatibility decisions
 
 The `hkdata` console script, `hk_data_platform.*` import aliases, `rqdata-hk-depth`, `rqdata-tick`, `rqdata-hk-assets`, and retired `marketdata migration` commands were removed from the active package. The former `freeze-hk`/`hydrate-hk` interfaces were removed with RQData; the linked recovery note is retained as historical guidance.
