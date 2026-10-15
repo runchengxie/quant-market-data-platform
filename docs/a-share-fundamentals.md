@@ -81,6 +81,25 @@ marketdata tushare validate-a-share-fundamentals-pit \
   --asset-dir <pit-dir> --target-date 20260529
 ```
 
+常规归档任务的 PIT 默认字段映射现已加入员工现金支出、应付职工薪酬、经营现金流出小计、营收和
+总资产。部署此版本后，每个新封存 vintage 都会按原有 PIT 观测计划记录这些字段。current 别名
+保持原状。首个成功归档的日期是这些字段最早的真实观测日。更早快照不会回填或改标。
+
+单独手工构建 PIT 时，可加入以下明确别名：
+
+```text
+  --field-map c_paid_to_for_empl=employee_cash_paid \
+  --field-map payroll_payable=employee_compensation_payable \
+  --field-map revenue=reported_revenue \
+  --field-map total_assets=reported_total_assets \
+  --field-map n_cashflow_act=net_operating_cashflow
+```
+
+这些映射应与对应的 normalized `cashflow`、`income` 和 `balancesheet` 组件一起传入。员工
+现金支出采用现金支付口径。应付职工薪酬反映期末负债存量，口径不同于本期费用。标准 normalized
+快照只保留 `report_type=1`。稀疏的 `report_type=5` 补充数据单独标记并保留其定义，避免混入这条
+PIT 链。新增字段映射不会补齐历史观测：只有实际记录过源行的不可变快照，才能证明该行在真实获取时点已可见。
+
 raw manifest 的 `query.start_date` 和 `query.end_date` 只描述报告期查询边界。它们不提供观测
 时点或 freshness 证据。normalized v2 把每个 part 的采集时间传播到
 `_source_retrieved_at`，并用 `observed_vintage_dates` 记录完整归档包的观测日期。单次 raw 包跨

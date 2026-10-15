@@ -65,6 +65,9 @@ def test_archive_requires_explicit_api_url_and_keeps_daily_core_pit_defaults() -
     assert "roe=roe" in args.field_mappings
     assert "rd_exp=rd_exp" in args.field_mappings
     assert "n_cashflow_act=n_cashflow_act" in args.field_mappings
+    assert "c_paid_to_for_empl=employee_cash_paid" in args.field_mappings
+    assert "payroll_payable=employee_compensation_payable" in args.field_mappings
+    assert "st_cash_out_act=operating_cash_outflows" in args.field_mappings
     assert "grossprofit_margin=grossprofit_margin" in args.field_mappings
     assert "netprofit_yoy=netprofit_yoy" in args.field_mappings
     assert "or_yoy=or_yoy" in args.field_mappings

@@ -31,17 +31,14 @@ from quant_market_data_platform.providers.tushare_common import write_manifest
 
 DEFAULT_DATASETS = ("income", "balancesheet", "cashflow", "fina_indicator")
 DEFAULT_FIELD_MAPPINGS = (
-    "revenue=revenue",
-    "total_revenue=total_revenue",
-    "rd_exp=rd_exp",
-    "operate_profit=operate_profit",
-    "total_profit=total_profit",
-    "n_income=n_income",
-    "n_income_attr_p=n_income_attr_p",
-    "total_assets=total_assets",
+    *(f"{x}={x}" for x in "revenue total_revenue rd_exp operate_profit total_profit".split()),
+    *(f"{x}={x}" for x in "n_income n_income_attr_p total_assets".split()),
+    "payroll_payable=employee_compensation_payable",
     "total_liab=total_liab",
     "total_hldr_eqy_exc_min_int=total_hldr_eqy_exc_min_int",
     "n_cashflow_act=n_cashflow_act",
+    "c_paid_to_for_empl=employee_cash_paid",
+    "st_cash_out_act=operating_cash_outflows",
     "n_cashflow_inv_act=n_cashflow_inv_act",
     "n_cash_flows_fnc_act=n_cash_flows_fnc_act",
     "roe=roe",
