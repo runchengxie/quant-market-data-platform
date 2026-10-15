@@ -276,4 +276,4 @@ The execution input audit and five behavioral tests add two Python files and 452
 
 ## 2026-10-15 英文运维索引语言路由测试
 
-英文运维索引新增 13 行回归测试，确认四个专题链接指向英文 canonical 页面，并检查 A-share minute guide 的明确链接文本。共享 `python_lines` 基线从 115068 调整至实测的 115081；Python 文件数、复杂度、长函数、长行和排除范围限制均不变。若这些断言并入现有文档契约检查且保留英文目标校验，应重新测量并收紧该额度。
+英文运维索引新增 13 行回归测试，确认四个专题链接指向英文 canonical 页面，并检查 A-share minute guide 的明确链接文本。共享 `python_lines` 基线从 115068 调整至实测的 115081，Python 文件数、复杂度、长函数、长行和排除范围限制均不变。若这些断言并入现有文档契约检查且保留英文目标校验，应重新测量并收紧该额度。
