@@ -11,6 +11,16 @@
 
 ## 数据产物根目录
 
+沪深历史分钟资产可通过独立契约
+`metadata/current_assets/a_share_sh_sz_minute_current.json` 读取。显式调用
+`PublishedAssetContract.load(path).asset("minute_1m_tushare_sh_sz_historical")`，
+不要通过全市场 `load_current` 隐式选择。该正式资产的 `market_scope` 为 `SH_SZ`，
+`full_market_publication_allowed` 为 `false`。全市场入口 `minute_1m`、
+`minute_1m_tushare` 和 `a_share_current.json` 沿用各自契约。
+版本内 `_publication_receipt.json` 保存覆盖范围、逐日哈希和缺口。
+`coverage_exclusions` 明示被排除日期。日期上下界描述首尾日期，
+下游必须核对实际分区与缺口。
+
 共享的数据产物根目录用于划分数据工具与策略代码库之间的存储边界。
 
 推荐的环境变量配置：
