@@ -71,6 +71,31 @@ marketdata tushare validate-a-share-fundamentals-pit \
   --asset-dir <pit-dir> --target-date 20260529
 ```
 
+The archive job's default PIT field map now includes the employee cash line,
+payroll payable, the operating-cash-flow subtotal, revenue, and total assets.
+Each new sealed vintage therefore records these fields on its ordinary PIT
+observation schedule. This does not switch a current alias. The first successful
+archive after deploying this version is the earliest observed date for these
+fields; earlier snapshots are not backfilled or relabeled.
+
+For a separate manual PIT build, use these explicit aliases:
+
+```text
+  --field-map c_paid_to_for_empl=employee_cash_paid \
+  --field-map payroll_payable=employee_compensation_payable \
+  --field-map revenue=reported_revenue \
+  --field-map total_assets=reported_total_assets \
+  --field-map n_cashflow_act=net_operating_cashflow
+```
+
+Pass the mappings with the matching normalized `cashflow`, `income`, and
+`balancesheet` components. Employee cash paid is not accrued wages, and payroll
+payable is not a period expense. Standard normalized snapshots contain
+`report_type=1`; the sparse `report_type=5` supplement is a separate definition
+and must not be silently mixed into this PIT chain. A new mapping does not
+backfill historical observations: only immutable snapshots that actually
+recorded a source row establish its retrieval-time visibility.
+
 Raw manifest `query.start_date` and `query.end_date` describe report-period query bounds; they are not observation-time or freshness evidence. Normalized v2 propagates each part's retrieval time to `_source_retrieved_at` and records complete archive observation dates in `observed_vintage_dates`. If one raw bundle spans multiple parts or retrieval dates, its completion date is the latest part retrieval date.
 
 PIT v2 event identity is `symbol + trade_date + report_period + _source_retrieved_at`. Multiple report periods disclosed on one available date remain separate rows; fields must not be merged across report periods. Records of the same event across retrieval vintages form an ordered revision history. Conflicting values for the same report period, available date, source, and retrieval timestamp fail closed.
