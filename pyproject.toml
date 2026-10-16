@@ -23,7 +23,7 @@ quantzone = [
 dev = [
   "duckdb>=1.5.5",
   "pandas>=2.2",
-  "polars>=1.43.2,<2",
+  "polars>=1.43.2,<3",
   "pyarrow>=25.0.0",
   "python-dotenv>=1",
   "pip-audit>=2.7",
@@ -45,7 +45,7 @@ duckdb = [
 minute-fusion = [
   "duckdb>=1.5.5",
   "pandas>=2.2",
-  "polars>=1.43.2,<2",
+  "polars>=1.43.2,<3",
   "pyarrow>=25.0.0",
 ]
 qlib = [
