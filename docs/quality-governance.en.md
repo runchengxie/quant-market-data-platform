@@ -92,3 +92,14 @@ file/line inventory accordingly; this adjustment grants no complexity waiver.
 ## QuantZone direct connection inventory (2026-10-03)
 
 The explicit CLI proxy option and its restoration tests add 83 Python lines (114,313 to 114,396), with no new files and no changes to complexity, long-line or function/file-size budgets. Removing this option or consolidating its tests must lower the inventory accordingly.
+
+## Explicit research panel inventory (2026-10-16)
+
+The strategy-panel reader and its behavioral regressions add two Python files.
+Only the shared file/line inventory is updated to the measured committed surface;
+long-line, complexity and function/file-size ceilings remain unchanged. The new
+source is fully covered by Ruff and ty, with no new exclusions. Integer date and
+duplicate-index regressions, hash validation and asset-kind checks are included.
+This accepts feature/test growth, not additional complexity debt. Remove the
+corresponding inventory when these modules are consolidated or retired; verify
+with the shared ratchet, the isolated full suite and existing governance checks.
