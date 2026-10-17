@@ -322,6 +322,10 @@ def _resolve_default_universe(inputs: _UniverseInputs) -> _ResolvedUniverse:
         source = f"{source}+exclude_prelisting_BJ({len(prelisting_bj)})"
     if provider_verified_outside_active:
         source = f"{source}+historical_provider_symbols({len(provider_verified_outside_active)})"
+    evidence = stock_history.attrs.get("verified_nontrading", {})
+    if evidence.get("trade_date") == inputs.trade_date and evidence.get("symbols"):
+        facts = ",".join(f"{code}:{reason}" for code, reason in evidence["symbols"].items())
+        source = f"{source}+verified_nontrading({facts})"
     return _ResolvedUniverse(symbols=symbols, rule=rule, source=source)
 
 
