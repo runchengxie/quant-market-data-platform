@@ -456,7 +456,13 @@ def _traded_symbols_from_provider(
     daily.intersection_update(a_share_master)
     daily_basic.intersection_update(a_share_master)
     daily.update(provider_verified_only)
-    missing_from_daily = daily_basic - daily
+    from quant_market_data_platform.providers._minute_nontrading import verified_nontrading_symbols
+
+    nontrading = verified_nontrading_symbols(
+        pro, missing=daily_basic - daily, trade_date=trade_date, policy=policy
+    )
+    stock_history.attrs["verified_nontrading"] = {"trade_date": trade_date, "symbols": nontrading}
+    missing_from_daily = daily_basic - daily - set(nontrading)
     unexplained_daily_only = {
         symbol
         for symbol in daily - daily_basic
