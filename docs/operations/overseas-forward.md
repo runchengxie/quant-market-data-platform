@@ -1,5 +1,7 @@
 # 海外日线前向回执 v1
 
+[English page](overseas-forward.en.md)
+
 `python -m quant_market_data_platform.overseas_forward --root <owner-data>/forward/overseas-v1 --mode capture_probe`
 
 每次执行重新请求 TuShare，强制使用 `TUSHARE_TOKEN_2` 及其配套自定义 route，通过生产安装的 `marketdata config run --config <private-config> -- ...` 注入凭证。复用 owner 的客户端与传输失败切换，不复制历史缓存作为新接收证据。每项请求使用 12 秒超时。失败只保存异常类别，避免凭证进入日志。

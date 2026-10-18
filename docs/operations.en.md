@@ -121,3 +121,7 @@ Use `--no-proxy` on either QuantZone command to connect directly when an inherit
 The reverse runner accepts `--batch-size` (default 20, maximum 33) and `--cooldown-seconds` (default 1.2). Explicit `--minute-quota-allow-burst` enables the shared ledger burst pool while retaining provider limits, holds, and stop conditions. The default remains the guaranteed pool. A complete 241-bar grid for 33 securities produces 7,953 rows, below the 8,000-row response cap. Longer schedules must preserve single-instance execution, resumable partitions, and independent batch acceptance.
 
 The quality budget adds 110 counted Python lines for explicit burst settings, command arguments, and real shared-ledger regressions covering default refusal and explicit admission. File-count and complexity limits do not increase. Retire this budget only when equivalent coverage reduces source and test lines.
+
+### Overseas research forward receipts
+
+[Append-only collection and timing rules](operations/overseas-forward.en.md) describe the independent module entry point and owner archive.
