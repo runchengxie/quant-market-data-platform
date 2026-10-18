@@ -227,3 +227,7 @@ The `tushare.stk_surv.v1` manifest retains its asset key and event-date partitio
 Industry interval manifests bound observed membership dates: `query.start_date` is the minimum effective date, and `query.end_date` is the maximum of all effective dates and nonempty interval end dates. A later open membership start cannot be excluded by an earlier closed interval end. These bounds are derived from payload values, not requested refresh dates or the retrieval vintage.
 
 Statement observation ledgers accept per-security `income`, `balancesheet` and `cashflow` sources alongside their `_vip` batch counterparts, mapped to the same canonical datasets. Both require content checksums, timezone-aware actual observation timestamps and statement identities; visibility remains bounded by the later observation/disclosure date plus the delay. A hash computed during recovery does not certify content at the original download date and cannot justify backdating visibility.
+
+## Overseas research forward receipts
+
+`overseas-receipt-v1` is an independent append-only owner archive. Fresh request CSV files, source dates, assumed closes and actual receipt times are linked by SHA256. See [collection and timing rules](operations/overseas-forward.en.md). QMR owns derived forecasts. Existing published assets and the Hong Kong production contract are unchanged.
