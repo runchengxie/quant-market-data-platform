@@ -125,3 +125,13 @@ The quality budget adds 110 counted Python lines for explicit burst settings, co
 ### Overseas research forward receipts
 
 [Append-only collection and timing rules](operations/overseas-forward.en.md) describe the independent module entry point and owner archive.
+
+### Statement template diagnostics
+
+`python scripts/operations/audit_fundamentals_templates.py --vintage <sealed-vintage> --output <new-directory>`
+replays normalization filters from complete raw v2 inputs and quarantines observation keys
+that remain ambiguous after provider revision selection. Diagnostic tables, conflicting rows,
+and a hash receipt go to a new external data directory. Original retrieval timestamps remain
+intact and actual generation time is recorded separately. The tool makes no API requests,
+publishes no normalized asset, and preserves sealed inputs and shared aliases. The strict
+builder continues to reject conflicting keys. Diagnostic quarantine grants no production exception.

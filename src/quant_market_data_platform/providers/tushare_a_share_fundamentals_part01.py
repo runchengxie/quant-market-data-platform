@@ -47,7 +47,7 @@ from quant_market_data_platform.providers.tushare_common import (
 
 STATEMENT_DATASETS = {"income", "balancesheet", "cashflow"}
 
-SUPPORTED_STATEMENT_COMP_TYPES = {"1", "2", "3", "4"}
+SUPPORTED_STATEMENT_COMP_TYPES = {"1", "2", "3", "4", "7"}
 
 DEFAULT_PIT_BUCKET_COUNT = 128
 

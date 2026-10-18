@@ -213,3 +213,12 @@ marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest
 ### 海外日线前向研究回执
 
 [追加式采集与时间边界](operations/overseas-forward.md)提供独立 module 入口，不更新共享数据别名。
+
+### 财报模板筛选诊断
+
+`python scripts/operations/audit_fundamentals_templates.py --vintage <sealed-vintage> --output <new-directory>`
+从完整 raw v2 输入重放标准化筛选，隔离修订筛选后仍有歧义的观测键。
+诊断表、冲突原行和哈希回执保存在新的外部数据目录。
+原始抓取时间保持不变，实际生成时间单独记录。
+该工具不发起API请求，不发布标准化资产，也不修改封存输入或共享别名。
+严格构建器仍拒绝同键冲突，诊断隔离不构成生产豁免。
