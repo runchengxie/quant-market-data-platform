@@ -202,3 +202,10 @@ marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest
 
 验收器拒绝未知身份或策略哈希，并重新检查输入字节与交易日覆盖。
 重复验收同一身份时保留原凭证，输入变化须使用新目录重新采集和验收。
+
+反向回填默认将已落盘、仅有股票无响应的日期写入
+`metadata/minute_backfill/reverse_scheduler/deferred_missing.json`，继续下载更早日期。
+回执和分区仍保持 `partial`，不会自动发布或豁免完整性检查。
+`deferred_missing` 表示本批缺口已挂起。`download_pass_complete_with_gaps` 表示首轮范围已扫描、仍有补采工作，不能解释为历史完整。
+网络、额度、存储和数据校验错误不会按无响应缺口跳过。
+使用 `--retry-deferred` 显式重试缺口。此模式保留未完成批次的恢复行为。

@@ -202,3 +202,19 @@ The minute-data test suite covers build/fusion/coverage, Beijing overlay, TuShar
 
 DailyWatch20 TuShare-native features were compared with Guan over 3,716,570 shared rows. Main-feature Pearson correlations ranged from 0.959 to 0.999, with largest differences in `minute_volume_concentration` and `minute_price_volume_corr`. This establishes lineage and feature availability, not numeric equivalence. Results are recorded in `metadata/minute_operational/acceptance/daily_watch20_tushare_native_rebaseline_v1.json`. Model retraining and release-grade backtesting still need to use TuShare-native features independently.
 The transport repair adds one test file and 110 counted Python lines for TLS EOF retries, certificate failure termination, and uncertain-request charging. Complexity thresholds are unchanged. Retire this budget only when equivalent replacement coverage reduces source and test line counts.
+
+## Deferred historical gaps
+
+The reverse backfill now queues persisted stock no-response gaps in
+`metadata/minute_backfill/reverse_scheduler/deferred_missing.json` and advances
+its first pass to older dates. Only bound, valid partitions whose current execution
+receipt confirms missing-only responses qualify. Global failures remain resumable.
+Receipts remain partial and publication completeness checks remain enforced.
+Use `--retry-deferred` to resume gap repairs explicitly.
+`download_pass_complete_with_gaps` means the first download pass is exhausted,
+with repairs still pending; it does not mean the history is complete.
+
+The historical code for China Merchants Property Operation & Service is
+`000043.SZ` through 2019-12-13 and `001914.SZ` from 2019-12-16. The universe
+selects one date-appropriate native code. See the
+[Shenzhen Stock Exchange notice](https://www.szse.cn/disclosure/notice/general/t20191211_572534.html).
