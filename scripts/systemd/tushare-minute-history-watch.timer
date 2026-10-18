@@ -1,0 +1,11 @@
+[Unit]
+Description=Observe minute history every five minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=5min
+AccuracySec=30s
+Unit=tushare-minute-history-watch.service
+
+[Install]
+WantedBy=timers.target

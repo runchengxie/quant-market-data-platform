@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from quant_market_data_platform._minute_history_lock import HistoryWriterBusy, history_writer_lock
 from quant_market_data_platform._minute_operational_receipt import read_operational_receipt
 from quant_market_data_platform._reverse_backfill_bj_policy import (
     persist_bj_report,
@@ -39,6 +40,7 @@ class ReverseBackfillOptions:
     bj_missing_policy: str = "report"
     dry_run: bool = False
     retry_deferred: bool = False
+    audit_block_path: Path | None = None
     batch_size: int = 20
     cooldown_seconds: float = 1.2
     quota_cooldown_seconds: float = 390.0
@@ -178,7 +180,7 @@ def _resume_paths(
     return None
 
 
-def run_reverse_backfill(options: ReverseBackfillOptions) -> dict[str, Any]:
+def _run_reverse_backfill(options: ReverseBackfillOptions) -> dict[str, Any]:
     """Acquire at most ``max_dates`` missing dates into isolated staging."""
     if options.bj_missing_policy not in {"report", "error"}:
         raise ValueError("bj_missing_policy must be report or error")
@@ -319,3 +321,16 @@ __all__ = [
     "_scheduler_plan_stem",
     "_select_reverse_dates",
 ]
+
+
+def run_reverse_backfill(options: ReverseBackfillOptions) -> dict[str, Any]:
+    """Acquire the shared writer lane and preserve persistent audit blocking."""
+    if options.audit_block_path is not None and options.audit_block_path.exists():
+        return {"status": "audit_blocked"}
+    try:
+        with history_writer_lock(options.artifacts_root):
+            if options.audit_block_path is not None and options.audit_block_path.exists():
+                return {"status": "audit_blocked"}
+            return _run_reverse_backfill(options)
+    except HistoryWriterBusy:
+        return {"status": "writer_busy"}

@@ -213,3 +213,13 @@ marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest
 ### 海外日线前向研究回执
 
 [追加式采集与时间边界](operations/overseas-forward.md)提供独立 module 入口，不更新共享数据别名。
+
+### 分钟历史监控与缺口补采
+
+使用 `scripts/operations/tushare_minute_history.py status --artifacts-root <data-root> --runtime-root <runtime-root>` 只读检查进度、额度、存储和审计阻断。统计分别列出元数据完成日期、独立审计日期和北京市场省略日期。历史审计绑定失效会单独记录，下载完成仍须经过发布验收。
+
+`watch` 使用相同参数并增加 `--state-root <monitor-root>`，写入 `status.json` 和去重的本地 `alerts.jsonl`。连续活跃且可运行的采样超过 15 分钟、至少三次没有进展时报告停滞。等待额度、空闲和审计阻断有独立状态。监控无需数据源凭证。
+
+`repair` 只处理 `deferred_missing.json` 中有来源绑定的股票日缺口，每次最多请求一个股票日。默认每日最多 500 次请求、每项最多三次尝试，失败后从 30 分钟开始退避。它与主下载共用写入锁和额度账本。空队列不创建数据源客户端。`--dry-run` 可检查候选项。
+
+补采保留原始分区和回执，验证通过后原子写入新的完整候选分区。语义异常会保留审计阻断，需独立排查后再恢复。候选分区仍须经过后续验收，补采不会切换发布别名。通用定时模板位于 `scripts/systemd/tushare-minute-history-watch.*` 和 `tushare-minute-gap-repair.*`，渲染后应引用稳定生产 release。

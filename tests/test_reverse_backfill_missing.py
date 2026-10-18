@@ -245,3 +245,19 @@ def test_mixed_batch_keeps_unattempted_dates_after_deferring_gap(tmp_path, monke
     selected = json.loads((metadata / "dates/reverse_20191210_20191211.json").read_text())["dates"]
     assert selected == ["20191211", "20191210"]
     assert calls[0].plan_path.name == "reverse_20191210_20191211.plan.json"
+
+
+def test_repair_queue_projection_does_not_hash_unrelated_days(tmp_path, monkeypatch):
+    from quant_market_data_platform import _reverse_backfill_missing as missing
+
+    base = tmp_path / "staging/tushare_minute_backfill_reverse"
+    for day in ["20191213", "20191212"]:
+        p = base / "runs/run/data" / f"trade_date={day}" / "_minute_mirror.json"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text("{}")
+    visited = []
+    monkeypatch.setattr(
+        missing, "_missing_symbols", lambda p, d: visited.append(p.parent.name) or []
+    )
+    missing.missing_queue(base, set(), selected_dates={"20191213"})
+    assert visited == ["trade_date=20191213"]

@@ -125,3 +125,15 @@ The quality budget adds 110 counted Python lines for explicit burst settings, co
 ### Overseas research forward receipts
 
 [Append-only collection and timing rules](operations/overseas-forward.en.md) describe the independent module entry point and owner archive.
+
+### Minute history monitoring and gap repair
+
+Run `scripts/operations/tushare_minute_history.py status --artifacts-root <data-root> --runtime-root <runtime-root>` for read-only progress, quota, storage and audit-block status. Counts distinguish metadata completion, independently audited dates and Beijing omissions. Expired audit bindings are reported separately. Download completion still requires publication acceptance.
+
+`watch` adds `--state-root <monitor-root>` and writes `status.json` plus deduplicated local `alerts.jsonl`. Stalling requires at least three consecutive active, runnable samples without progress across 15 minutes. Quota waits, idle writers and audit blocks have separate states. Monitoring needs no provider credentials.
+
+`repair` handles only source-bound stock-day gaps in `deferred_missing.json`, requesting at most one stock-day per invocation. Defaults cap daily requests at 500 and attempts per item at three, with exponential backoff starting at 30 minutes. It shares the main writer lock and quota ledger. An empty queue creates no provider client. Use `--dry-run` to inspect candidates.
+
+Repair preserves original partitions and receipts, then atomically installs a new complete candidate after validation. Semantic failures retain an audit block for separate investigation. Candidates require later acceptance and never switch published aliases. Generic timers live under `scripts/systemd/tushare-minute-history-watch.*` and `tushare-minute-gap-repair.*`; rendered units must use stable production releases.
+
+The code-size baseline adds the bounded repair worker, evidence helpers, read-only inventory, shared lock, CLI and failure-path tests. Complexity and large-file limits stay fixed. Future edits must fit this measured baseline or reduce it when these components are consolidated.
