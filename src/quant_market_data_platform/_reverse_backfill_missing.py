@@ -79,12 +79,18 @@ def _receipt_index(staging: Path) -> tuple[dict[str, Any], dict[str, int]]:
 
 
 def missing_queue(
-    staging: Path, settled: set[str], *, report_path: Path | None = None
+    staging: Path,
+    settled: set[str],
+    *,
+    report_path: Path | None = None,
+    selected_dates: set[str] | None = None,
 ) -> dict[str, Any]:
     receipts, failed = _receipt_index(staging)
     latest: dict[str, Path] = {}
     for path in staging.glob("runs/*/data/trade_date=*/_minute_mirror.json"):
         date = path.parent.name.removeprefix("trade_date=")
+        if selected_dates is not None and date not in selected_dates:
+            continue
         if date not in latest or path.stat().st_mtime_ns > latest[date].stat().st_mtime_ns:
             latest[date] = path
     dates: dict[str, Any] = {}

@@ -1,0 +1,11 @@
+[Unit]
+Description=Bounded queued minute stock-day repair
+
+[Service]
+Type=oneshot
+WorkingDirectory=@MDP_DIR@
+ExecStart=@MDP_DIR@/.venv/bin/marketdata config run --config @DATA_PLATFORM_CONFIG@ -- @MDP_PYTHON@ @MDP_DIR@/scripts/operations/tushare_minute_history.py repair --artifacts-root @DATA_PLATFORM_ROOT@ --runtime-root @MINUTE_RUNTIME_ROOT@ --daily-request-limit 500 --max-attempts 3 --allow-burst
+TimeoutStartSec=20min
+TimeoutStopSec=2min
+KillSignal=SIGINT
+Nice=15
