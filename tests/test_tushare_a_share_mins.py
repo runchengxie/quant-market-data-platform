@@ -867,7 +867,7 @@ def test_historical_daily_intersection_can_retain_provider_only_symbols(
 ) -> None:
     class HistoricalProviderOnlyPro:
         def daily(self, *, trade_date: str, fields: str, limit: int, offset: int) -> pd.DataFrame:
-            symbols = ["000001.SZ", "000022.SZ", "000043.SZ"] if offset == 0 else []
+            symbols = ["000001.SZ", "000022.SZ", "000044.SZ"] if offset == 0 else []
             return pd.DataFrame({"ts_code": symbols, "trade_date": [trade_date] * len(symbols)})
 
         daily_basic = daily
@@ -899,7 +899,7 @@ def test_historical_daily_intersection_can_retain_provider_only_symbols(
     assert _sidecar(tmp_path)["expected_symbols"] == [
         "000001.SZ",
         "000022.SZ",
-        "000043.SZ",
+        "000044.SZ",
     ]
 
 
@@ -981,10 +981,18 @@ def test_historical_code_transition_augments_live_master_and_prefers_date_code()
     assert "302132.SZ" in mins._historical_symbols(history, trade_date="20250217")
 
 
+@pytest.mark.parametrize(
+    "transition",
+    [
+        ("20220715", "300114.SZ", "302132.SZ", "300114.SZ"),
+        ("20191213", "000043.SZ", "001914.SZ", "000043.SZ"),
+        ("20191216", "000043.SZ", "001914.SZ", "001914.SZ"),
+    ],
+)
 def test_historical_code_transition_mirror_is_promotable_full_universe(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, transition
 ) -> None:
-    trade_date = "20220715"
+    trade_date, historical, successor, expected = transition
     minute_calls: list[str] = []
 
     class TransitionPro:
@@ -993,12 +1001,12 @@ def test_historical_code_transition_mirror_is_promotable_full_universe(
             if list_status != "L":
                 return pd.DataFrame(columns=pd.Index(columns))
             return pd.DataFrame(
-                [("302132.SZ", "L", "20100827", "", "CNY")],
+                [(successor, "L", "20100827", "", "CNY")],
                 columns=pd.Index(columns),
             )
 
         def _daily_frame(self, offset: int) -> pd.DataFrame:
-            symbols = ["300114.SZ", "302132.SZ"] if offset == 0 else []
+            symbols = [historical, successor] if offset == 0 else []
             return pd.DataFrame({"ts_code": symbols, "trade_date": [trade_date] * len(symbols)})
 
         def daily(self, *, trade_date: str, fields: str, limit: int, offset: int) -> pd.DataFrame:
@@ -1011,7 +1019,9 @@ def test_historical_code_transition_mirror_is_promotable_full_universe(
         minute_calls.extend(symbols)
         frame = _bars(symbols)
         frame["trade_time"] = frame["trade_time"].map(
-            lambda value: value.replace(year=2022, month=7, day=15)
+            lambda value: value.replace(
+                year=int(trade_date[:4]), month=int(trade_date[4:6]), day=int(trade_date[6:])
+            )
         )
         frame["trade_date"] = trade_date
         return frame
@@ -1035,11 +1045,11 @@ def test_historical_code_transition_mirror_is_promotable_full_universe(
     sidecar = json.loads((part_dir / mins.COMPLETENESS_FILENAME).read_text())
     partition = pd.read_parquet(part_dir / "part-00000.parquet")
     receipt = mins.validate_complete_minute_partition(part_dir, trade_date=trade_date)
-    assert minute_calls == ["300114.SZ"]
-    assert set(partition["ts_code"]) == {"300114.SZ"}
-    assert sidecar["expected_symbols"] == ["300114.SZ"]
-    assert sidecar["universe_rule"] == mins.HISTORICAL_CODE_TRANSITION_UNIVERSE_RULE
-    assert receipt["universe_rule"] == mins.HISTORICAL_CODE_TRANSITION_UNIVERSE_RULE
+    assert minute_calls == [expected]
+    assert set(partition["ts_code"]) == {expected}
+    assert sidecar["expected_symbols"] == [expected]
+    assert "daily_crosschecked" in sidecar["universe_rule"]
+    assert receipt["universe_rule"] == sidecar["universe_rule"]
 
 
 def test_daily_crosscheck_ignores_non_master_b_shares_and_allows_daily_only_bj() -> None:
@@ -1910,3 +1920,13 @@ def test_corrupt_bound_parquet_is_quarantined_and_rebuilt(
     assert calls == ["000001.SZ"]
     assert _sidecar(tmp_path)["status"] == "complete"
     assert list((part_path.parent / "_quarantine").glob("*.parquet"))
+
+
+@pytest.mark.parametrize(
+    "trade_date,expected", [("20191213", "000043.SZ"), ("20191216", "001914.SZ")]
+)
+def test_cm_property_code_transition_has_one_native_code(trade_date, expected):
+    symbols, _ = _universe._apply_historical_code_transitions(
+        {"000043.SZ", "001914.SZ", "000001.SZ"}, trade_date=trade_date
+    )
+    assert symbols == {expected, "000001.SZ"}

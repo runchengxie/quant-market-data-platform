@@ -165,3 +165,18 @@ def test_reverse_cli_passes_response_size_and_pacing_to_scheduler(monkeypatch, c
         "cooldown_seconds": 1.2,
         "allow_burst": True,
     }
+
+
+@pytest.mark.parametrize("status", ["deferred_missing", "download_pass_complete_with_gaps"])
+def test_reverse_cli_reports_gaps_without_retry_failure(monkeypatch, capsys, status):
+    import json
+
+    from scripts.operations import tushare_minute_reverse_backfill as command
+
+    def step(options):
+        assert options.retry_deferred is True
+        return {"status": status, "deferred_dates": 1}
+
+    monkeypatch.setattr(command, "run_reverse_backfill", step)
+    assert command.main(["--artifacts-root", "/fixture", "--retry-deferred"]) == 0
+    assert json.loads(capsys.readouterr().out)["status"] == status

@@ -461,3 +461,17 @@ DailyWatch20 的 TuShare-native 特征已生成并与 Guan 版本完成共同日
 `metadata/minute_operational/acceptance/daily_watch20_tushare_native_rebaseline_v1.json`。
 模型重训和 release-grade 回测仍需以 TuShare-native 特征为输入后单独完成。
 本次传输修复的质量预算增加一个测试文件和 110 行 Python，用于 TLS EOF 重试、证书错误停止和不确定请求计费的回归覆盖。复杂度阈值不变。只有在以等效测试替换这些覆盖且源代码与测试行数减少时，才收回该预算。
+
+## 历史缺口与代码变更
+
+历史分钟反向回填将仅含 `missing from response` 的部分日期挂起到
+`metadata/minute_backfill/reverse_scheduler/deferred_missing.json`，主下载继续向更早日期推进。
+清单保留日期、缺失证券代码和原始 sidecar 路径。完成副本出现后，该日期退出清单。
+这不会更改原始数据、部分完成回执或正式发布门槛。
+`--retry-deferred` 用于单独恢复未完成计划。配额、安全余量和供应商限速仍生效。
+首轮下载耗尽但仍有缺口返回 `download_pass_complete_with_gaps`，需要后续补采和验收。
+
+招商积余的源生历史代码为 `000043.SZ`（截至 2019-12-13）和 `001914.SZ`
+（自 2019-12-16）。股票池按交易日归一为唯一有效代码，分钟数据保留源生代码，
+不会合成新代码的历史分钟线。变更日期见
+[深交所公告](https://www.szse.cn/disclosure/notice/general/t20191211_572534.html)。

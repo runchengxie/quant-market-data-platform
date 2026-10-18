@@ -13,6 +13,10 @@ from quant_market_data_platform._reverse_backfill_bj_policy import (
     persist_bj_report,
     scan_bj_missing,
 )
+from quant_market_data_platform._reverse_backfill_missing import (
+    missing_queue,
+    missing_receipt_dates,
+)
 from quant_market_data_platform.minute_candidate import MinuteCandidateError, _read_json
 from quant_market_data_platform.providers._env import resolve_tushare_api_url
 from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
@@ -34,6 +38,7 @@ class ReverseBackfillOptions:
     max_dates: int = 1
     bj_missing_policy: str = "report"
     dry_run: bool = False
+    retry_deferred: bool = False
     batch_size: int = 20
     cooldown_seconds: float = 1.2
     quota_cooldown_seconds: float = 390.0
@@ -185,7 +190,13 @@ def run_reverse_backfill(options: ReverseBackfillOptions) -> dict[str, Any]:
     report_path = paths["metadata"] / "bj_missing_report.json"
     if options.bj_missing_policy == "report" and not options.dry_run:
         persist_bj_report(report_path, reports)
-    resume = _resume_paths(paths["metadata"], max_dates=options.max_dates, settled_dates=settled)
+    queue_path = paths["metadata"] / "deferred_missing.json"
+    queue = missing_queue(
+        paths["staging"], settled, report_path=None if options.dry_run else queue_path
+    )
+    deferred = set(queue["dates"])
+    skipped = settled | (set() if options.retry_deferred else deferred)
+    resume = _resume_paths(paths["metadata"], max_dates=options.max_dates, settled_dates=skipped)
     if resume is None:
         current_min = _current_min_date(paths["alias"])
         open_dates = _load_open_dates(
@@ -194,11 +205,18 @@ def run_reverse_backfill(options: ReverseBackfillOptions) -> dict[str, Any]:
         dates = _select_reverse_dates(
             open_dates=open_dates,
             current_min_date=current_min,
-            complete_dates=settled,
+            complete_dates=skipped,
             max_dates=options.max_dates,
         )
         if not dates:
-            return {"status": "noop", "reason": "reverse_history_is_complete_or_exhausted"}
+            return {
+                "status": "download_pass_complete_with_gaps" if deferred else "noop",
+                "reason": "first_pass_exhausted_with_pending_repairs"
+                if deferred
+                else "reverse_history_is_complete_or_exhausted",
+                "deferred_dates": len(deferred),
+                "deferred_queue": str(queue_path),
+            }
         stem = _scheduler_plan_stem(dates)
         dates_path = paths["metadata"] / "dates" / f"{stem}.json"
         plan_path = paths["metadata"] / "plans" / f"{stem}.plan.json"
@@ -266,8 +284,22 @@ def run_reverse_backfill(options: ReverseBackfillOptions) -> dict[str, Any]:
         settled = _complete_dates(paths["staging"]) | {report["trade_date"] for report in reports}
         if status == "partial" and dates and dates.issubset(settled):
             status = "accepted_bj_missing"
+    settled = _complete_dates(paths["staging"], bj_missing_policy=options.bj_missing_policy)
+    queue = missing_queue(
+        paths["staging"], settled, report_path=None if options.dry_run else queue_path
+    )
+    if status == "partial" and not options.retry_deferred:
+        dates = _plan_dates(plan_path)
+        if (
+            dates
+            and missing_receipt_dates(_read_json(receipt_path))
+            and dates.issubset(settled | set(queue["dates"]))
+        ):
+            status = "deferred_missing"
     return {
         "status": status,
+        "deferred_dates": len(queue["dates"]),
+        "deferred_queue": str(queue_path),
         "bj_missing_policy": options.bj_missing_policy,
         "bj_missing_report": (
             str(report_path)

@@ -50,6 +50,12 @@ STOCK_LIST_STATUSES = ("L", "D", "P", "G")
 # both aliases are returned for an old trading day.
 HISTORICAL_CODE_TRANSITIONS = (
     {
+        "historical": "000043.SZ",
+        "successor": "001914.SZ",
+        "historical_last_trade_date": "20191213",
+        "successor_first_trade_date": "20191216",
+    },
+    {
         "historical": "300114.SZ",
         "successor": "302132.SZ",
         "historical_last_trade_date": "20250214",
