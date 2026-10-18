@@ -351,3 +351,7 @@ TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
 它验证文件哈希、采集开始晚于请求末日收盘、接收时间、完整交易日覆盖、行情和因子配对、复权价格重算一致性。
 `marketdata.etf_snapshot_review.v1` 的 `accepted` 仅表示这批字节在记录的 `observed_by`
 时刻已经接收，不能证明历史供应商送达时间。采集过程不能自己设置此状态。
+
+## 海外前向研究回执
+
+`overseas-receipt-v1` 是独立追加档案，不进入现有 published asset 或港股生产契约。每次新请求的 CSV 与开始/完成回执写入 owner 数据目录，按内容 SHA256 供下游核验。[格式和时间判定](operations/overseas-forward.md)描述原始来源日期、假设闭市时间、缺失/失败状态与不合格补跑。研究预测由 QMR 管理。

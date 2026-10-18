@@ -209,3 +209,7 @@ marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest
 `deferred_missing` 表示本批缺口已挂起。`download_pass_complete_with_gaps` 表示首轮范围已扫描、仍有补采工作，不能解释为历史完整。
 网络、额度、存储和数据校验错误不会按无响应缺口跳过。
 使用 `--retry-deferred` 显式重试缺口。此模式保留未完成批次的恢复行为。
+
+### 海外日线前向研究回执
+
+[追加式采集与时间边界](operations/overseas-forward.md)提供独立 module 入口，不更新共享数据别名。
