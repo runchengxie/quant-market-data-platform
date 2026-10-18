@@ -20,7 +20,7 @@ POLICY = {
         "complete-unreviewed",
         "relative-file-hashes",
         "aware-receipt-clock",
-        "bar-close-before-receipt",
+        "bar-close-before-acquisition-start",
         "unique-positive-pairs",
         "calendar-coverage",
     ],
@@ -82,8 +82,8 @@ def _validate_snapshot(manifest_path: Path, now: datetime) -> dict[str, Any]:
     )
     if started.tzinfo is None or completed.tzinfo is None or not started <= completed <= now:
         raise ValueError("invalid observed clock")
-    if completed < close:
-        raise ValueError("receipt predates bar close")
+    if started < close:
+        raise ValueError("acquisition starts before bar close")
     paths = {
         key: snapshot_file(manifest_path.parent, record) for key, record in value["files"].items()
     }

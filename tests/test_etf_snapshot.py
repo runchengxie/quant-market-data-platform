@@ -298,6 +298,15 @@ def test_baseline_factor_rescaling_rebuilds_all_history(
             day = kwargs["start_date"]
             if api == "trade_cal":
                 return pd.DataFrame({"cal_date": [day], "is_open": [1]})
+            if api == "fund_adj":
+                dates = pd.date_range(kwargs["start_date"], kwargs["end_date"]).strftime("%Y%m%d")
+                return pd.DataFrame(
+                    {
+                        "ts_code": ["510300.SH"] * len(dates),
+                        "trade_date": dates,
+                        "adj_factor": [1.0 if d == "20261015" else 2.0 for d in dates],
+                    }
+                )
             values = {"ts_code": ["510300.SH"], "trade_date": [day]}
             values.update(
                 {"close": [4.0], "amount": [20000.0]}
@@ -490,3 +499,82 @@ def test_failed_factor_request_retains_received_daily_page(tmp_path: Path) -> No
     assert result["status"] == "incomplete"
     page = tmp_path / "snapshot/raw-pages/fund_daily-510300.SH-0.parquet"
     assert pd.read_parquet(page).close.tolist() == [4.0]
+
+
+def test_revised_historical_factors_block_incremental_publication(tmp_path: Path) -> None:
+    from quant_market_data_platform.etf_snapshot import acquire_etf_snapshot
+
+    class Client:
+        revised = False
+
+        def query(self, api: str, **kwargs: object) -> pd.DataFrame:
+            dates = pd.date_range(kwargs["start_date"], kwargs["end_date"]).strftime("%Y%m%d")
+            if api == "trade_cal":
+                return pd.DataFrame({"cal_date": dates, "is_open": 1})
+            data = {"ts_code": ["510300.SH"] * len(dates), "trade_date": dates}
+            data.update(
+                {"close": [4.0] * len(dates), "amount": [20000.0] * len(dates)}
+                if api == "fund_daily"
+                else {"adj_factor": [2.0 if self.revised else 1.0] * len(dates)}
+            )
+            return pd.DataFrame(data)
+
+    client = Client()
+
+    def acquire(start, end, name, baseline=None):
+        return acquire_etf_snapshot(
+            symbols=("510300.SH",),
+            start_date=start,
+            end_date=end,
+            baseline_manifest=baseline,
+            output=tmp_path / name,
+            token_env="TUSHARE_TOKEN",
+            api_url=None,
+            now=lambda: datetime(2026, 10, 16, 11, tzinfo=UTC),
+            client=client,
+        )
+
+    assert acquire("20261015", "20261015", "old")["status"] == "unreviewed"
+    client.revised = True
+    fresh = acquire("20261015", "20261016", "fresh")
+    assert fresh["status"] == "unreviewed"
+    result = acquire("20261016", "20261016", "incremental", tmp_path / "old/manifest.json")
+    assert result["status"] == "incomplete"
+    assert result["reasons"] == ["historical_factor_revision"]
+
+
+def test_factor_endpoint_paginates_after_2000_rows(tmp_path: Path) -> None:
+    from quant_market_data_platform.etf_snapshot import acquire_etf_snapshot
+
+    dates = pd.bdate_range("2017-01-02", periods=2001).strftime("%Y%m%d")
+
+    class Client:
+        def query(self, api: str, **kwargs: object) -> pd.DataFrame:
+            if api == "trade_cal":
+                days = pd.date_range(dates[0], dates[-1]).strftime("%Y%m%d")
+                return pd.DataFrame({"cal_date": days, "is_open": [int(d in dates) for d in days]})
+            size = 2000 if api == "fund_adj" else 5000
+            offset = kwargs["offset"]
+            assert isinstance(offset, int)
+            selected = dates[offset : offset + size]
+            data = {"ts_code": ["510300.SH"] * len(selected), "trade_date": selected}
+            data.update(
+                {"close": [4.0] * len(selected), "amount": [20000.0] * len(selected)}
+                if api == "fund_daily"
+                else {"adj_factor": [1.0] * len(selected)}
+            )
+            return pd.DataFrame(data)
+
+    result = acquire_etf_snapshot(
+        symbols=("510300.SH",),
+        start_date=dates[0],
+        end_date=dates[-1],
+        baseline_manifest=None,
+        output=tmp_path / "snapshot",
+        token_env="TUSHARE_TOKEN",
+        api_url=None,
+        now=lambda: datetime(2026, 10, 16, 11, tzinfo=UTC),
+        client=Client(),
+    )
+    assert result["status"] == "unreviewed"
+    assert len(pd.read_parquet(tmp_path / "snapshot/panel.parquet")) == 2001

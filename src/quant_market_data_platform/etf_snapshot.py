@@ -102,12 +102,14 @@ def acquire_etf_snapshot(  # noqa: PLR0913
 
         calendar = request("trade_cal", exchange="SSE", start_date=start_date, end_date=end_date)
         _retain(output, result, "calendar", calendar)
-        daily, factors = _download_pairs(request, symbols, start_date, end_date, output)
+        factor_start = baseline[3] if baseline is not None else start_date
+        ranges = {"fund_daily": (start_date, end_date), "fund_adj": (factor_start, end_date)}
+        daily, factors = _download_pairs(request, symbols, ranges, output)
         _validate_coverage(calendar, daily, symbols, start_date, end_date)
         if baseline is not None:
             old_daily, old_factors, old_calendar, baseline_start = baseline
             daily = pd.concat([old_daily, daily], ignore_index=True)
-            factors = pd.concat([old_factors, factors], ignore_index=True)
+            _verify_historical_factors(old_factors, factors)
             calendar = pd.concat([old_calendar, calendar], ignore_index=True)
             result["start_date"] = baseline_start
             _retain(output, result, "calendar", calendar)
@@ -140,8 +142,7 @@ def _retain(output: Path, result: dict[str, Any], key: str, frame: Any) -> None:
 def _download_pairs(
     request: Callable[..., Any],
     symbols: tuple[str, ...],
-    start_date: str,
-    end_date: str,
+    ranges: dict[str, tuple[str, str]],
     output: Path,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     pages = output / "raw-pages"
@@ -149,6 +150,8 @@ def _download_pairs(
     frames: dict[str, list[pd.DataFrame]] = {"daily": [], "factors": []}
     for symbol in symbols:
         for key, api in (("daily", "fund_daily"), ("factors", "fund_adj")):
+            start_date, end_date = ranges[api]
+            page_size = 2000 if api == "fund_adj" else 5000
             chunks: list[pd.DataFrame] = []
             offset = 0
             while True:
@@ -157,7 +160,7 @@ def _download_pairs(
                     ts_code=symbol,
                     start_date=start_date,
                     end_date=end_date,
-                    limit=5000,
+                    limit=page_size,
                     offset=offset,
                 )
                 if not isinstance(frame, pd.DataFrame) or frame.empty:
@@ -168,7 +171,7 @@ def _download_pairs(
                 if chunks and frame.equals(chunks[-1]):
                     raise SnapshotUnavailable("repeated_provider_page")
                 chunks.append(frame)
-                if len(frame) < 5000:
+                if len(frame) < page_size:
                     break
                 offset += len(frame)
             if not chunks:
@@ -326,3 +329,18 @@ def _file_sha256(path: Path) -> str:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _verify_historical_factors(old: pd.DataFrame, fresh: pd.DataFrame) -> None:
+    keys = ["ts_code", "trade_date"]
+    if fresh.duplicated(keys).any():
+        raise SnapshotUnavailable("duplicate_factor_keys")
+    comparison = old.merge(
+        fresh[keys + ["adj_factor"]],
+        on=keys,
+        how="left",
+        suffixes=("_old", "_fresh"),
+        validate="one_to_one",
+    )
+    if not comparison.adj_factor_old.eq(comparison.adj_factor_fresh).all():
+        raise SnapshotUnavailable("historical_factor_revision")

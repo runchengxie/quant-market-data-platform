@@ -20,17 +20,11 @@ def test_review_rejects_unknown_policy_before_writing(tmp_path: Path) -> None:
     assert not (tmp_path / "review.json").exists()
 
 
-def test_review_accepts_hash_bound_snapshot_and_rejects_changed_bytes(tmp_path: Path) -> None:
+def _make_snapshot(tmp_path: Path) -> tuple[Path, dict]:
     import hashlib
     import json
 
     import pandas as pd
-
-    from quant_market_data_platform.etf_snapshot_review import (
-        POLICY_SHA256,
-        REVIEWER,
-        review_etf_snapshot,
-    )
 
     files = {}
     for name, values in {
@@ -66,6 +60,17 @@ def test_review_accepts_hash_bound_snapshot_and_rejects_changed_bytes(tmp_path: 
             }
         )
     )
+    return manifest, files
+
+
+def test_review_accepts_hash_bound_snapshot_and_rejects_changed_bytes(tmp_path: Path) -> None:
+    from quant_market_data_platform.etf_snapshot_review import (
+        POLICY_SHA256,
+        REVIEWER,
+        review_etf_snapshot,
+    )
+
+    manifest, files = _make_snapshot(tmp_path)
     receipt = tmp_path / "review.json"
     now = datetime(2026, 10, 16, 11, tzinfo=UTC)
     result = review_etf_snapshot(
@@ -109,3 +114,27 @@ def test_review_cli_rejects_acquisition_identity(tmp_path: Path) -> None:
             ]
         )
     assert not (tmp_path / "receipt.json").exists()
+
+
+def test_preclose_acquisition_cannot_be_approved_by_slow_factor_completion(tmp_path: Path) -> None:
+    import json
+
+    from quant_market_data_platform.etf_snapshot_review import (
+        POLICY_SHA256,
+        REVIEWER,
+        review_etf_snapshot,
+    )
+
+    manifest, _ = _make_snapshot(tmp_path)
+    value = json.loads(manifest.read_bytes())
+    value["capture_started_at"] = "2026-10-16T14:59:00+08:00"
+    value["capture_completed_at"] = "2026-10-16T15:01:00+08:00"
+    manifest.write_text(json.dumps(value))
+    with pytest.raises(ValueError, match="close"):
+        review_etf_snapshot(
+            manifest,
+            reviewer=REVIEWER,
+            policy_sha256=POLICY_SHA256,
+            now=datetime(2026, 10, 16, 11, tzinfo=UTC),
+            output=tmp_path / "review.json",
+        )
