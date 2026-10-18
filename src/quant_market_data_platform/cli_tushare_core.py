@@ -25,6 +25,8 @@ def _handle_tushare_core(args: argparse.Namespace) -> int | None:
         "plan-a-share-minute-backfill": _handle_plan_minute_backfill,
         "run-a-share-minute-backfill": _handle_run_minute_backfill,
         "run-a-share-minute-full-day-chunk": _handle_run_minute_full_day_chunk,
+        "review-etf-snapshot": _handle_etf_snapshot_review,
+        "snapshot-etf-daily": _handle_etf_snapshot,
         "backfill-etf-history": _handle_etf_history_backfill,
         "validate-etf-daily-pair": _handle_etf_pair_validation,
         "build-etf-daily-forward-adjusted": _handle_etf_forward_adjusted,
@@ -550,3 +552,58 @@ def print_summary(summary: object) -> None:
 
 
 __all__ = ["_handle_tushare_core"]
+
+
+def _handle_etf_snapshot(args: argparse.Namespace) -> int:
+    import json
+    from datetime import UTC, datetime
+    from pathlib import Path
+
+    from .etf_snapshot import acquire_etf_snapshot
+
+    if args.dry_run:
+        print(
+            json.dumps(
+                {
+                    "dry_run": True,
+                    "symbols": args.symbols,
+                    "start_date": args.start_date,
+                    "end_date": args.end_date,
+                    "max_requests": args.max_requests,
+                    "output": args.output,
+                }
+            )
+        )
+        return 0
+    result = acquire_etf_snapshot(
+        symbols=tuple(args.symbols),
+        start_date=args.start_date,
+        end_date=args.end_date,
+        baseline_manifest=Path(args.baseline_manifest) if args.baseline_manifest else None,
+        output=Path(args.output),
+        token_env=args.token_env,
+        api_url=args.api_url,
+        max_requests=args.max_requests,
+        deadline=datetime.fromisoformat(args.deadline) if args.deadline else None,
+        now=lambda: datetime.now(UTC),
+    )
+    print(json.dumps(result, sort_keys=True))
+    return 0 if result["status"] == "unreviewed" else 1
+
+
+def _handle_etf_snapshot_review(args: argparse.Namespace) -> int:
+    import json
+    from datetime import UTC, datetime
+    from pathlib import Path
+
+    from .etf_snapshot_review import review_etf_snapshot
+
+    result = review_etf_snapshot(
+        Path(args.manifest),
+        reviewer=args.reviewer,
+        policy_sha256=args.policy_sha256,
+        now=datetime.now(UTC),
+        output=Path(args.output),
+    )
+    print(json.dumps(result, sort_keys=True))
+    return 0

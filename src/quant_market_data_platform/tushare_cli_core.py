@@ -133,6 +133,28 @@ def _add_tushare_date_mirror_parsers(tushare_subparsers: argparse._SubParsersAct
 
 
 def _add_etf_history_parsers(tushare_subparsers: argparse._SubParsersAction) -> None:
+    review = tushare_subparsers.add_parser(
+        "review-etf-snapshot", help="Validate an acquired ETF snapshot under the owner policy."
+    )
+    review.add_argument("--manifest", required=True)
+    review.add_argument("--reviewer", required=True)
+    review.add_argument("--policy-sha256", required=True)
+    review.add_argument("--output", required=True)
+
+    snapshot = tushare_subparsers.add_parser(
+        "snapshot-etf-daily", help="Acquire a bounded immutable ETF daily snapshot."
+    )
+    snapshot.add_argument("--symbols", nargs="+", required=True)
+    snapshot.add_argument("--start-date", required=True)
+    snapshot.add_argument("--end-date", required=True)
+    snapshot.add_argument("--baseline-manifest")
+    snapshot.add_argument("--output", required=True)
+    snapshot.add_argument("--max-requests", type=int, default=96)
+    snapshot.add_argument("--deadline", help="Timezone-aware ISO acquisition deadline.")
+    snapshot.add_argument("--dry-run", action="store_true")
+    add_token_env_argument(snapshot)
+    add_provider_runtime_arguments(snapshot)
+
     backfill = tushare_subparsers.add_parser(
         "backfill-etf-history", help="Backfill ETF daily bars and adjustment factors by month."
     )
