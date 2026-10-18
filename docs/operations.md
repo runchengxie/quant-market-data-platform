@@ -176,3 +176,29 @@ TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
 | 000670.SZ | 2020-04-07 | 2022-08-22 | [历史沿革](https://static.cninfo.com.cn/finalpage/2026-06-09/1225358835.PDF) |
 | 000792.SZ | 2020-05-22 | 2021-08-10 | [暂停](https://static.cninfo.com.cn/finalpage/2020-05-21/1207838318.PDF)、[恢复](https://static.cninfo.com.cn/finalpage/2021-08-03/1210641780.PDF) |
 | 000995.SZ | 2019-05-13 | 2020-12-16 | [暂停期间公告](https://static.cninfo.com.cn/finalpage/2020-12-05/1208857867.PDF)、[恢复](https://static.cninfo.com.cn/finalpage/2020-12-09/1208871266.PDF) |
+
+### 指定 ETF 的有界日线快照
+
+先预演请求范围，不读取凭证、不访问网络、不创建输出：
+
+```bash
+marketdata tushare snapshot-etf-daily --symbols 510300.SH 511260.SH \
+  --start-date 20261016 --end-date 20261016 --output /path/to/new-snapshot --dry-run
+```
+
+实际运行使用相同参数去掉 `--dry-run`，通过现有 `marketdata config run` 注入凭证。
+可加 `--deadline 2026-10-16T19:00:00+08:00` 限制采集截止时间、
+`--max-requests 96` 限制实际尝试次数。`--baseline-manifest` 接受此前的完整快照清单。
+保留失败目录并使用新目录重试，禁止覆盖已有目录。成功退出只表示采集完成、尚待验收。
+
+采集完成后，单独运行 `marketdata tushare review-etf-snapshot`。从已安装模块导出策略哈希：
+
+```bash
+python -c 'from quant_market_data_platform.etf_snapshot_review import POLICY_SHA256; print(POLICY_SHA256)'
+marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest.json \
+  --reviewer owner-etf-snapshot-policy-v1 --policy-sha256 <installed-policy-sha256> \
+  --output /path/to/new-review.json
+```
+
+验收器拒绝未知身份或策略哈希，并重新检查输入字节与交易日覆盖。
+重复验收同一身份时保留原凭证，输入变化须使用新目录重新采集和验收。
