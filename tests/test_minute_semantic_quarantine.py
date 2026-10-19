@@ -413,3 +413,29 @@ def test_lexical_alias_registry_survives_external_symlink(tmp_path):
     alias.symlink_to(external, target_is_directory=True)
     with pytest.raises(ValueError, match="quarantin"):
         reject_quarantined_dates(alias, ["20190509"])
+
+
+def test_candidate_destination_keeps_lexical_owner_registry(tmp_path):
+    from quant_market_data_platform import minute_candidate_publish as publish
+
+    root = tmp_path / "owner"
+    root.mkdir()
+    register(root)
+    external = tmp_path / "external"
+    external.mkdir()
+    link = root / "published"
+    link.symlink_to(external, target_is_directory=True)
+    inventory = {
+        "partitions": [
+            {
+                "trade_date": "20190509",
+                "candidate": {"partition_path": str(external / "source.parquet")},
+            }
+        ]
+    }
+    with patch.object(publish, "_validated_candidate_evidence", return_value=(inventory, {})):
+        with pytest.raises(ValueError, match="quarantin"):
+            publish.publish_candidate(
+                root / "i.json", root / "a.json", link / "candidate", root / "r.json"
+            )
+    assert not (external / "candidate").exists()
