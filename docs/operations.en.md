@@ -147,3 +147,13 @@ The registry at `metadata/minute_backfill/reverse_scheduler/semantic_quarantine.
 Partition acceptance, candidate publication, operational assembly and alias promotion reject quarantined dates, including paths through symlinks. Monitoring exposes `semantic_quarantine_dates` with a deduplicated warning; exhausted first-pass acquisition returns `download_pass_complete_with_gaps`. Correct minute values still require separate investigation and repair. This command provides no automatic release from quarantine or publication exemption. Monitoring streams the bound evidence hashes to detect changes.
 
 The size baseline admits the quarantine evidence helpers and failure-path tests. Complexity and large-file budgets stay fixed; consolidate or remove these additions when the workflow is retired.
+
+### Statement template diagnostics
+
+`python scripts/operations/audit_fundamentals_templates.py --vintage <sealed-vintage> --output <new-directory>`
+replays normalization filters from complete raw v2 inputs and quarantines observation keys
+that remain ambiguous after provider revision selection. Diagnostic tables, conflicting rows,
+and a hash receipt go to a new external data directory. Original retrieval timestamps remain
+intact and actual generation time is recorded separately. The tool makes no API requests,
+publishes no normalized asset, and preserves sealed inputs and shared aliases. The strict
+builder continues to reject conflicting keys. Diagnostic quarantine grants no production exception.

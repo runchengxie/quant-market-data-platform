@@ -240,3 +240,12 @@ python scripts/operations/tushare_minute_history.py quarantine \
 主下载仅在当前阻断被隔离记录完整覆盖时继续采集。新增异常、证据变化或损坏记录仍会暂停。主机自定义预检必须使用 `quarantine_status(root, marker)["blocked"]`，继续仅检查文件是否存在会保持暂停。普通缺口补采同样遵守此门禁，额外错误保存在 `semantic-audit-additional-blocks/` 并继续阻断。
 
 隔离日期在分钟分区验收、候选发布、运行版本组装和别名切换时被拒绝。监控显示 `semantic_quarantine_dates` 并记录去重的 warning，首轮采集结束仍返回 `download_pass_complete_with_gaps`。该日期的正确分钟值需要另行核实和修复，本命令保留隔离状态，未提供自动解除或发布豁免。监控会流式核对隔离证据哈希，避免将已变化的证据继续视为已隔离。
+
+### 财报模板筛选诊断
+
+`python scripts/operations/audit_fundamentals_templates.py --vintage <sealed-vintage> --output <new-directory>`
+从完整 raw v2 输入重放标准化筛选，隔离修订筛选后仍有歧义的观测键。
+诊断表、冲突原行和哈希回执保存在新的外部数据目录。
+原始抓取时间保持不变，实际生成时间单独记录。
+该工具不发起API请求，不发布标准化资产，也不修改封存输入或共享别名。
+严格构建器仍拒绝同键冲突，诊断隔离不构成生产豁免。

@@ -215,6 +215,8 @@ SHA-256、字节数和精确 retrieval timestamp。raw、normalized v2 与 PIT v
 `assets/tushare/a_share/fundamentals_vintages/vintage=YYYYMMDD`，根目录的 `SEALED.json` 绑定
 所有子 manifest。该归档目录不参与 current alias 选择。
 
+财报标准化接受 `comp_type=1,2,3,4,7`，分别为一般工商业、银行、保险、证券和多元金融。该字段描述报表模板，合并范围由 `report_type` 选择。同一次观测中不按模板设置优先级。按供应商更新标记和公告日期筛选后，同键冲突仍由歧义检查拒绝。修补标准化时须写入新目录，保留原始抓取时间和旧版本封印，不能据此认证历史 PIT 可得性。定义见 [TuShare 利润表](https://tushare.pro/document/2?doc_id=33)、[资产负债表](https://tushare.pro/document/2?doc_id=36)和[现金流量表](https://tushare.pro/document/2?doc_id=44)。
+
 `dc_concept_cons` 保持 `tushare.dc_concept_cons.v1` 既有 schema，并以新增字段提供逐交易日
 完整性证据。下游必须读取
 `completeness.trade_dates[<trade_date>].complete`，不能只依据顶层 `status: completed` 或目录中

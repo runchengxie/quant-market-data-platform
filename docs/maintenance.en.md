@@ -121,3 +121,20 @@ uv sync --locked --extra dev
 Inspect the lock diff for setuptools-only changes, then run the [local quality and dependency audit gates](operations/testing.en.md). If another package changes, explain and validate that dependency change separately. Open a PR targeting main and merge only after required checks pass. A lock update does not promote production or replace a live environment.
 
 Leave ordinary Dependabot updates and security alerts enabled. After GitHub deploys the upstream fix, verify that a fresh setuptools update job successfully changes uv.lock before retiring this manual procedure. Upstream PR merge alone is not evidence that the hosted updater has deployed the fix. The October update replaces locked setuptools 83.0.0 with 84.0.0 without adding an ignore rule or changing the build requirement.
+
+## 2026-10-19 statement template diagnostic baseline
+
+The shared baseline increases `python_files` from 496 to 498 and `python_lines`
+from 117363 to 117565. The net 202 lines support a standalone retained-raw
+statement diagnostic, index/template conflict regression coverage, and the existing
+filter correction. The diagnostic preserves all ambiguous keys and actual observation
+clocks for review. The adjustment records measured file and line counts. Complexity,
+long-line, and large-file budgets retain their existing limits. If a common normalization
+audit replaces the standalone command or the command is retired, remove duplicated code
+and lower these budgets by the actual reduction. Run the shared
+`research-code-quality --ratchet` gate and affected regression tests before integration.
+
+After integrating the minute history changes from current main, the combined measured
+inventory is 509 Python files and 119725 lines, compared with main's 507 files and
+119523 lines. This repair still adds exactly two files and 202 lines. Main's existing
+features and documentation are retained.
