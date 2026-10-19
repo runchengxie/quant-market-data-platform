@@ -138,6 +138,16 @@ Repair preserves original partitions and receipts, then atomically installs a ne
 
 The code-size baseline adds the bounded repair worker, evidence helpers, read-only inventory, shared lock, CLI and failure-path tests. Complexity and large-file limits stay fixed. Future edits must fit this measured baseline or reduce it when these components are consolidated.
 
+### Explicit semantic quarantine
+
+Use `scripts/operations/tushare_minute_history.py quarantine --artifacts-root <data-root> --runtime-root <runtime-root> --acceptance <failed-acceptance.json> --requery <raw-stock-day.parquet> --trade-date YYYYMMDD --symbol <ts-code> --reason '<investigation conclusion>'` after independently investigating a reproducible supplier inconsistency. This credential-free command shares the writer lock and revalidates the source binding, complete minute grid and structural semantics. Only hard-notional failures confined to the named stock-day are eligible; the entire requery must reproduce the original stock-day.
+
+The registry at `metadata/minute_backfill/reverse_scheduler/semantic_quarantine.json` binds source partition, sidecar, failed acceptance and requery SHA256 values. Original evidence and the persistent block remain unchanged. Acquisition proceeds only when quarantine fully covers that block. Unknown failures, changed evidence and malformed registries remain blocking. Custom host preflights must use `quarantine_status(root, marker)["blocked"]` rather than marker existence. Gap repair uses the same gate and retains additional failures under `semantic-audit-additional-blocks/`.
+
+Partition acceptance, candidate publication, operational assembly and alias promotion reject quarantined dates, including paths through symlinks. Monitoring exposes `semantic_quarantine_dates` with a deduplicated warning; exhausted first-pass acquisition returns `download_pass_complete_with_gaps`. Correct minute values still require separate investigation and repair. This command provides no automatic release from quarantine or publication exemption. Monitoring streams the bound evidence hashes to detect changes.
+
+The size baseline admits the quarantine evidence helpers and failure-path tests. Complexity and large-file budgets stay fixed; consolidate or remove these additions when the workflow is retired.
+
 ### Statement template diagnostics
 
 `python scripts/operations/audit_fundamentals_templates.py --vintage <sealed-vintage> --output <new-directory>`

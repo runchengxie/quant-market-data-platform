@@ -219,12 +219,14 @@ def run_gap_repair(options: GapRepairOptions) -> dict[str, Any]:
         HistoryWriterBusy,
         history_writer_lock,
     )
+    from quant_market_data_platform.minute_semantic_quarantine import quarantine_status
 
-    if (options.runtime_root / "semantic-audit-blocked.json").exists():
+    marker = options.runtime_root / "semantic-audit-blocked.json"
+    if quarantine_status(options.artifacts_root, marker)["blocked"]:
         return _result("audit_blocked")
     try:
         with history_writer_lock(options.artifacts_root):
-            if (options.runtime_root / "semantic-audit-blocked.json").exists():
+            if quarantine_status(options.artifacts_root, marker)["blocked"]:
                 return _result("audit_blocked")
             return _run_locked(options)
     except HistoryWriterBusy:

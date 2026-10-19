@@ -288,6 +288,11 @@ def assemble_operational_version(
     expected_dates = sorted(repair_dates + extension_dates)
     extension = _incremental_records(roots, expected_dates)
     records = _validated_records(base_records + extension, expected_dates=None)
+    from quant_market_data_platform.minute_semantic_quarantine import reject_quarantined_dates
+
+    reject_quarantined_dates(assembly.output_dir, [r["trade_date"] for r in records])
+    for record in records:
+        reject_quarantined_dates(Path(record["source_partition_path"]), [record["trade_date"]])
     payload = _operational_payload(
         assembly,
         base_receipt_path=base_receipt_path,
@@ -355,6 +360,11 @@ def promote_operational_alias(
     embedded = output_dir / "_operational_receipt.json"
     if not embedded.is_file() or file_sha256(embedded) != file_sha256(version_receipt_path):
         raise MinuteCandidateError("Operational version receipt does not match embedded evidence")
+    from quant_market_data_platform.minute_semantic_quarantine import reject_quarantined_dates
+
+    dates = [str(record["trade_date"]) for record in receipt["daily"]]
+    reject_quarantined_dates(alias, dates)
+    reject_quarantined_dates(output_dir, dates)
     legacy_before = legacy_alias.resolve(strict=True)
     _replace_operational_alias(alias, output_dir)
     if alias.is_symlink() or alias.resolve(strict=True) == output_dir:

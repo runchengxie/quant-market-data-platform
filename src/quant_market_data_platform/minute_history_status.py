@@ -217,6 +217,12 @@ def history_status(  # noqa: PLR0913 - public monitoring interface
     last, changed = _progress_time(progress, previous, day, now, warnings)
     marker_path = runtime_root / "semantic-audit-blocked.json"
     marker = read_json(marker_path, warnings)
+    from quant_market_data_platform.minute_semantic_quarantine import quarantine_status
+
+    quarantine = quarantine_status(root, marker_path)
+    warnings.extend(quarantine["errors"])
+    progress["semantic_quarantine_dates"] = quarantine["dates"]
+    progress["semantic_quarantine_count"] = len(quarantine["dates"])
     exit_record = read_json(runtime_root / "last-main-exit.json", warnings)
     active = _writer_active(root, warnings)
     since, runnable_samples = _runnable(previous, active, changed, now)
@@ -226,10 +232,12 @@ def history_status(  # noqa: PLR0913 - public monitoring interface
         free = 0
     evidence = {
         "marker": marker,
-        "blocked_by_audit": preflight.get("blocked_by_audit") is True,
+        "blocked_by_audit": (
+            preflight.get("blocked_by_audit") is True and not quarantine["marker_quarantined"]
+        ),
         "runnable_since": since,
         "runnable_samples": runnable_samples,
-        "marker_exists": marker_path.exists(),
+        "marker_exists": quarantine["blocked"],
         "quota": quota,
         "provenance": provenance,
         "day": day,
@@ -285,6 +293,9 @@ def watch_history(  # noqa: PLR0913 - public monitoring interface
     )
     critical = result["state"] in {"audit_blocked", "stalled", "unknown_stale_evidence"}
     identity = f"{result['state']}:{result['reason']}" if critical else None
+    pending = result["progress"]["semantic_quarantine_dates"]
+    if not critical and pending:
+        identity = "semantic_quarantine:" + ",".join(pending)
     old = previous.get("active_alert")
     result["active_alert"] = identity
     state_root.mkdir(parents=True, exist_ok=True)
@@ -292,7 +303,13 @@ def watch_history(  # noqa: PLR0913 - public monitoring interface
     if old and old != identity:
         events.append({"event": "resolved", "identity": old})
     if identity and old != identity:
-        events.append({"event": "opened", "identity": identity, "severity": "critical"})
+        events.append(
+            {
+                "event": "opened",
+                "identity": identity,
+                "severity": "critical" if critical else "warning",
+            }
+        )
     if events:
         with (state_root / "alerts.jsonl").open("a") as handle:
             for event in events:
