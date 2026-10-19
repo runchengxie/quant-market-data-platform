@@ -24,6 +24,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cooldown-seconds", type=float, default=1.2)
     parser.add_argument("--minute-quota-allow-burst", action="store_true")
     parser.add_argument("--bj-missing-policy", choices=("report", "error"), default="report")
+    parser.add_argument("--audit-block-path", type=Path)
     parser.add_argument("--retry-deferred", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     return parser
@@ -43,6 +44,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             bj_missing_policy=args.bj_missing_policy,
             dry_run=args.dry_run,
             retry_deferred=args.retry_deferred,
+            audit_block_path=args.audit_block_path,
         )
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
@@ -56,6 +58,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "download_pass_complete_with_gaps",
             "dry_run",
             "noop",
+            "writer_busy",
         }
         else 75
     )

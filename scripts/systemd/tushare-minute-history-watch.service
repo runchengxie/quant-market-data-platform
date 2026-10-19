@@ -1,0 +1,9 @@
+[Unit]
+Description=Read-only minute history state and local alerts
+
+[Service]
+Type=oneshot
+WorkingDirectory=@MDP_DIR@
+ExecStart=@MDP_PYTHON@ @MDP_DIR@/scripts/operations/tushare_minute_history.py watch --artifacts-root @DATA_PLATFORM_ROOT@ --runtime-root @MINUTE_RUNTIME_ROOT@ --state-root @MINUTE_STATUS_ROOT@
+TimeoutStartSec=5min
+Nice=15

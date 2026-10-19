@@ -133,3 +133,8 @@ long-line, and large-file budgets retain their existing limits. If a common norm
 audit replaces the standalone command or the command is retired, remove duplicated code
 and lower these budgets by the actual reduction. Run the shared
 `research-code-quality --ratchet` gate and affected regression tests before integration.
+
+After integrating the minute history changes from current main, the combined measured
+inventory is 509 Python files and 119725 lines, compared with main's 507 files and
+119523 lines. This repair still adds exactly two files and 202 lines. Main's existing
+features and documentation are retained.

@@ -298,3 +298,5 @@ The execution input audit and five behavioral tests add two Python files and 452
 文件数与行数预算按本次实际扫描结果登记，其余复杂度、长行和大文件预算保持原值。
 后续若将诊断复用到统一标准化审计入口，或不再需要该独立诊断命令，应删除重复实现并按实际减少量下调预算。
 合并前须运行共享 `research-code-quality --ratchet` 门禁以及对应回归测试。
+
+合并当前主线的分钟历史监控改动后，联合实测为509个Python文件、119725行。主线已有507个文件、119523行，本次净增仍为2个文件、202行，保留主线全部功能与说明。

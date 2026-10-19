@@ -1,0 +1,11 @@
+[Unit]
+Description=Check eligible minute repair work between main batches
+
+[Timer]
+OnBootSec=3min
+OnUnitInactiveSec=20min
+AccuracySec=30s
+Unit=tushare-minute-gap-repair.service
+
+[Install]
+WantedBy=timers.target
