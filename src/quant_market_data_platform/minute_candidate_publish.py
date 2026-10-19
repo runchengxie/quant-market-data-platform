@@ -134,6 +134,13 @@ def publish_candidate(
     destination = Path(output_dir).expanduser().resolve()
     receipt_path = Path(receipt_json).expanduser().resolve()
     inventory, audit = _validated_candidate_evidence(inventory_path, semantic_path)
+    from quant_market_data_platform.minute_semantic_quarantine import reject_quarantined_dates
+
+    reject_quarantined_dates(destination, [r["trade_date"] for r in inventory["partitions"]])
+    for record in inventory["partitions"]:
+        reject_quarantined_dates(
+            Path(record["candidate"]["partition_path"]), [record["trade_date"]]
+        )
     if destination.exists():
         embedded_path = destination / "_candidate_receipt.json"
         if embedded_path.is_file():

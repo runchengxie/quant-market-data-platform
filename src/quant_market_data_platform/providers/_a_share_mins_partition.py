@@ -312,6 +312,9 @@ def validate_complete_minute_partition(
     """
     _validate_date(trade_date)
     part_dir = Path(partition_dir).expanduser()
+    from quant_market_data_platform.minute_semantic_quarantine import reject_quarantined_dates
+
+    reject_quarantined_dates(part_dir, [trade_date])
     sidecar_path = part_dir / COMPLETENESS_FILENAME
     payload = _read_completeness(part_dir)
     if payload is None:

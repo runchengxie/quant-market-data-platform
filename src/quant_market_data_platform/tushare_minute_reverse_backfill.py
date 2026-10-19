@@ -325,12 +325,22 @@ __all__ = [
 
 def run_reverse_backfill(options: ReverseBackfillOptions) -> dict[str, Any]:
     """Acquire the shared writer lane and preserve persistent audit blocking."""
-    if options.audit_block_path is not None and options.audit_block_path.exists():
-        return {"status": "audit_blocked"}
+    from quant_market_data_platform.minute_semantic_quarantine import quarantine_status
+
+    gate = quarantine_status(options.artifacts_root, options.audit_block_path)
+    if gate["blocked"]:
+        return {"status": "audit_blocked", "quarantine": gate}
     try:
         with history_writer_lock(options.artifacts_root):
-            if options.audit_block_path is not None and options.audit_block_path.exists():
-                return {"status": "audit_blocked"}
-            return _run_reverse_backfill(options)
+            gate = quarantine_status(options.artifacts_root, options.audit_block_path)
+            if gate["blocked"]:
+                return {"status": "audit_blocked", "quarantine": gate}
+            result = _run_reverse_backfill(options)
+            if gate["dates"]:
+                result["semantic_quarantine_dates"] = gate["dates"]
+                result["quality_pending"] = True
+                if result["status"] == "noop":
+                    result["status"] = "download_pass_complete_with_gaps"
+            return result
     except HistoryWriterBusy:
         return {"status": "writer_busy"}

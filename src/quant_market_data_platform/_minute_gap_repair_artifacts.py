@@ -165,6 +165,15 @@ def _assemble(options: Any, job: dict[str, Any], state: dict[str, Any]) -> str |
 
 def _save_bad(options: Any, evidence: Path, error: BaseException) -> None:
     if (options.runtime_root / "semantic-audit-blocked.json").exists():
+        _atomic_write_json(
+            options.runtime_root / "semantic-audit-additional-blocks" / f"{uuid4().hex}.json",
+            {
+                "source": "minute_gap_repair",
+                "evidence": str(evidence),
+                "error_type": type(error).__name__,
+                "status": "blocked",
+            },
+        )
         return
     _atomic_write_json(
         options.runtime_root / "semantic-audit-blocked.json",

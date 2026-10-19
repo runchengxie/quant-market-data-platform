@@ -223,3 +223,20 @@ marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest
 `repair` 只处理 `deferred_missing.json` 中有来源绑定的股票日缺口，每次最多请求一个股票日。默认每日最多 500 次请求、每项最多三次尝试，失败后从 30 分钟开始退避。它与主下载共用写入锁和额度账本。空队列不创建数据源客户端。`--dry-run` 可检查候选项。
 
 补采保留原始分区和回执，验证通过后原子写入新的完整候选分区。语义异常会保留审计阻断，需独立排查后再恢复。候选分区仍须经过后续验收，补采不会切换发布别名。通用定时模板位于 `scripts/systemd/tushare-minute-history-watch.*` 和 `tushare-minute-gap-repair.*`，渲染后应引用稳定生产 release。
+
+### 显式隔离已复现的分钟语义异常
+
+对于供应商重复返回相同矛盾值的股票日，使用独立审计和重新查询证据登记隔离：
+
+```bash
+python scripts/operations/tushare_minute_history.py quarantine \
+  --artifacts-root <data-root> --runtime-root <runtime-root> \
+  --acceptance <failed-acceptance.json> --requery <raw-stock-day.parquet> \
+  --trade-date YYYYMMDD --symbol <ts-code> --reason '<investigation conclusion>'
+```
+
+登记无需凭证，使用主下载共用的写入锁。它重新验证来源绑定、完整分钟网格和基础语义，要求异常仅涉及指定股票的成交金额硬校验，并要求重新查询的整个股票日与原值相同。其他错误继续阻断。记录位于 `metadata/minute_backfill/reverse_scheduler/semantic_quarantine.json`，绑定原始分区、sidecar、失败审计和重新查询文件的 SHA256。原文件和阻断凭证保持原样。
+
+主下载仅在当前阻断被隔离记录完整覆盖时继续采集。新增异常、证据变化或损坏记录仍会暂停。主机自定义预检必须使用 `quarantine_status(root, marker)["blocked"]`，继续仅检查文件是否存在会保持暂停。普通缺口补采同样遵守此门禁，额外错误保存在 `semantic-audit-additional-blocks/` 并继续阻断。
+
+隔离日期在分钟分区验收、候选发布、运行版本组装和别名切换时被拒绝。监控显示 `semantic_quarantine_dates` 并记录去重的 warning，首轮采集结束仍返回 `download_pass_complete_with_gaps`。该日期的正确分钟值需要另行核实和修复，本命令保留隔离状态，未提供自动解除或发布豁免。监控会流式核对隔离证据哈希，避免将已变化的证据继续视为已隔离。
