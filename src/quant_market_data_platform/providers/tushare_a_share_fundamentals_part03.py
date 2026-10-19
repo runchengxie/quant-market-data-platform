@@ -166,27 +166,10 @@ def _filter_statement_company_types(dataset: str, frame: Any, dropped: dict[str,
     company_type = frame["comp_type"].fillna("").astype(str).str.strip()
     unsupported = company_type.ne("") & ~company_type.isin(SUPPORTED_STATEMENT_COMP_TYPES)
     dropped["unsupported_comp_type"] = int(unsupported.sum())
-    frame = frame.loc[~unsupported].copy()
-    if frame.empty or "comp_type" not in frame:
-        return frame
-    # Prefer consolidated statements when the provider returns both consolidated
-    # and parent-company rows for the same reported observation. Keep a
-    # non-consolidated row only when no consolidated row exists for that key.
-    key_columns = [
-        column for column in ("ts_code", "end_date", "report_type", "f_ann_date") if column in frame
-    ]
-    if key_columns:
-        consolidated_keys = frame.loc[frame["comp_type"].eq("1"), key_columns].drop_duplicates()
-        if not consolidated_keys.empty:
-            marker = frame.merge(
-                consolidated_keys.assign(_has_consolidated=True),
-                on=key_columns,
-                how="left",
-            )["_has_consolidated"].fillna(False)
-            prefer_consolidated = marker & frame["comp_type"].ne("1")
-            dropped["non_consolidated_with_consolidated"] = int(prefer_consolidated.sum())
-            frame = frame.loc[~prefer_consolidated].copy()
-    return frame
+    # comp_type identifies a reporting template, never consolidation scope.
+    # report_type is filtered separately. Conflicting templates for the same
+    # observation remain subject to the ordinary ambiguity check.
+    return frame.loc[~unsupported].copy()
 
 
 def _filter_normalized_report_rows(

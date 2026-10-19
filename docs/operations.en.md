@@ -137,3 +137,13 @@ Run `scripts/operations/tushare_minute_history.py status --artifacts-root <data-
 Repair preserves original partitions and receipts, then atomically installs a new complete candidate after validation. Semantic failures retain an audit block for separate investigation. Candidates require later acceptance and never switch published aliases. Generic timers live under `scripts/systemd/tushare-minute-history-watch.*` and `tushare-minute-gap-repair.*`; rendered units must use stable production releases.
 
 The code-size baseline adds the bounded repair worker, evidence helpers, read-only inventory, shared lock, CLI and failure-path tests. Complexity and large-file limits stay fixed. Future edits must fit this measured baseline or reduce it when these components are consolidated.
+
+### Statement template diagnostics
+
+`python scripts/operations/audit_fundamentals_templates.py --vintage <sealed-vintage> --output <new-directory>`
+replays normalization filters from complete raw v2 inputs and quarantines observation keys
+that remain ambiguous after provider revision selection. Diagnostic tables, conflicting rows,
+and a hash receipt go to a new external data directory. Original retrieval timestamps remain
+intact and actual generation time is recorded separately. The tool makes no API requests,
+publishes no normalized asset, and preserves sealed inputs and shared aliases. The strict
+builder continues to reject conflicting keys. Diagnostic quarantine grants no production exception.

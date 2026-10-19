@@ -135,7 +135,7 @@ class UpdatedIncomeClient:
             [
                 base | {"comp_type": "2", "update_flag": "0", "ebit": 184.0},
                 base | {"comp_type": "2", "update_flag": "1", "ebit": 226.0},
-                base | {"comp_type": "7", "update_flag": "1", "ebit": 999.0},
+                base | {"comp_type": "9", "update_flag": "1", "ebit": 999.0},
                 base
                 | {
                     "ts_code": "002411.SZ",
@@ -145,8 +145,8 @@ class UpdatedIncomeClient:
                 },
                 base
                 | {
-                    "ts_code": "002411.SZ",
-                    "comp_type": "4",
+                    "ts_code": "002412.SZ",
+                    "comp_type": "7",
                     "update_flag": "1",
                     "ebit": 20.0,
                 },
@@ -349,7 +349,10 @@ def test_normalized_prefers_latest_provider_update_flag_within_observation(tmp_p
     assert consolidated[["comp_type", "ebit"]].to_dict("records") == [
         {"comp_type": "1", "ebit": 10.0}
     ]
-    assert manifest["dropped_rows"]["non_consolidated_with_consolidated"] == 1
+    diversified = frame.loc[frame["symbol"] == "002412.SZ"]
+    assert diversified[["comp_type", "ebit"]].to_dict("records") == [
+        {"comp_type": "7", "ebit": 20.0}
+    ]
     bse = frame.loc[frame["symbol"] == "833243.BJ"]
     assert bse[["ann_date", "revenue"]].to_dict("records") == [
         {"ann_date": "20260301", "revenue": 50.0}

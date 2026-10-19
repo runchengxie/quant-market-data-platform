@@ -223,3 +223,12 @@ marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest
 `repair` 只处理 `deferred_missing.json` 中有来源绑定的股票日缺口，每次最多请求一个股票日。默认每日最多 500 次请求、每项最多三次尝试，失败后从 30 分钟开始退避。它与主下载共用写入锁和额度账本。空队列不创建数据源客户端。`--dry-run` 可检查候选项。
 
 补采保留原始分区和回执，验证通过后原子写入新的完整候选分区。语义异常会保留审计阻断，需独立排查后再恢复。候选分区仍须经过后续验收，补采不会切换发布别名。通用定时模板位于 `scripts/systemd/tushare-minute-history-watch.*` 和 `tushare-minute-gap-repair.*`，渲染后应引用稳定生产 release。
+
+### 财报模板筛选诊断
+
+`python scripts/operations/audit_fundamentals_templates.py --vintage <sealed-vintage> --output <new-directory>`
+从完整 raw v2 输入重放标准化筛选，隔离修订筛选后仍有歧义的观测键。
+诊断表、冲突原行和哈希回执保存在新的外部数据目录。
+原始抓取时间保持不变，实际生成时间单独记录。
+该工具不发起API请求，不发布标准化资产，也不修改封存输入或共享别名。
+严格构建器仍拒绝同键冲突，诊断隔离不构成生产豁免。
