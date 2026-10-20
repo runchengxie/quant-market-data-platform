@@ -6,7 +6,7 @@ import json
 import os
 import tempfile
 from collections import defaultdict
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
@@ -41,7 +41,7 @@ def _now() -> str:
 
 
 @contextmanager
-def _lock(run: Path) -> Iterator[None]:
+def _lock(run: Path) -> Generator[None]:
     # Retain the inode: unlinking a flock file can permit two simultaneous locks.
     import fcntl
 

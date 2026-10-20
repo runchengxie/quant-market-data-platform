@@ -7,7 +7,7 @@ import json
 import math
 import os
 import socket
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Literal
@@ -308,7 +308,7 @@ def _save_receipt(receipt: dict[str, Any], path: Path) -> None:
 
 
 @contextmanager
-def _run_lock(path: Path) -> Iterator[None]:
+def _run_lock(path: Path) -> Generator[None]:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a+", encoding="utf-8") as handle:
         try:

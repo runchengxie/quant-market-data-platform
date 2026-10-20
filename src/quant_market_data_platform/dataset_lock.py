@@ -8,7 +8,7 @@ import json
 import os
 import socket
 import uuid
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
@@ -202,7 +202,7 @@ def exclusive_file_lock(
     *,
     operation: str,
     remove_on_release: bool = False,
-) -> Iterator[Path]:
+) -> Generator[Path]:
     """Hold an advisory lock fd for the whole critical section.
 
     The compatibility check is deliberately conservative. A live or remote
@@ -231,7 +231,7 @@ def minute_dataset_lock(
     output_dir: str | Path,
     *,
     operation: str,
-) -> Iterator[Path]:
+) -> Generator[Path]:
     """Acquire the shared minute dataset lock."""
     lock_path = minute_dataset_lock_path(output_dir)
     with exclusive_file_lock(lock_path, operation=operation) as acquired:

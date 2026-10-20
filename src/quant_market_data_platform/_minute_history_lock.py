@@ -5,7 +5,7 @@ from __future__ import annotations
 import fcntl
 import json
 import os
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
@@ -16,7 +16,7 @@ class HistoryWriterBusy(RuntimeError):
 
 
 @contextmanager
-def history_writer_lock(root: Path) -> Iterator[None]:
+def history_writer_lock(root: Path) -> Generator[None]:
     path = root.resolve() / "metadata/minute_backfill/reverse_scheduler/writer.lock"
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a+", encoding="utf-8") as handle:

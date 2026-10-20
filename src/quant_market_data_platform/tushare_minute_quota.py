@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import os
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -209,7 +209,7 @@ class MinuteQuotaLedger:
         *,
         consumer: str | None = None,
         now: datetime | None = None,
-    ) -> Iterator[MinuteQuotaReservation]:
+    ) -> Generator[MinuteQuotaReservation]:
         """Conservatively settle forgotten or exceptional provider attempts."""
 
         reservation = self.reserve(rows, consumer=consumer, now=now)
