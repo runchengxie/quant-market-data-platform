@@ -5,7 +5,7 @@ from __future__ import annotations
 import hmac
 import sqlite3
 import time
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import closing, contextmanager
 from dataclasses import dataclass
 from datetime import datetime
@@ -220,7 +220,7 @@ def connect(store: QuotaStoreContext) -> sqlite3.Connection:
 
 
 @contextmanager
-def transaction(store: QuotaStoreContext) -> Iterator[sqlite3.Connection]:
+def transaction(store: QuotaStoreContext) -> Generator[sqlite3.Connection]:
     with closing(connect(store)) as connection:
         connection.execute("BEGIN IMMEDIATE")
         try:
