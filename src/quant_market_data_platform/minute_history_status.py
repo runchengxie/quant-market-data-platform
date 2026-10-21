@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 
 from quant_market_data_platform._minute_history_activity import observe_rows
 from quant_market_data_platform._minute_history_inventory import inventory, read_json
+from quant_market_data_platform._minute_history_pipeline import pipeline
 
 _MIN_FREE = 10 * 1024**3
 
@@ -244,6 +245,7 @@ def history_status(  # noqa: PLR0913 - public monitoring interface
         "reason": reason,
         "generated_at": now.isoformat(),
         "progress": progress,
+        "pipeline": pipeline(progress),
         "quota": quota,
         "last_progress_at": last,
         "samples": evidence["samples"],

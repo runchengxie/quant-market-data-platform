@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 518,
-    "python_lines": 122007,
+    "python_files": 520,
+    "python_lines": 122184,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,8 +18,8 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "5cde542",
-    "reason": "Date-scoped provider-policy marker bugfix adds four offline regressions covering native identity, effective exclusions, nonintersecting scope, and invalid-policy rejection. Only the Python line budget grows by 69; other debt budgets remain unchanged.",
-    "exit_condition": "Remove this line budget if the policy date-scope behavior or its regression coverage is retired."
+    "source_revision": "6eb327c4ae4267e1856c5a9bb03e4bc8b8e510cf",
+    "reason": "Add a small read-only history phase presenter and six regression cases for scoped audits, authoritative queue counts, and validated publication evidence. File budget increases by two and line budget by 177; complexity, long-line and oversized-file limits are unchanged. Remove the old partial inventory mock in the quarantine alert test so it exercises the actual inventory.",
+    "exit_condition": "Remove the phase presenter file/line budget when this status contract is retired or consolidated while retaining its scope and evidence regression coverage."
   }
 }

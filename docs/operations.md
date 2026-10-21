@@ -218,6 +218,15 @@ marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest
 
 使用 `scripts/operations/tushare_minute_history.py status --artifacts-root <data-root> --runtime-root <runtime-root>` 只读检查进度、额度、存储和审计阻断。统计分别列出元数据完成日期、独立审计日期和北京市场省略日期。历史审计绑定失效会单独记录，下载完成仍须经过发布验收。
 
+`status` 和 `watch` 的 `pipeline` 将进度分为下载、语义审计、覆盖认证和正式发布四个阶段。
+`acquisition.deferred_dates` 读取当前补缺队列，当前数量以该队列为准。
+队列缺失或格式无效时数量为 `null`，不能视为零。语义审计按验收范围分别计数，
+`coverage.full_market_audited_dates` 仅统计完整市场验收。指定股票池验收和允许北京市场省略
+不会升级为完整市场认证，`full_market_ready` 仍受独立发布门禁约束。
+前三个阶段的范围是历史 staging，`publication` 则是当前已发布资产的独立日期窗口，
+其日期数和行数只读取经过路径及版本校验的 operational receipt。缺少有效回执时为 `null`。
+这些窗口不能直接相加或用来计算统一完成率，队列清零也不表示历史数据已正式发布。
+
 `watch` 使用相同参数并增加 `--state-root <monitor-root>`，写入 `status.json` 和去重的本地 `alerts.jsonl`。连续活跃且可运行的采样超过 15 分钟、至少三次没有进展时报告停滞。等待额度、空闲和审计阻断有独立状态。监控无需数据源凭证。
 
 `repair` 只处理 `deferred_missing.json` 中有来源绑定的股票日缺口，每次最多请求一个股票日。默认每日最多 500 次请求、每项最多三次尝试，失败后从 30 分钟开始退避。它与主下载共用写入锁和额度账本。空队列不创建数据源客户端。`--dry-run` 可检查候选项。
