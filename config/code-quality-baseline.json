@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 524,
-    "python_lines": 123566,
+    "python_lines": 123629,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,9 +18,9 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "a4e251f13d0a3368658b1794309f9b2848bbcfd0",
-    "reason": "Preserve all merged feature budgets. Add the read-only four-phase history presenter and six regressions (+2 files, +177 lines). All complexity, long-line and oversized-file limits are unchanged.",
-    "exit_condition": "Remove the phase presenter allowance if retired or consolidated with equivalent evidence/scope tests. Preserve preceding retirement conditions in previous_change_records."
+    "source_revision": "1f4936c89d2b537ae0dc7149af44632bf6febbeb",
+    "reason": "Add five production-shaped archive-alias regression cases (+63 test lines); automatic donor selection skips historical and dangling symlinks without following cold archive targets. Production source line count and all complexity, long-line and oversized-file limits are unchanged.",
+    "exit_condition": "Remove the added test line allowance if archive-alias regressions are consolidated or retired with equivalent no-traversal and explicit-donor refusal coverage. Preserve earlier exit conditions in previous_change_records."
   },
   "previous_change_records": [
     {
@@ -37,6 +37,11 @@
       "source_revision": "15d9f9a50c8f244884d845ade511c4091c946c7f",
       "reason": "Preserves merged provider-policy, delayed-margin and company-template feature budgets; adds verified immutable snapshot reuse, full raw inode isolation and regressions. Only file/line allowance changes; complexity and oversized-file limits remain unchanged.",
       "exit_condition": "Reduce the snapshot reuse file/line allowance when removed or consolidated; retain earlier feature retirement conditions recorded below."
+    },
+    {
+      "source_revision": "a4e251f13d0a3368658b1794309f9b2848bbcfd0",
+      "reason": "Preserve all merged feature budgets. Add the read-only four-phase history presenter and six regressions (+2 files, +177 lines). All complexity, long-line and oversized-file limits are unchanged.",
+      "exit_condition": "Remove the phase presenter allowance if retired or consolidated with equivalent evidence/scope tests. Preserve preceding retirement conditions in previous_change_records."
     }
   ]
 }

@@ -24,10 +24,10 @@ def _real(path: Path) -> None:
 
 
 def select_latest(inputs: Path, output: Path) -> Path | None:
-    """Skip retired/unreceipted attempts; validate selected completed candidate later."""
+    """Skip archive aliases and retired/unreceipted attempts without following links."""
     candidates = []
     for path in inputs.glob("*"):
-        if path == output or not NAME.fullmatch(path.name):
+        if path == output or not NAME.fullmatch(path.name) or path.is_symlink():
             continue
         _real(path)
         marker = path / "retirement_receipt.json"

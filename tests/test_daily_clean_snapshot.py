@@ -388,3 +388,66 @@ def test_reuse_final_check_detects_new_raw_inode_alias_outside_dates(tmp_path, m
     with pytest.raises(ValueError):
         build_daily_clean_snapshot(tmp_path, "20260929", "20260930", output, reuse_from=donor)
     assert not (output / "snapshot_receipt.json").exists()
+
+
+@pytest.mark.parametrize("dangling", [False, True])
+def test_latest_reuse_skips_cold_archive_alias_without_traversal(tmp_path, monkeypatch, dangling):
+    _, donor, output = _donor(tmp_path)
+    cold = tmp_path / "outside-artifacts-cold-archive"
+    if not dangling:
+        cold.mkdir()
+        (cold / "snapshot_receipt.json").write_text("must not read external archive")
+    alias = donor.parent / "a_share_all_20260929_20260930.20260929T230000.99"
+    alias.symlink_to(cold, target_is_directory=True)
+    resolve = Path.resolve
+
+    def no_archive_resolution(path, *args, **kwargs):
+        if path == alias or path.is_relative_to(cold):
+            raise AssertionError("automatic selection traversed a cold archive alias")
+        return resolve(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "resolve", no_archive_resolution)
+    receipt = build_daily_clean_snapshot(
+        tmp_path, "20260929", "20260930", output, reuse_latest_completed=True
+    )
+    assert receipt["storage"]["reused_files"] == 8
+    assert receipt["storage"]["reuse_from"] == donor.relative_to(tmp_path).as_posix()
+    assert alias.is_symlink()
+
+
+@pytest.mark.parametrize("dangling", [False, True])
+def test_latest_reuse_with_only_archive_aliases_copies_inputs(tmp_path, monkeypatch, dangling):
+    _sources(tmp_path)
+    inputs = tmp_path / "assets/tushare/a_share/daily_clean_inputs"
+    inputs.mkdir()
+    cold = tmp_path / "outside-artifacts-cold-archive"
+    if not dangling:
+        cold.mkdir()
+        (cold / "snapshot_receipt.json").write_text("must not read external archive")
+    alias = inputs / "a_share_all_20260929_20260930.20260929T230000.99"
+    alias.symlink_to(cold, target_is_directory=True)
+    output = inputs / "a_share_all_20260929_20260930.20261001T230000.101"
+    resolve = Path.resolve
+
+    def no_archive_resolution(path, *args, **kwargs):
+        if path == alias or path.is_relative_to(cold):
+            raise AssertionError("automatic selection traversed a cold archive alias")
+        return resolve(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "resolve", no_archive_resolution)
+    receipt = build_daily_clean_snapshot(
+        tmp_path, "20260929", "20260930", output, reuse_latest_completed=True
+    )
+    assert receipt["storage"]["reused_files"] == 0
+    assert receipt["storage"]["copied_files"] == 8
+    assert receipt["storage"]["reuse_from"] is None
+    assert alias.is_symlink()
+
+
+def test_explicit_timestamp_alias_is_still_refused(tmp_path):
+    _, donor, output = _donor(tmp_path)
+    alias = donor.parent / "a_share_all_20260929_20260930.20260929T230000.99"
+    alias.symlink_to(donor, target_is_directory=True)
+    with pytest.raises(ValueError, match="canonical without symlinks"):
+        build_daily_clean_snapshot(tmp_path, "20260929", "20260930", output, reuse_from=alias)
+    assert not output.exists()

@@ -96,7 +96,9 @@ uv run python scripts/operations/restore_minute_partition_from_quarantine.py \
 
 发布脚本可使用互斥选项 `--reuse-latest-completed`：输出必须直接位于
 `assets/tushare/a_share/daily_clean_inputs`，按捕获时间和数字后缀选取最新完成的规范快照。
-退役目录和没有 receipt 的未完成尝试不参与选择。已完成候选无效时失败，不静默换用更旧版本。
+历史归档符号链接（含失效链接）、退役目录和没有 receipt 的未完成尝试不参与选择。
+自动选择不解析或读取归档链接目标。真实已完成候选无效时失败，不静默换用更旧版本。
+显式 `--reuse-from` 仍拒绝符号链接，只接受规范的实际快照目录。
 没有候选时全部复制。该选项不修改旧目录或 latest 发布形式。
 receipt 的 `storage` 记录供体路径及 receipt 指纹、复用/复制文件数与逻辑字节数。
 文件记录的 `storage_method` 区分硬链接和复制。这些字节数描述逻辑复用量，实际空间按 inode 与磁盘块另行统计。
