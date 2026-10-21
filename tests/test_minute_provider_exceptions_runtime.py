@@ -75,3 +75,71 @@ def test_runtime_exclusions_reject_weakening_promotion_guards(tmp_path: Path) ->
 
     with pytest.raises(ProviderNoDataExceptionError, match="fail-closed"):
         load_provider_no_data_exclusions(path, trade_date="20160104")
+
+
+def _day_progress(tmp_path, monkeypatch, *, date, codes, policy_path):
+    import pandas as pd
+
+    from quant_market_data_platform.providers import tushare_a_share_mins as shell
+    from quant_market_data_platform.providers._a_share_mins_constants import MinsMirrorOptions
+    from quant_market_data_platform.providers._mins_fetch import _build_day_progress
+
+    # The only external input is the provider's traded-symbol response.
+    monkeypatch.setattr(shell, "_traded_symbols_from_provider", lambda *a, **k: set(codes))
+    history = pd.DataFrame(
+        {"ts_code": codes, "list_date": ["20100101"] * len(codes), "delist_date": [""] * len(codes)}
+    )
+    return _build_day_progress(
+        None,
+        MinsMirrorOptions(
+            start_date=date, end_date=date, provider_no_data_exceptions_path=policy_path
+        ),
+        None,
+        tmp_path,
+        date,
+        [],
+        None,
+        history,
+    )
+
+
+def test_inapplicable_policy_preserves_native_universe_identity(tmp_path, monkeypatch):
+    path = tmp_path / "exceptions.json"
+    _write_policy(path, allow=True)
+    baseline = _day_progress(
+        tmp_path, monkeypatch, date="20160105", codes=["001872.SZ", "600000.SH"], policy_path=None
+    )
+    actual = _day_progress(
+        tmp_path, monkeypatch, date="20160105", codes=["001872.SZ", "600000.SH"], policy_path=path
+    )
+    assert actual[2:] == baseline[2:]
+    assert actual[1].universe_hash == baseline[1].universe_hash
+
+
+def test_applicable_policy_excludes_code_and_marks_scope(tmp_path, monkeypatch):
+    path = tmp_path / "exceptions.json"
+    _write_policy(path, allow=True)
+    actual = _day_progress(
+        tmp_path, monkeypatch, date="20160104", codes=["001872.SZ", "600000.SH"], policy_path=path
+    )
+    assert actual[2] == {"600000.SH"}
+    assert ":provider_no_data_exceptions=" in actual[3]
+    assert actual[4].endswith(":audited_provider_no_data_exclusions")
+
+
+def test_applicable_policy_retains_scope_when_universe_intersection_empty(tmp_path, monkeypatch):
+    path = tmp_path / "exceptions.json"
+    _write_policy(path, allow=True)
+    actual = _day_progress(
+        tmp_path, monkeypatch, date="20160104", codes=["600000.SH"], policy_path=path
+    )
+    assert actual[2] == {"600000.SH"}
+    assert ":provider_no_data_exceptions=" in actual[3]
+    assert actual[4].endswith(":audited_provider_no_data_exclusions")
+
+
+def test_invalid_policy_rejected_even_on_inapplicable_date(tmp_path, monkeypatch):
+    path = tmp_path / "exceptions.json"
+    _write_policy(path, allow=False)
+    with pytest.raises(ProviderNoDataExceptionError, match="acquisition exclusion"):
+        _day_progress(tmp_path, monkeypatch, date="20160105", codes=["600000.SH"], policy_path=path)

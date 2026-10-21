@@ -48,6 +48,7 @@ from quant_market_data_platform.providers.tushare_a_share_fundamentals_support i
     FieldValidationError,
     FundamentalsDownloadError,
     PitProvenanceError,
+    merge_pit_template_identity,
 )
 from quant_market_data_platform.providers.tushare_a_share_fundamentals_support import (
     assert_unambiguous_pit_events as _assert_unambiguous_pit_events,
@@ -476,6 +477,7 @@ def _empty_pit_frame(value_columns: Sequence[str]) -> Any:
             "disclosure_date",
             "available_date",
             "_source_dataset",
+            "_source_comp_type",
             "_source_raw_asset",
             "_source_run_id",
             "_source_retrieved_at",
@@ -490,7 +492,15 @@ def _coalesce_pit_frame(frame: Any, value_columns: Sequence[str]) -> Any:
     pd = pandas()
     if frame.empty:
         return _empty_pit_frame(value_columns)
+    if "_source_comp_type" not in frame:
+        frame = frame.assign(_source_comp_type="")
     _assert_unambiguous_pit_events(frame, value_columns)
+    frame = frame.assign(
+        _source_comp_type=[
+            merge_pit_template_identity([row])
+            for row in frame.loc[:, ["_source_dataset", "_source_comp_type"]].to_dict("records")
+        ]
+    )
     group_columns = [
         "symbol",
         "trade_date",
@@ -517,6 +527,9 @@ def _coalesce_pit_frame(frame: Any, value_columns: Sequence[str]) -> Any:
             "disclosure_date": _last_present(group["disclosure_date"]),
             "available_date": _last_present(group["available_date"]),
             "_source_dataset": _join_unique(group["_source_dataset"]),
+            "_source_comp_type": merge_pit_template_identity(
+                group.loc[:, ["_source_dataset", "_source_comp_type"]].to_dict("records")
+            ),
             "_source_raw_asset": _join_unique(group["_source_raw_asset"]),
             "_source_run_id": _join_unique(group["_source_run_id"]),
             "_source_retrieved_at": _join_unique(group["_source_retrieved_at"]),
