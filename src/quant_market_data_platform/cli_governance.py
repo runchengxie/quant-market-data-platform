@@ -65,6 +65,15 @@ def add_governance_parser(subparsers: argparse._SubParsersAction) -> None:
     snapshot.add_argument("--start-date", required=True)
     snapshot.add_argument("--end-date", required=True)
     snapshot.add_argument("--out-dir", required=True)
+    reuse = snapshot.add_mutually_exclusive_group()
+    reuse.add_argument(
+        "--reuse-from", type=Path, help="Reuse verified read-only shards from this prior snapshot."
+    )
+    reuse.add_argument(
+        "--reuse-latest-completed",
+        action="store_true",
+        help="Reuse newest completed non-retired canonical sibling; copy if none exists.",
+    )
 
 
 def _load_json_object(path: Path, *, label: str) -> dict[str, object]:
@@ -189,6 +198,8 @@ def handle_snapshot_clean_inputs(args: argparse.Namespace) -> int:
         args.start_date,
         args.end_date,
         Path(args.out_dir),
+        reuse_from=args.reuse_from,
+        reuse_latest_completed=args.reuse_latest_completed,
     )
     print(
         json.dumps(

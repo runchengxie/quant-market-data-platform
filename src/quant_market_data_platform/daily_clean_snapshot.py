@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
@@ -15,22 +14,12 @@ from typing import Any
 import pyarrow.parquet as pq
 import yaml
 
+from .daily_clean_reuse import SnapshotReuse, select_latest
+from .daily_clean_snapshot_io import hash_file as _hash_file
+from .daily_clean_snapshot_io import stamp as _stamp
 from .paths import candidate_asset_paths
 
 DATASETS = ("daily", "adj_factor", "daily_basic", "limit_status")
-
-
-def _stamp(path: Path) -> tuple[int, int, int, int, int]:
-    info = path.stat()
-    return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
-
-
-def _hash_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _copy_file(source: Path, destination: Path) -> None:
@@ -100,7 +89,9 @@ def _sources(root: Path, start: str, end: str) -> dict[str, dict[str, Any]]:
     return sources
 
 
-def _capture_dataset(dataset: str, state: dict[str, Any], output: Path) -> dict[str, Any]:
+def _capture_dataset(
+    dataset: str, state: dict[str, Any], output: Path, reuse: SnapshotReuse | None
+) -> dict[str, Any]:
     source: Path = state["path"]
     target = output / dataset
     records = []
@@ -110,17 +101,21 @@ def _capture_dataset(dataset: str, state: dict[str, Any], output: Path) -> dict[
         relative = original.relative_to(source)
         captured = target / relative
         captured.parent.mkdir(parents=True, exist_ok=True)
-        _copy_file(original, captured)
+        linked = reuse is not None and reuse.link(original, Path(dataset) / relative, captured)
+        if not linked:
+            _copy_file(original, captured)
         captured_hashes[original] = _hash_file(captured)
         rows += pq.ParquetFile(captured).metadata.num_rows
         records.append(
             {
                 "path": relative.as_posix(),
+                "storage_method": "hardlink" if linked else "copy",
                 "bytes": captured.stat().st_size,
                 "sha256": captured_hashes[original],
             }
         )
-        captured.chmod(0o444)
+        if not linked:
+            captured.chmod(0o444)
     state["captured_hashes"] = captured_hashes
     return {
         "source_path": source.as_posix(),
@@ -166,13 +161,37 @@ def _write_manifest(
     (output / dataset / "manifest.yml").chmod(0o444)
 
 
+def _storage_summary(entries, reuse: SnapshotReuse | None, root: Path) -> dict[str, Any]:
+    records = [record for entry in entries.values() for record in entry["files"]]
+    return {
+        "raw_isolation_files": len(reuse.raw_files) if reuse else 0,
+        "raw_isolation_passes": 2 if reuse else 0,
+        "raw_isolation_scope": "all_parquet_in_four_raw_data_roots" if reuse else None,
+        "reused_files": sum(r["storage_method"] == "hardlink" for r in records),
+        "reused_bytes": sum(r["bytes"] for r in records if r["storage_method"] == "hardlink"),
+        "copied_files": sum(r["storage_method"] == "copy" for r in records),
+        "copied_bytes": sum(r["bytes"] for r in records if r["storage_method"] == "copy"),
+        "reuse_from": reuse.donor.relative_to(root).as_posix() if reuse else None,
+        "reuse_receipt_sha256": reuse.hashes[reuse.donor / "snapshot_receipt.json"]
+        if reuse
+        else None,
+    }
+
+
 def build_daily_clean_snapshot(
-    root: Path, start_date: str, end_date: str, output: Path
+    root: Path,
+    start_date: str,
+    end_date: str,
+    output: Path,
+    *,
+    reuse_from: Path | None = None,
+    reuse_latest_completed: bool = False,
 ) -> dict[str, Any]:
-    """Publish a receipt only after all independent copies pass source checks.
+    """Publish a receipt after raw-independent captured shards pass source checks.
 
     Failure leaves an unreceipted attempt for inspection. No existing output or
-    source is modified. Callers must serialize writers for a coherent capture.
+    source bytes are modified. Reuse changes donor link counts/ctime only.
+    Callers must serialize writers and retirement for a coherent capture.
     """
     _dates(start_date, end_date)
     root = root.expanduser().resolve(strict=True)
@@ -188,7 +207,21 @@ def build_daily_clean_snapshot(
         )
     if output.exists():
         raise FileExistsError(f"snapshot output already exists: {output}")
+    if reuse_from is not None and reuse_latest_completed:
+        raise ValueError("reuse options are mutually exclusive")
+    inputs = root / "assets/tushare/a_share/daily_clean_inputs"
+    if reuse_latest_completed:
+        if output.parent != inputs:
+            raise ValueError("latest reuse requires output under canonical inputs root")
+        reuse_from = select_latest(inputs, output)
+    reuse = (
+        SnapshotReuse(inputs, reuse_from.expanduser().absolute())
+        if reuse_from is not None
+        else None
+    )
     sources = _sources(root, start_date, end_date)
+    if reuse is not None:
+        reuse.bind_raw_sources(tuple(state["path"] / "data" for state in sources.values()))
     if any(
         state["path"].is_relative_to(output) or output.is_relative_to(state["path"])
         for state in sources.values()
@@ -196,9 +229,12 @@ def build_daily_clean_snapshot(
         raise ValueError("snapshot output overlaps a raw source")
     output.mkdir(parents=True, exist_ok=False)
     entries = {
-        dataset: _capture_dataset(dataset, state, output) for dataset, state in sources.items()
+        dataset: _capture_dataset(dataset, state, output, reuse)
+        for dataset, state in sources.items()
     }
     _verify_sources(sources, start_date, end_date)
+    if reuse is not None:
+        reuse.verify()
     for dataset, entry in entries.items():
         entry["source_path"] = Path(entry["source_path"]).relative_to(root).as_posix()
         _write_manifest(output, dataset, entry, start_date, end_date)
@@ -209,6 +245,7 @@ def build_daily_clean_snapshot(
         "start_date": start_date,
         "end_date": end_date,
         "datasets": entries,
+        "storage": _storage_summary(entries, reuse, root),
     }
     pending_receipt = output / "snapshot_receipt.json.pending"
     with pending_receipt.open("x", encoding="utf-8") as handle:

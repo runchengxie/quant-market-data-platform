@@ -51,7 +51,32 @@ Public CLI documentation tests derive reachable commands from the parser. When a
 date-filtered snapshot of daily, adjustment, daily-basic and limit-status inputs.
 Serialize raw writers first. The output must be a new path under the data root.
 A completed receipt pins source manifests and each captured file's SHA-256.
-Failed attempts are preserved without a completed receipt. Scheduled retention
+Failed attempts are preserved without a completed receipt.
+
+Add `--reuse-from PRIOR_SNAPSHOT` to reuse byte-identical read-only shards from a
+completed, non-retired canonical timestamp snapshot under the same inputs root.
+The complete donor inventory and receipt hashes/sizes are verified first. Only
+immutable snapshot shards share hardlinks; raw inputs retain separate inodes and
+new manifests/receipts remain independent. Changed/new shards are copied.
+Only cross-device hardlink errors fall back to copying; other errors fail closed.
+
+Publishers holding their existing publication lock can use the mutually exclusive
+`--reuse-latest-completed` option. Output must be a direct child of
+`assets/tushare/a_share/daily_clean_inputs`. Selection uses capture timestamp and
+numeric suffix, skips retired directories and unreceipted attempts, and rejects
+invalid completed candidates. With no candidate, capture copies every shard.
+No old directories or latest publication representation are changed.
+
+Receipt `storage` records donor receipt fingerprint, reused/copied file counts
+and logical byte counts; per-file `storage_method` identifies hardlink or copy.
+These counts do not measure physical disk savings. Published snapshot shards
+must remain read-only: corrections must write new files, never overwrite shared
+inodes. Linking changes donor link count and ctime without changing bytes,
+permissions or mtime. Removing one linked filename leaves other snapshots intact;
+retirement receipt restoration dependencies remain protected. Existing readers
+and producer rollbacks can continue reading the same layout.
+
+Scheduled retention
 `apply` is disabled; use the reviewed lifecycle retirement conditions in
 [data governance](data-governance.en.md) before any data removal.
 
