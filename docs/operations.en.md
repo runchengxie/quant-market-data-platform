@@ -177,3 +177,5 @@ limits stay unchanged. Reclaim the corresponding line budget when orchestration 
 are consolidated or regression fixtures shrink.
 
 `archive_state.json` atomically records the archive phase, dataset, completed child manifest hashes, and failure type. Same-day fundamentals conflicts also record the business key; arbitrary exception text is excluded to avoid exposing request details. This is diagnostic progress evidence: `running` can also indicate an interrupted process. Completion still requires validated `manifest.yml` and `SEALED.json`. Retries reuse completed children, and an already sealed successful archive does not rewrite its state receipt.
+
+Delayed margin recovery and receipt states: [A-share operations](operations/a-share-tushare.en.md#delayed-margin-inputs-for-the-evening-producer).

@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 518,
-    "python_lines": 122007,
+    "python_files": 519,
+    "python_lines": 122475,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,8 +18,8 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "5cde542",
-    "reason": "Date-scoped provider-policy marker bugfix adds four offline regressions covering native identity, effective exclusions, nonintersecting scope, and invalid-policy rejection. Only the Python line budget grows by 69; other debt budgets remain unchanged.",
-    "exit_condition": "Remove this line budget if the policy date-scope behavior or its regression coverage is retired."
+    "source_revision": "6eb327c4ae4267e1856c5a9bb03e4bc8b8e510cf",
+    "reason": "Preserves the merged date-scoped provider-policy line budget and adds one 187-line delayed-margin owner helper, 20 entry-point lines and 261 regression-test lines. Margin recovery adds one file and 468 lines; all other debt limits remain unchanged.",
+    "exit_condition": "Remove the 468-line/one-file margin allowance when recovery is retired or consolidated while preserving safety coverage. Retain or reduce the separately reviewed provider-policy allowance according to its retirement condition."
   }
 }

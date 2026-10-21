@@ -451,3 +451,21 @@ See [A-share fundamentals](../a-share-fundamentals.en.md) for the full raw-to-PI
 ## Retired RQData entry point
 
 RQData online reads and A-share collection were fully retired on 2026-07-26. `rqdata_a_share.py`, `cli_rqdata.py`, and `rqdata_runtime*.py` were removed from the active package. The A-share data path now uses TuShare platform assets; new research must not depend on RQData.
+
+## Delayed margin inputs for the evening producer
+
+`prepare_a_share_evening_data.py` revisits the two preceding open sessions in the local SSE calendar
+for `margin` and `margin_detail`. It fetches missing historical partitions so a same-day empty response
+can be recovered after the provider releases the data. Existing validated positive partitions are not
+rewritten. Other datasets retain their exact-target behavior. If the calendar is unavailable or has
+insufficient history, only the target is attempted and `recovery_window_error` records the reason.
+
+The receipt distinguishes `requested_target_date`, the verified physical `as_of`, and `target_ready`.
+An empty target with a positive partition no more than two calendar days old is `expected_delay`;
+older data is `stale`. Missing data, request errors and invalid partition dates or keys remain `failed`,
+with per-date outcomes and command exit codes. The recovery window uses trading sessions; the delay
+threshold continues to use calendar days, including across holidays.
+
+`recovered_dates`, `date_results` and `market_coverage` record the evidence. Market counts are observations;
+`market_completeness=not_established` does not certify full-market coverage. The bounded recovery does
+not repair older gaps, overwrite sealed raw data, or change shared aliases.
