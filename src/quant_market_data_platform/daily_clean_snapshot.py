@@ -178,7 +178,7 @@ def _storage_summary(entries, reuse: SnapshotReuse | None, root: Path) -> dict[s
     }
 
 
-def build_daily_clean_snapshot(
+def build_daily_clean_snapshot(  # noqa: PLR0913 - preserve capture API with explicit reuse options
     root: Path,
     start_date: str,
     end_date: str,
