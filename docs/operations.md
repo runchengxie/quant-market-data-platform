@@ -28,6 +28,8 @@
 | 准备独立停复牌与分红执行研究输入 | [执行研究输入审计](operations/execution-input-readiness.md) |
 | 测试脚本与测试范围说明 | [operations/testing.md](operations/testing.md) |
 
+晚间融资融券的延迟补齐及 receipt 状态见 [A 股操作说明](operations/a-share-tushare.md#晚间融资融券的延迟补齐)。
+
 ## 常用命令族
 
 - `marketdata paths`

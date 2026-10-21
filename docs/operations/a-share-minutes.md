@@ -498,3 +498,5 @@ DailyWatch20 的 TuShare-native 特征已生成并与 Guan 版本完成共同日
 全市场 sidecar，修复通道在初始化配额账本和发出请求前返回 `historical_code_transition_required`。
 保留原文件和 partial 回执，应按正确股票池生成并重验新候选，不能改写旧证据。
 供应商历史分钟数据的可用性仍需逐日核对。
+
+配置 provider-no-data policy 后，每个交易日都会严格校验该文件。只有该日存在生效的例外代码时，采集股票池规则和来源才附加 policy 标记。即使这些代码与当日股票池没有交集，仍保留标记。日期不适用时保留原生股票池身份，不改变完整性或发布门禁。
