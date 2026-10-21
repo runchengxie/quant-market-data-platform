@@ -11,6 +11,11 @@ from datetime import datetime
 from pathlib import Path
 
 from quant_market_data_platform.contract import load_current_contract
+from quant_market_data_platform.evening_data_recovery import (
+    DELAYED_DATASETS,
+    DelayedDatasetRequest,
+    prepare_delayed_dataset,
+)
 from quant_market_data_platform.providers._env import _load_tushare_env_files
 
 DATASETS = (
@@ -175,6 +180,21 @@ def prepare(date: str, data_root: Path, token_env: str, premium: bool) -> tuple[
         if not required and not premium:
             continue
         out_dir = asset_root / relative
+        if name in DELAYED_DATASETS:
+            rows.append(
+                prepare_delayed_dataset(
+                    DelayedDatasetRequest(
+                        dataset=name,
+                        command=command,
+                        out_dir=out_dir,
+                        target=date,
+                        data_root=data_root,
+                        token_env=token_env,
+                    ),
+                    _run,
+                )
+            )
+            continue
         result = _run(command, out_dir, date, token_env)
         partition = _partition(out_dir, date)
         ok = result.returncode == 0 and partition.is_file() and partition.stat().st_size > 0
