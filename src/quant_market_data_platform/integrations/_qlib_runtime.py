@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
+from importlib import import_module
 from typing import Any, Protocol
 
-# qlib is an optional heavy dependency (the `[qlib]` extra) and is intentionally
-# absent from the type-check environment. The runtime import error here is what
-# surfaces as `QlibIntegrationUnavailableError` when `as_data_loader()` is called
-# without qlib installed, so this unresolved-import is expected, not a defect.
-from qlib.data.dataset.loader import DataLoader  # ty: ignore[unresolved-import]
+# Resolve the optional runtime base only when the public lazy adapter imports this
+# module. This preserves the real Qlib subclass without requiring Qlib in the
+# standard type-check environment or environment-dependent import suppressions.
+DataLoader = import_module("qlib.data.dataset.loader").DataLoader
 
 
 class _PublishedAssetAdapter(Protocol):
