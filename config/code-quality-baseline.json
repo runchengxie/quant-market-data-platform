@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 518,
-    "python_lines": 121938,
+    "python_lines": 122007,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,8 +18,8 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "5da37968f6fa19f82b2f6f03d5a5e2086f6f06ae",
-    "reason": "Reviewed lifecycle implementation adds isolated retirement/state classification modules, a CLI wrapper, and regression tests. File/line growth is the new feature budget, not additional long functions, oversized files, or ignored complexity.",
-    "exit_condition": "Reduce the feature budget if these workflows are removed or consolidated while preserving their safety tests."
+    "source_revision": "5cde542",
+    "reason": "Date-scoped provider-policy marker bugfix adds four offline regressions covering native identity, effective exclusions, nonintersecting scope, and invalid-policy rejection. Only the Python line budget grows by 69; other debt budgets remain unchanged.",
+    "exit_condition": "Remove this line budget if the policy date-scope behavior or its regression coverage is retired."
   }
 }

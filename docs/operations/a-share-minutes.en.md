@@ -251,3 +251,5 @@ using a successor on a historical date are reported as
 requests. Preserve their files and partial receipts; regenerate and audit a new
 candidate with the correct universe rather than rewriting old evidence. Supplier
 availability still requires verification for each historical stock-day.
+
+A configured provider-no-data policy is strictly validated for every trading date. Its policy marker is attached to the acquisition universe rule and source only when the policy has effective exception codes for that date, even if those codes do not intersect the day’s universe. Dates without effective exceptions retain their native universe identity; completeness and publication gates remain unchanged.
