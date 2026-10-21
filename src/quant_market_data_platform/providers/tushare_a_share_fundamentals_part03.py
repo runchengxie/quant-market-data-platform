@@ -167,9 +167,10 @@ def _filter_statement_company_types(dataset: str, frame: Any, dropped: dict[str,
     unsupported = company_type.ne("") & ~company_type.isin(SUPPORTED_STATEMENT_COMP_TYPES)
     dropped["unsupported_comp_type"] = int(unsupported.sum())
     # comp_type identifies a reporting template, never consolidation scope.
-    # report_type is filtered separately. Conflicting templates for the same
-    # observation remain subject to the ordinary ambiguity check.
-    return frame.loc[~unsupported].copy()
+    # report_type is filtered separately. Preserve template identity before
+    # selecting revisions and checking ambiguity within each template.
+    canonical = company_type.where(frame["comp_type"].notna(), frame["comp_type"])
+    return frame.assign(comp_type=canonical).loc[~unsupported].copy()
 
 
 def _filter_normalized_report_rows(
@@ -183,6 +184,15 @@ def _filter_normalized_report_rows(
         dropped["unsupported_report_type"] = int((~supported).sum())
         frame = frame.loc[supported].copy()
     return _filter_statement_company_types(dataset, frame, dropped)
+
+
+def _normalized_identity_keys(dataset: str, spec: Any, frame: Any) -> list[str]:
+    keys = ["symbol", *[key for key in spec.dedupe_keys if key != "ts_code" and key in frame]]
+    if dataset in STATEMENT_DATASETS and "comp_type" in frame:
+        keys.append("comp_type")
+    if "_source_retrieved_at" in frame:
+        keys.append("_source_retrieved_at")
+    return keys
 
 
 def build_normalized_fundamentals(
@@ -216,9 +226,7 @@ def build_normalized_fundamentals(
     if disclosure_col:
         frame["disclosure_date"] = frame[disclosure_col].map(_date_token)
     frame = _filter_normalized_report_rows(dataset, spec, frame, dropped)
-    keys = ["symbol", *[key for key in spec.dedupe_keys if key != "ts_code" and key in frame]]
-    if "_source_retrieved_at" in frame:
-        keys.append("_source_retrieved_at")
+    keys = _normalized_identity_keys(dataset, spec, frame)
     frame, dropped["superseded_update_flag"], dropped["superseded_ann_date"] = (
         _select_latest_provider_update(frame, keys)
     )
@@ -271,6 +279,8 @@ def build_normalized_fundamentals(
             "raw_preserves_all_report_types": True,
             "normalized_standard_report_type": spec.standard_report_type,
             "dedupe_keys": keys,
+            "statement_template_identity": "comp_type" if "comp_type" in keys else None,
+            "flat_pit_template_policy": "reject_multiple_templates_per_observation",
             "source_observation_provenance": "_source_retrieved_at",
             "query_range_semantics": "report_period_not_freshness",
             "freshness_semantics": "raw_retrieval_vintage",
@@ -748,6 +758,8 @@ def _pit_projected_columns(mappings: Mapping[str, str]) -> list[str]:
         dict.fromkeys(
             [
                 "symbol",
+                "comp_type",
+                "_source_comp_type",
                 "report_period",
                 "disclosure_date",
                 "_source_dataset",
@@ -770,6 +782,7 @@ def _pit_output_columns(mappings: Mapping[str, str]) -> list[str]:
         "disclosure_date",
         "available_date",
         "_source_dataset",
+        "_source_comp_type",
         "_source_raw_asset",
         "_source_run_id",
         "_source_retrieved_at",
