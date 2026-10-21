@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -24,9 +25,14 @@ from quant_market_data_platform.providers.tushare_a_share_fundamentals_support i
 )
 from quant_market_data_platform.providers.tushare_common import normalize_ts_code, pandas
 
+STATEMENT_DATASETS = ("income", "balancesheet", "cashflow")
 
-def run(vintage: Path, output: Path) -> dict:
+
+def run(vintage: Path, output: Path, *, datasets: Sequence[str] = STATEMENT_DATASETS) -> dict:
     """Quarantine every ambiguous observation key after the ordinary revision filters."""
+    selected = tuple(dict.fromkeys(datasets))
+    if not selected or any(name not in STATEMENT_DATASETS for name in selected):
+        raise ValueError("datasets must select income, balancesheet, or cashflow")
     pd = pandas()
     if output.exists():
         raise ValueError("output must be a new directory")
@@ -40,7 +46,7 @@ def run(vintage: Path, output: Path) -> dict:
         "quarantine_policy": "exclude all ambiguous keys after provider revision selection",
         "datasets": {},
     }
-    for name in ["income", "balancesheet", "cashflow"]:
+    for name in selected:
         source = vintage / "raw" / name
         manifest = asset_manifest_payload(source)
         _, observation, frames = _revision_safe_raw_inputs(source, manifest)
@@ -86,7 +92,7 @@ def run(vintage: Path, output: Path) -> dict:
         old = vintage / "normalized" / name / "manifest.yml"
         audit["datasets"][name] = {
             "raw_manifest_sha256": file_sha256(source / "manifest.yml"),
-            "old_normalized_manifest_sha256": file_sha256(old),
+            "old_normalized_manifest_sha256": file_sha256(old) if old.is_file() else None,
             "source_observation": observation,
             "source_rows": sum(len(f) for f in frames),
             "diagnostic_rows": len(clean),
@@ -107,5 +113,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--vintage", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--dataset", dest="datasets", action="append", choices=STATEMENT_DATASETS)
     args = parser.parse_args()
-    run(args.vintage.resolve(), args.output.resolve())
+    run(args.vintage.resolve(), args.output.resolve(), datasets=args.datasets or STATEMENT_DATASETS)
