@@ -27,7 +27,7 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _current_min(root: Path, warnings: list[str]) -> str | None:
+def _current_publication(root: Path, warnings: list[str]) -> dict[str, Any]:
     alias = root / "assets/derived/a_share/minute_1m_tushare"
     contract = root / "metadata/current_assets/a_share_current.json"
     if contract.exists():
@@ -41,22 +41,49 @@ def _current_min(root: Path, warnings: list[str]) -> str | None:
             )
         except (OSError, ValueError, KeyError) as exc:
             warnings.append(f"current contract: {exc}")
-            return None
+            return {}
     if not alias.exists():
-        return None
+        return {}
     from quant_market_data_platform._minute_operational_receipt import read_operational_receipt
 
     try:
-        _, receipt = read_operational_receipt(alias.resolve())
+        receipt_path, receipt = read_operational_receipt(alias.resolve())
     except (OSError, ValueError, KeyError, TypeError, RuntimeError) as exc:
         warnings.append(f"current receipt: {exc}")
-        return None
+        return {}
     summary = receipt.get("summary", {})
     if not isinstance(summary, dict):
         warnings.append("invalid current receipt summary")
+        return {}
+    result: dict[str, Any] = {"receipt": str(receipt_path)}
+    for key in ("date_min", "date_max", "market_scope", "dates", "rows"):
+        value = summary.get(key)
+        if value is None:
+            continue
+        valid = (
+            type(value) is int and value >= 0
+            if key in {"dates", "rows"}
+            else isinstance(value, str)
+        )
+        if not valid:
+            warnings.append(f"invalid current receipt summary: {key}")
+            return {}
+        result[key] = value
+    return result
+
+
+def _deferred_count(metadata: Path, warnings: list[str]) -> int | None:
+    path = metadata / "deferred_missing.json"
+    if not path.exists():
         return None
-    value = summary.get("date_min")
-    return str(value) if value else None
+    queue = read_json(path, warnings).get("dates")
+    if not isinstance(queue, dict) or any(
+        not isinstance(day, str) or len(day) != 8 or not day.isdigit() or not isinstance(item, dict)
+        for day, item in queue.items()
+    ):
+        warnings.append("invalid deferred missing queue")
+        return None
+    return len(queue)
 
 
 def _open_dates(root: Path, minimum: str | None, warnings: list[str]) -> set[str] | None:
@@ -175,7 +202,8 @@ def inventory(root: Path, warnings: list[str], runtime_root: Path | None = None)
         for name, dates in runtime_scopes.items():
             scopes[name].update(dates)
     audited = set().union(*scopes.values())
-    minimum = _current_min(root, warnings)
+    publication = _current_publication(root, warnings)
+    minimum = publication.get("date_min")
     open_dates = _open_dates(root, minimum, warnings)
     return {
         "metadata_complete_dates": len(complete),
@@ -189,5 +217,7 @@ def inventory(root: Path, warnings: list[str], runtime_root: Path | None = None)
         "settled_dates": len(complete | bj),
         "remaining_open_dates": len(open_dates - complete - bj) if open_dates is not None else None,
         "current_min_date": minimum,
+        "deferred_dates": _deferred_count(metadata, warnings),
+        "published_asset": publication,
         "full_market_ready": False,
     }

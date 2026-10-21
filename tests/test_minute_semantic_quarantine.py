@@ -233,12 +233,8 @@ def test_monitor_keeps_quality_debt_visible_and_alerts_once(tmp_path):
             }
         )
     )
-    with patch(
-        "quant_market_data_platform.minute_history_status.inventory",
-        return_value={"settled_dates": 1, "independently_audited_dates": 0},
-    ):
-        a = watch_history(tmp_path, runtime, tmp_path / "monitor", now=now, min_free_bytes=0)
-        b = watch_history(tmp_path, runtime, tmp_path / "monitor", now=now, min_free_bytes=0)
+    a = watch_history(tmp_path, runtime, tmp_path / "monitor", now=now, min_free_bytes=0)
+    b = watch_history(tmp_path, runtime, tmp_path / "monitor", now=now, min_free_bytes=0)
     assert a["state"] == b["state"] == "idle"
     assert a["progress"]["semantic_quarantine_dates"] == ["20190509"]
     events = (tmp_path / "monitor/alerts.jsonl").read_text().splitlines()
