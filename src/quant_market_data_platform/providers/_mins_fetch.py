@@ -187,11 +187,12 @@ def _build_day_progress(  # noqa: PLR0913
             options.provider_no_data_exceptions_path,
             trade_date=trade_date,
         )
-        expected_symbols.difference_update(exclusions.codes)
-        universe_rule = (
-            f"{universe_rule}:provider_no_data_exceptions={exclusions.policy_sha256[:16]}"
-        )
-        universe_source = f"{universe_source}:audited_provider_no_data_exclusions"
+        if exclusions.codes:
+            expected_symbols.difference_update(exclusions.codes)
+            universe_rule = (
+                f"{universe_rule}:provider_no_data_exceptions={exclusions.policy_sha256[:16]}"
+            )
+            universe_source = f"{universe_source}:audited_provider_no_data_exclusions"
     if not expected_symbols:
         raise ValueError(f"No acquisition symbols remain for {trade_date}")
     progress = _MinuteProgress(

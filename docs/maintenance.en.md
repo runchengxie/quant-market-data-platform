@@ -141,7 +141,7 @@ features and documentation are retained.
 
 ## Evening margin recovery size budget (2026-10-21)
 
-The measured shared size budget changes from 518 Python files / 121938 lines to 519 files / 122406 lines.
+The measured shared size budget changes from 518 Python files / 122007 lines to 519 files / 122475 lines.
 The 468 added lines comprise a 187-line owner helper, 20 entry-point lines and 261 regression-test lines.
 Complexity, long-function, long-line, oversized-file and exclusion budgets remain fixed. Reduce this
 allowance when the recovery logic is consolidated or retired, retaining repeated-run, calendar,
