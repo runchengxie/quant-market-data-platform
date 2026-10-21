@@ -260,7 +260,15 @@ manifest 与 rollback 证据成组归档。报告不会自动处理这些对象�
 1. 临近执行时重新计算 inode 与可回收空间。
 1. 获得明确人工批准。
 
-当前实现停在 dry-run 阶段。
+定时入口只生成评审计划。独立的[输入快照退役流程](operations/daily-clean-snapshot-retirement.md)
+可以删除经过逐文件校验的重复分片，同时保留原始元数据和恢复映射。它不修改 current
+资产，也不按目录年龄直接删除。
+
+日线清洗 inventory 规则使用 `a_share_all_*_daily_clean*`，覆盖带 `_daily_clean_st.<attempt>`
+后缀的构建目录。输入规则也要覆盖带时间戳的 capture。未完成的尝试标为 `review`，不占用
+最新 N 份的保留名额。`retirement_receipt.json` 确认完成后，原目录只保留血缘元数据，也不
+再占用该名额。无效或未完成的退役回执仍须复核。current、rollback、历史报告和恢复供体的
+引用继续受保护。失败证据的保留期限需另行确定，不能仅凭年龄删除。
 
 ## 保留引用与独立输入
 

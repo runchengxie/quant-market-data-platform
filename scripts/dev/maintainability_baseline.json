@@ -1,10 +1,10 @@
 {
-  "generated_on": "2026-09-05",
+  "generated_on": "2026-10-21",
   "metrics": {
     "functions_over_100": 38,
     "functions_over_250": 1,
     "functions_over_500": 0,
-    "functions_with_10_plus_args": 10,
+    "functions_with_10_plus_args": 11,
     "largest_files": [
       {
         "lines": 2045,
@@ -205,7 +205,7 @@
       }
     ],
     "max_argument_count": 16,
-    "max_file_lines": 2045,
+    "max_file_lines": 2048,
     "max_function_lines": 309,
     "public_facade": {
       "exports": 0,
@@ -227,5 +227,12 @@
     },
     "version": 1
   },
-  "version": 1
+  "version": 1,
+  "baseline_adjustments": [
+    {
+      "source_revision": "5da37968f6fa19f82b2f6f03d5a5e2086f6f06ae",
+      "reason": "Both accepted main and this task measure 11 functions with ten or more arguments and a 2048-line largest test file. Align only these pre-existing drift values; no task-induced regression is accepted.",
+      "exit_condition": "Lower these limits when existing wide signatures and the fundamentals test module are split without changing public contracts."
+    }
+  ]
 }

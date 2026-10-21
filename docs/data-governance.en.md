@@ -157,7 +157,18 @@ Before any cleanup, verify each condition:
 6. Inodes and reclaimable space have been recalculated close to execution.
 7. Explicit human approval has been recorded.
 
-The current implementation stops at the dry-run stage.
+The scheduled runner stops at the review-plan stage. The separate
+[reviewed snapshot retirement workflow](operations/daily-clean-snapshot-retirement.en.md)
+can remove verified duplicate input shards while retaining original metadata and
+reconstruction mappings. It never changes current assets or deletes by age.
+
+Use `a_share_all_*_daily_clean*` for the daily-clean inventory rule so that
+`_daily_clean_st.<attempt>` directories are included. Input capture rules must
+also include timestamped names. Uncompleted attempts remain `review` and do not
+consume newest-N slots. A completed `retirement_receipt.json` keeps provenance
+metadata outside those slots; malformed or incomplete retirement receipts require
+review. Current, rollback, retained-report and reconstruction-donor references
+remain protected. These rules do not establish a time limit for failure evidence.
 
 ## Retained references and input captures
 

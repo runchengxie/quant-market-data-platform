@@ -6,9 +6,12 @@ from __future__ import annotations
 import argparse
 import json
 import re
-from collections.abc import Mapping, Sequence
-from datetime import datetime
+import tempfile
+from collections.abc import Callable, Mapping, Sequence
+from datetime import UTC, datetime
+from functools import partial
 from pathlib import Path
+from typing import TypeVar
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -28,6 +31,8 @@ from quant_market_data_platform.providers.tushare_a_share_fundamentals_support i
     require_asset_integrity,
 )
 from quant_market_data_platform.providers.tushare_common import write_manifest
+
+_StepResult = TypeVar("_StepResult")
 
 DEFAULT_DATASETS = ("income", "balancesheet", "cashflow", "fina_indicator")
 DEFAULT_FIELD_MAPPINGS = (
@@ -291,20 +296,102 @@ def verify_sealed_snapshot(root: Path) -> dict[str, object]:
     return dict(manifest)
 
 
+def _write_archive_state(root: Path, state: dict[str, object]) -> None:
+    """Atomically replace progress evidence; it is never a completion certificate."""
+    state["updated_at_utc"] = datetime.now(UTC).isoformat()
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", prefix=".archive_state.", dir=root, delete=False
+    ) as handle:
+        temporary = Path(handle.name)
+        try:
+            handle.write(json.dumps(state, indent=2) + "\n")
+            handle.flush()
+            temporary.replace(root / "archive_state.json")
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
+def _archive_step(
+    root: Path,
+    state: dict[str, object],
+    phase: str,
+    dataset: str | None,
+    operation: Callable[[], _StepResult],
+) -> _StepResult:
+    state.update(status="running", phase=phase, dataset=dataset)
+    _write_archive_state(root, state)
+    try:
+        return operation()
+    except Exception as error:
+        # Provider exceptions can contain request URLs or credentials. Persist only
+        # the type and the strictly constrained business key from our ambiguity error.
+        details = {"type": type(error).__name__}
+        match = re.fullmatch(
+            r"(?:Normalized|PIT) fundamentals contain an ambiguous same-day revision for "
+            r"(\('[A-Za-z0-9_.:+ -]+'(?:, '[A-Za-z0-9_.:+ -]+')*\))\.",
+            str(error),
+        )
+        if type(error).__name__ == "FieldValidationError" and match:
+            details["conflicting_key"] = match.group(1)
+        state.update(status="failed", error=details)
+        _write_archive_state(root, state)
+        raise
+
+
 def archive_vintage(args: argparse.Namespace) -> dict[str, object]:
     _validate_api_url(args.api_url)
     root = snapshot_root(args.artifacts_root, args.snapshot_date)
     if (root / "SEALED.json").is_file():
         return verify_sealed_snapshot(root)
     root.mkdir(parents=True, exist_ok=True)
-    raw_dirs = [_archive_raw_dataset(args, root, dataset) for dataset in args.datasets]
-    normalized_dirs = [
-        _archive_normalized_dataset(args, root, dataset, raw)
-        for dataset, raw in zip(args.datasets, raw_dirs, strict=True)
-    ]
-    pit = _archive_pit(args, root, normalized_dirs)
-    manifest = _seal_snapshot(args, root, raw_dirs, normalized_dirs, pit)
-    verify_sealed_snapshot(root)
+    completed: list[dict[str, str]] = []
+    state: dict[str, object] = {
+        "schema_version": "tushare.fundamentals.archive_state.v1",
+        "snapshot_date": args.snapshot_date,
+        "completed_children": completed,
+    }
+    raw_dirs = []
+    normalized_dirs = []
+    for dataset in args.datasets:
+        raw = _archive_step(
+            root, state, "raw", dataset, partial(_archive_raw_dataset, args, root, dataset)
+        )
+        raw_dirs.append(raw)
+        completed.append(
+            {
+                "path": str(raw.relative_to(root)),
+                "manifest_sha256": file_sha256(raw / "manifest.yml"),
+            }
+        )
+    for dataset, raw in zip(args.datasets, raw_dirs, strict=True):
+        normalized = _archive_step(
+            root,
+            state,
+            "normalized",
+            dataset,
+            partial(_archive_normalized_dataset, args, root, dataset, raw),
+        )
+        normalized_dirs.append(normalized)
+        completed.append(
+            {
+                "path": str(normalized.relative_to(root)),
+                "manifest_sha256": file_sha256(normalized / "manifest.yml"),
+            }
+        )
+    pit = _archive_step(root, state, "pit", None, lambda: _archive_pit(args, root, normalized_dirs))
+    completed.append(
+        {"path": str(pit.relative_to(root)), "manifest_sha256": file_sha256(pit / "manifest.yml")}
+    )
+    manifest = _archive_step(
+        root,
+        state,
+        "seal",
+        None,
+        lambda: _seal_snapshot(args, root, raw_dirs, normalized_dirs, pit),
+    )
+    _archive_step(root, state, "verify", None, lambda: verify_sealed_snapshot(root))
+    state.update(status="completed", phase="completed", dataset=None)
+    _write_archive_state(root, state)
     return manifest
 
 
