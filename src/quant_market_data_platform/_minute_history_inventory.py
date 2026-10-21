@@ -103,7 +103,7 @@ def _accepted_bj(
 
 def _audited_dates(
     metadata: Path, versions: dict[str, tuple[str, str]], warnings: list[str]
-) -> tuple[dict[str, set[str]], int]:
+) -> tuple[dict[str, set[str]], int, set[str]]:
     scopes: dict[str, set[str]] = {
         name: set()
         for name in (
@@ -113,6 +113,7 @@ def _audited_dates(
         )
     }
     expired = 0
+    expired_dates: set[str] = set()
     paths = list(metadata.glob("**/*audit*.json"))
     paths.extend(metadata.glob("batch-acceptance/*/acceptance.json"))
     for path in paths:
@@ -125,6 +126,9 @@ def _audited_dates(
             bound = versions.get(str(Path(sidecar).resolve())) if isinstance(sidecar, str) else None
             if bound is None or bound[1] != record.get("sidecar_sha256"):
                 expired += 1
+                day = bound[0] if bound else str(record.get("trade_date", ""))
+                if len(day) == 8 and day.isdigit():
+                    expired_dates.add(day)
                 continue
             issues = record.get("issues", record.get("issue_count"))
             clean = (
@@ -143,7 +147,7 @@ def _audited_dates(
                 continue
             if scope in scopes and record.get("binding_matches") is True and clean:
                 scopes[scope].add(bound[0])
-    return scopes, expired
+    return scopes, expired, expired_dates
 
 
 def inventory(root: Path, warnings: list[str], runtime_root: Path | None = None) -> dict[str, Any]:
@@ -161,10 +165,13 @@ def inventory(root: Path, warnings: list[str], runtime_root: Path | None = None)
         if payload.get("status") == "complete":
             complete.add(day)
     bj = _accepted_bj(metadata, versions, warnings)
-    scopes, expired = _audited_dates(metadata, versions, warnings)
+    scopes, expired, expired_dates = _audited_dates(metadata, versions, warnings)
     if runtime_root is not None:
-        runtime_scopes, runtime_expired = _audited_dates(runtime_root, versions, warnings)
+        runtime_scopes, runtime_expired, runtime_expired_dates = _audited_dates(
+            runtime_root, versions, warnings
+        )
         expired += runtime_expired
+        expired_dates.update(runtime_expired_dates)
         for name, dates in runtime_scopes.items():
             scopes[name].update(dates)
     audited = set().union(*scopes.values())
@@ -176,6 +183,9 @@ def inventory(root: Path, warnings: list[str], runtime_root: Path | None = None)
         "independently_audited_dates": len(audited),
         "audit_scope_dates": {name: len(dates) for name, dates in scopes.items()},
         "expired_audit_bindings": expired,
+        "expired_audit_dates": len(expired_dates),
+        "superseded_expired_audit_dates": len(expired_dates & audited),
+        "unresolved_expired_audit_dates": len(expired_dates - audited),
         "settled_dates": len(complete | bj),
         "remaining_open_dates": len(open_dates - complete - bj) if open_dates is not None else None,
         "current_min_date": minimum,

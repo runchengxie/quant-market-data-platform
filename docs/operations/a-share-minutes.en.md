@@ -218,3 +218,36 @@ The historical code for China Merchants Property Operation & Service is
 `000043.SZ` through 2019-12-13 and `001914.SZ` from 2019-12-16. The universe
 selects one date-appropriate native code. See the
 [Shenzhen Stock Exchange notice](https://www.szse.cn/disclosure/notice/general/t20191211_572534.html).
+
+## Long-running batch monitoring and historical repair evidence
+
+The history monitor reads the shared quota ledger in SQLite read-only mode. A held
+history writer lock and a positive-row commit from the same Shanghai quota day
+within 600 seconds establish live download activity, even when the batch-start
+preflight snapshot is older. `activity_provenance` describes that observation;
+`provenance.fresh` still reports the age of the original preflight. Quota values
+remain snapshot values, not a newly calculated remaining allowance. An idle lock,
+empty responses, another consumer, another quota day, invalid evidence, or a future
+timestamp beyond the 60-second clock tolerance cannot establish activity. Audit
+blocks still take precedence, and the monitor also checks current free disk space.
+
+`expired_audit_bindings` counts historical report records, including repeated
+reports for the same day. `expired_audit_dates` counts their distinct dates.
+`superseded_expired_audit_dates` counts dates covered by a current hash-bound,
+clean passing audit; `unresolved_expired_audit_dates` counts the remaining dates.
+Old reports remain evidence. A new audit must verify the current sidecar and actual
+Parquet contents; changing a stored hash is not a substitute for re-auditing.
+These counts do not establish full-market completeness or authorize publication.
+
+Historical full-universe retrieval also selects `000022.SZ` through 2018-12-20 and
+`001872.SZ` from 2018-12-26, and `601313.SH` through the last pre-holiday trading
+session on 2018-02-14 and `601360.SH` from 2018-02-28. See the issuer notices for
+[China Merchants Port](https://static.cninfo.com.cn/finalpage/2018-12-26/1205690369.PDF)
+and [Jiangnan Jiajie / 360](https://static.cninfo.com.cn/finalpage/2018-02-13/1204419027.PDF).
+The intervening code-change suspensions fail closed if a provider nevertheless
+returns one of those codes as traded. Existing deferred full-universe sidecars
+using a successor on a historical date are reported as
+`historical_code_transition_required` before creating a quota ledger or spending
+requests. Preserve their files and partial receipts; regenerate and audit a new
+candidate with the correct universe rather than rewriting old evidence. Supplier
+availability still requires verification for each historical stock-day.

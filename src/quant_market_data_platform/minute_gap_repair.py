@@ -42,6 +42,22 @@ class _QueueRowInvalid(ValueError):
     """A fixed, safe reason for rejecting a queue row."""
 
 
+def _require_native_provider_universe(source: dict[str, Any], date: str) -> None:
+    if not source["universe_rule"].startswith("daily_crosschecked_"):
+        return
+    from quant_market_data_platform.providers._a_share_mins_universe import (
+        _apply_historical_code_transitions,
+    )
+
+    symbols = set(source["expected_symbols"])
+    try:
+        native, _ = _apply_historical_code_transitions(symbols, trade_date=date)
+    except RuntimeError:
+        raise _QueueRowInvalid("historical_code_transition_required") from None
+    if native != symbols:
+        raise _QueueRowInvalid("historical_code_transition_required")
+
+
 def _queue_jobs(
     root: Path, queue: dict[str, Any]
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
@@ -51,7 +67,7 @@ def _queue_jobs(
     for date, row in sorted(queue["dates"].items()):
         try:
             paths = row["sidecars"]
-            if len(paths) != 1 or row != current.get(date):
+            if len(paths) != 1:
                 raise _QueueRowInvalid("stale_queue")
             path = Path(paths[0]).resolve()
             relative = path.relative_to((staging / "runs").resolve())
@@ -72,6 +88,9 @@ def _queue_jobs(
                 or not payload["universe_source"]
             ):
                 raise _QueueRowInvalid("invalid_universe_identity")
+            _require_native_provider_universe(payload, date)
+            if row != current.get(date):
+                raise _QueueRowInvalid("stale_queue")
             jobs.append(
                 {
                     "date": date,

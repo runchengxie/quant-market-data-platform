@@ -79,10 +79,11 @@ def test_returned_rows_count_is_effective_progress(tmp_path):
     with sqlite3.connect(db) as conn:
         conn.execute(
             "CREATE TABLE request_attempts "
-            "(quota_date TEXT, consumer TEXT, state TEXT, committed_rows INTEGER)"
+            "(quota_date TEXT, consumer TEXT, state TEXT, committed_rows INTEGER, updated_at TEXT)"
         )
         conn.execute(
-            "INSERT INTO request_attempts VALUES ('20261019','reverse_backfill','committed',241)"
+            "INSERT INTO request_attempts VALUES "
+            "('20261019','reverse_backfill','committed',241,NULL)"
         )
     prior = {
         **status(root, runtime),
@@ -433,3 +434,46 @@ def test_boolean_numeric_preflight_and_nonboolean_block_flag_are_invalid(tmp_pat
         assert result["evidence_warnings"]
     put(runtime / "semantic-audit-blocked.json", {"acceptance": "/audit/report.json"})
     assert status(root, runtime)["state"] == "audit_blocked"
+
+
+def test_expired_audit_records_count_unique_unresolved_dates_without_erasing_history(tmp_path):
+    import hashlib
+
+    root, runtime = fixture(tmp_path)
+    records = []
+    for date in ("20220101", "20220102"):
+        sidecar = root / (
+            f"staging/tushare_minute_backfill_reverse/runs/old/data/"
+            f"trade_date={date}/_minute_mirror.json"
+        )
+        put(sidecar, {"status": "partial", "trade_date": date})
+        records.append(
+            {
+                "sidecar": str(sidecar),
+                "trade_date": date,
+                "sidecar_sha256": "0" * 64,
+                "status": "passed_requested_universe_only",
+                "binding_matches": True,
+                "issues": [],
+            }
+        )
+    expired = runtime / "batch-acceptance/old/acceptance.json"
+    put(expired, {"partitions": [records[0], records[0], records[1]]})
+    old_bytes = expired.read_bytes()
+    current = {
+        **records[0],
+        "sidecar_sha256": hashlib.sha256(Path(str(records[0]["sidecar"])).read_bytes()).hexdigest(),
+    }
+    put(runtime / "batch-acceptance/new/acceptance.json", {"partitions": [current]})
+    progress = status(root, runtime)["progress"]
+    assert progress["expired_audit_bindings"] == 3
+    assert progress["expired_audit_dates"] == 2
+    assert progress["superseded_expired_audit_dates"] == 1
+    assert progress["unresolved_expired_audit_dates"] == 1
+    assert progress["independently_audited_dates"] == 1
+    assert expired.read_bytes() == old_bytes
+    current["issues"] = {"duplicate_rows": 1}
+    put(runtime / "batch-acceptance/new/acceptance.json", {"partitions": [current]})
+    progress = status(root, runtime)["progress"]
+    assert progress["superseded_expired_audit_dates"] == 0
+    assert progress["unresolved_expired_audit_dates"] == 2
