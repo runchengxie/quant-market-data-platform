@@ -952,3 +952,20 @@ marketdata tushare publish-a-share-pit-fundamentals --help
 ## RQData A 股入口（已退役）
 
 RQData A 股在线读取与采集入口已在 2026-07-26 完全退役，相关代码（`rqdata_a_share.py`、`cli_rqdata.py`、`rqdata_runtime*.py`）已从活跃包移除。当前 A 股主线统一使用 TuShare 平台资产，新研究不应依赖 RQData。
+
+## 晚间融资融券的延迟补齐
+
+`prepare_a_share_evening_data.py` 对 `margin` 和 `margin_detail` 会回看本地 SSE
+交易日历中的前两个交易日，只补缺失的历史分区，避免当天返回空数据后一直漏掉次日披露的数据。
+已存在的有效非空分区不会重写。其他数据集仍按原来的目标日逻辑执行。日历缺失或不足时，
+只尝试目标日，并在 receipt 的 `recovery_window_error` 中记录原因，不猜测工作日或扩大历史范围。
+
+receipt 的 `requested_target_date` 表示请求目标，`as_of` 表示已验证分区的实际最新日期，
+`target_ready` 只有目标日存在有效非空数据时才为真。目标日为空、实际最新数据滞后不超过
+两个自然日时，状态为 `expected_delay`。超过该范围为 `stale`。无可用分区、请求失败或分区
+日期、主键校验失败时，状态仍为 `failed`，并保留逐日结果及命令退出码。回看窗口按交易日取值，
+延迟阈值仍按自然日计算，节假日不会改变这一阈值。
+
+`recovered_dates`、`date_results` 和 `market_coverage` 提供补齐证据。市场数量仅为观测结果，
+`market_completeness=not_established` 表示市场完整性仍需单独认证。此补齐窗口不会修复更早历史缺口，
+也不会覆盖已封存原始数据或更改共享别名。

@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 520,
-    "python_lines": 122184,
+    "python_files": 521,
+    "python_lines": 122652,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,8 +18,8 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "6eb327c4ae4267e1856c5a9bb03e4bc8b8e510cf",
-    "reason": "Add a small read-only history phase presenter and six regression cases for scoped audits, authoritative queue counts, and validated publication evidence. File budget increases by two and line budget by 177; complexity, long-line and oversized-file limits are unchanged. Remove the old partial inventory mock in the quarantine alert test so it exercises the actual inventory.",
-    "exit_condition": "Remove the phase presenter file/line budget when this status contract is retired or consolidated while retaining its scope and evidence regression coverage."
+    "source_revision": "b271d837e59f4d0e6a4623f07335fd8687c67d57",
+    "reason": "Preserve the merged provider-policy and delayed-margin budgets. Add a read-only phase presenter and six history-evidence regression cases (+2 Python files, +177 lines). Remove the obsolete partial inventory mock so the quarantine alert test uses the actual inventory. Complexity, long-line and oversized-file limits remain unchanged.",
+    "exit_condition": "Remove the phase presenter allowance when retired or consolidated while preserving its scope/evidence tests. Preserve or reduce the preceding 468-line/one-file margin and 69-line provider-policy allowances under their existing retirement conditions."
   }
 }
