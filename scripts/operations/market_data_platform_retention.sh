@@ -28,6 +28,8 @@ apply fails closed; date age alone never authorizes deletion.
 Dry-run candidates are clearly versioned snapshots:
   assets/tushare/a_share/daily/a_share_all_20150101_YYYYMMDD_daily_clean
   assets/tushare/a_share/daily_clean_inputs/a_share_all_20150101_YYYYMMDD
+Timestamped input captures and *_daily_clean_st.<attempt> outputs are included.
+Completed retirement markers retain provenance without consuming a version slot.
 EOF
 }
 
@@ -129,8 +131,8 @@ main() {
   refresh_governance_report
   REPORT="$REPORT_DIR/retention-$(date -u +%Y%m%dT%H%M%SZ).tsv"
   printf 'action\tbytes\thuman_size\tfiles\tpath\treason\n' > "$REPORT"
-  process_group daily_clean "$DAILY_DIR" '^a_share_all_20150101_([0-9]{8})_daily_clean$' "$KEEP_DAILY_CLEAN_TOTAL"
-  process_group daily_clean_inputs "$INPUTS_DIR" '^a_share_all_20150101_([0-9]{8})$' "$KEEP_DAILY_CLEAN_INPUTS_TOTAL"
+  process_group daily_clean "$DAILY_DIR" '^a_share_all_[0-9]{8}_([0-9]{8})_daily_clean(_st\.[[:alnum:]]+)?$' "$KEEP_DAILY_CLEAN_TOTAL"
+  process_group daily_clean_inputs "$INPUTS_DIR" '^a_share_all_[0-9]{8}_([0-9]{8})(\.[0-9]{8}T[0-9]{6}\.[0-9]+)?$' "$KEEP_DAILY_CLEAN_INPUTS_TOTAL"
   ln -sfn "$(basename -- "$REPORT")" "$REPORT_DIR/scheduled-latest.tsv"
   ln -sfn "$(basename -- "$REPORT")" "$REPORT_DIR/latest.tsv"
   echo "report: $REPORT"

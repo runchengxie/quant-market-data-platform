@@ -113,7 +113,7 @@ PIT v2 的事件主键是
 TuShare 报表可能在同一次观测中同时返回 `update_flag=0` 的初始值和 `update_flag=1` 的更新值。
 normalized 会先在完整事件键内保留数值最高的 `update_flag`，并把被替代行计入
 `dropped_rows.superseded_update_flag`。
-三张报表只接受官方定义的 `comp_type=1..4`，未定义类型计入
+三张报表只接受官方定义的 `comp_type=1..4,7`，未定义类型计入
 `dropped_rows.unsupported_comp_type`。同一 `f_ann_date` 下存在多次公告记录时，
 保留较晚 `ann_date` 并计入 `dropped_rows.superseded_ann_date`。最高 flag 和最新公告日内若仍有
 财务值冲突，构建器继续 fail closed。

@@ -162,6 +162,53 @@ def test_retain_newest_orders_by_rightmost_date_before_basename(tmp_path: Path) 
     assert [item.action for item in items] == ["keep", "retire_candidate"]
 
 
+def test_retired_snapshot_metadata_does_not_displace_live_version(tmp_path: Path) -> None:
+    parent = tmp_path / "daily_clean_inputs"
+    live = parent / "a_share_all_20150101_20261019.20261019T100000.1"
+    retired = parent / "a_share_all_20150101_20261020.20261020T100000.2"
+    for path in (live, retired):
+        path.mkdir(parents=True)
+        (path / "snapshot_receipt.json").write_text(
+            '{"schema_version":"a_share.daily_clean_input_snapshot.v1","status":"completed"}'
+        )
+    (retired / "retirement_receipt.json").write_text(
+        '{"schema_version":"a_share.daily_clean_input_retirement.v1","status":"completed"}'
+    )
+    items = plan_data_governance(
+        tmp_path, [RetainNewestRule("inputs", "daily_clean_inputs", "a_share_all_*", 1)]
+    )
+    by_path = {item.path: item for item in items}
+    assert by_path[live].action == "keep"
+    assert "retired" in by_path[retired].reason
+
+
+def test_uncompleted_clean_attempt_is_reviewed_without_consuming_retention_slot(
+    tmp_path: Path,
+) -> None:
+    parent = tmp_path / "daily"
+    live = parent / "a_share_all_20150101_20261019_daily_clean_st.success"
+    failed = parent / "a_share_all_20150101_20261020_daily_clean_st.failed"
+    for path in (live, failed):
+        path.mkdir(parents=True)
+    (live / "manifest.yml").write_text("status: completed\n")
+    items = plan_data_governance(
+        tmp_path, [RetainNewestRule("clean", "daily", "a_share_all_*_daily_clean*", 1)]
+    )
+    by_path = {item.path: item for item in items}
+    assert by_path[live].action == "keep"
+    assert by_path[failed].action == "review"
+
+
+def test_invalid_retirement_receipt_is_reviewed(tmp_path: Path) -> None:
+    path = tmp_path / "versions" / "snapshot_20261020"
+    path.mkdir(parents=True)
+    (path / "retirement_receipt.json").write_text("not-json")
+    [item] = plan_data_governance(
+        tmp_path, [RetainNewestRule("versions", "versions", "snapshot_*", 0)]
+    )
+    assert item.action == "review"
+
+
 def test_explicit_candidate_is_kept_when_sibling_symlink_targets_it(tmp_path: Path) -> None:
     version = tmp_path / "minute_v3"
     version.mkdir()

@@ -29,6 +29,7 @@ def test_retention_units_are_renderable_and_use_canonical_paths() -> None:
     assert "@MARKETDATA_CLI@" in service
     assert "research-workspace" not in service
     assert "Persistent=true" in timer
+    assert "market_data_platform_retention.sh plan" in service
 
 
 def test_systemd_renderer_can_render_retention_units(tmp_path: Path) -> None:
@@ -71,7 +72,9 @@ def test_retention_runner_scans_real_versioned_directories(tmp_path: Path) -> No
         daily / "a_share_all_20150101_20260908_daily_clean",
         daily / "a_share_all_20150101_20260907_daily_clean",
         daily / "zz-unrelated-directory",
+        daily / "a_share_all_20080101_20261020_daily_clean_st.abc123",
         inputs / "a_share_all_20150101_20260908",
+        inputs / "a_share_all_20080101_20261020.20261020T230319.123",
         inputs / "zz-unrelated-directory",
     ):
         path.mkdir(parents=True)
@@ -111,6 +114,8 @@ def test_retention_runner_scans_real_versioned_directories(tmp_path: Path) -> No
 
     assert result.returncode == 0, result.stderr
     assert "would-delete" not in result.stdout
+    assert "a_share_all_20080101_20261020_daily_clean_st.abc123" in result.stdout
+    assert "a_share_all_20080101_20261020.20261020T230319.123" in result.stdout
     assert (root / "metadata" / "retention" / "governance-latest.tsv").is_symlink()
 
 

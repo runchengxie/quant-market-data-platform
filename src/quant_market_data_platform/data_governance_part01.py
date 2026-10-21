@@ -376,10 +376,16 @@ def _plan_retain_newest(
     candidates = _direct_child_directories(root, parent, rule.pattern)
     protected_targets = _sibling_symlink_targets(parent)
     items: list[PlanItem] = []
-    for index, path in enumerate(candidates):
+    from .daily_retention_state import daily_attempt_state
+
+    index = 0
+    for path in candidates:
+        attempt_state = daily_attempt_state(path)
         if _is_protected_path(path, protected_paths):
             action: PlanAction = "keep"
             reason = "protected because it overlaps a declared current or kept path"
+        elif attempt_state is not None:
+            action, reason = attempt_state
         elif index < rule.retain_newest:
             action = "keep"
             reason = f"within newest {rule.retain_newest} matching versions"
@@ -397,6 +403,8 @@ def _plan_retain_newest(
                 reason=reason,
             )
         )
+        if attempt_state is None:
+            index += 1
     return items
 
 

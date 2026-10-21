@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -228,3 +229,103 @@ def test_completed_raw_reused_without_provider_context_on_unsealed_retry(tmp_pat
     with pytest.raises(FieldValidationError, match="ambiguous same-day revision"):
         archive.archive_vintage(args)
     assert not (root / "SEALED.json").exists()
+
+
+def test_archive_failure_receipt_preserves_phase_key_and_completed_raw(tmp_path, monkeypatch):
+    from quant_market_data_platform.providers.tushare_a_share_fundamentals_support import (
+        FieldValidationError,
+    )
+
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    key = "('603093.SH', '20260331', '1', '20260421', '2026-10-20T18:45:10+00:00')"
+
+    def raw(_args, _root, dataset):
+        return _child(root, f"raw/{dataset}")
+
+    def normalize(*_):
+        state = json.loads((root / "archive_state.json").read_text())
+        assert state["status"] == "running"
+        assert state["phase"] == "normalized"
+        raise FieldValidationError(
+            f"Normalized fundamentals contain an ambiguous same-day revision for {key}."
+        )
+
+    monkeypatch.setattr(archive, "_archive_raw_dataset", raw)
+    monkeypatch.setattr(archive, "_archive_normalized_dataset", normalize)
+    with pytest.raises(FieldValidationError):
+        archive.archive_vintage(args)
+    state = json.loads((root / "archive_state.json").read_text())
+    assert state["status"] == "failed"
+    assert state["phase"] == "normalized"
+    assert state["dataset"] == "income"
+    assert state["error"] == {"type": "FieldValidationError", "conflicting_key": key}
+    assert len(state["completed_children"]) == len(args.datasets)
+    assert all(child["manifest_sha256"] for child in state["completed_children"])
+    assert not (root / "manifest.yml").exists()
+    assert not list(root.glob(".archive_state.*"))
+
+
+def test_archive_failure_receipt_excludes_arbitrary_exception_text(tmp_path, monkeypatch):
+    args = _archive_args(tmp_path)
+
+    def raw(*_, **__):
+        raise RuntimeError("request token=private-example")
+
+    monkeypatch.setattr(archive, "_archive_raw_dataset", raw)
+    with pytest.raises(RuntimeError, match="private-example"):
+        archive.archive_vintage(args)
+    text = (archive.snapshot_root(tmp_path, args.snapshot_date) / "archive_state.json").read_text()
+    state = json.loads(text)
+    assert state["error"] == {"type": "RuntimeError"}
+    assert state["phase"] == "raw"
+    assert "private-example" not in text
+
+
+def test_archive_sealed_success_does_not_rewrite_state(tmp_path, monkeypatch):
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    root.mkdir(parents=True)
+    (root / "SEALED.json").write_text("fixture")
+    state = root / "archive_state.json"
+    state.write_text("original diagnostic receipt")
+    monkeypatch.setattr(archive, "verify_sealed_snapshot", lambda _: {"status": "completed"})
+    assert archive.archive_vintage(args) == {"status": "completed"}
+    assert state.read_text() == "original diagnostic receipt"
+
+
+def test_archive_state_replace_failure_preserves_previous_receipt(tmp_path, monkeypatch):
+    state = tmp_path / "archive_state.json"
+    state.write_text("previous complete JSON")
+
+    def fail_replace(*_):
+        raise OSError("fixture replace failure")
+
+    monkeypatch.setattr(Path, "replace", fail_replace)
+    with pytest.raises(OSError, match="fixture replace failure"):
+        archive._write_archive_state(tmp_path, {"status": "running"})
+    assert state.read_text() == "previous complete JSON"
+    assert not list(tmp_path.glob(".archive_state.*"))
+
+
+def test_archive_retry_replaces_failed_state_with_completed_receipt(tmp_path, monkeypatch):
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    root.mkdir(parents=True)
+    (root / "archive_state.json").write_text('{"status":"failed","error":{"type":"Old"}}')
+    monkeypatch.setattr(
+        archive, "_archive_raw_dataset", lambda _a, _r, name: _child(root, f"raw/{name}")
+    )
+    monkeypatch.setattr(
+        archive,
+        "_archive_normalized_dataset",
+        lambda _a, _r, name, _raw: _child(root, f"normalized/{name}"),
+    )
+    monkeypatch.setattr(archive, "_archive_pit", lambda *_: _child(root, "pit"))
+    assert archive.archive_vintage(args)["status"] == "completed"
+    state = json.loads((root / "archive_state.json").read_text())
+    assert state["status"] == state["phase"] == "completed"
+    assert state["dataset"] is None
+    assert "error" not in state
+    assert len(state["completed_children"]) == 2 * len(args.datasets) + 1
+    archive.verify_sealed_snapshot(root)

@@ -19,7 +19,8 @@ uv run python scripts/operations/render_tushare_minute_campaign_units.py \
   --marketdata-cli "$MDP_DIR/.venv/bin/marketdata" \
   --output-dir "$HOME/.config/systemd/user"
 systemctl --user daemon-reload
- # apply 已禁用：保留安装模板供后续审查，不启用 timer。
+ # 核对渲染路径后，可启用只生成评审计划的 timer；不会自动删除数据。
+systemctl --user enable --now market-data-platform-retention.timer
 ```
 
 为期四年的替换任务已经完成。夜间、加速、尾部和硬停止 timer 仍作为历史模板保留，
