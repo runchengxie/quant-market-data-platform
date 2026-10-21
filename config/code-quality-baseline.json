@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 518,
-    "python_lines": 121938,
+    "python_files": 519,
+    "python_lines": 122406,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,8 +18,8 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "5da37968f6fa19f82b2f6f03d5a5e2086f6f06ae",
-    "reason": "Reviewed lifecycle implementation adds isolated retirement/state classification modules, a CLI wrapper, and regression tests. File/line growth is the new feature budget, not additional long functions, oversized files, or ignored complexity.",
-    "exit_condition": "Reduce the feature budget if these workflows are removed or consolidated while preserving their safety tests."
+    "source_revision": "2d3781f8eb740ba2e9060ce226f5dfedea6b2bf3",
+    "reason": "Delayed margin recovery adds one 187-line owner helper, 20 lines in the existing evening entry point, and 261 regression-test lines. The measured budget grows by one file and 468 lines; complexity, long-function, oversized-file and exclusion limits remain unchanged.",
+    "exit_condition": "Remove this exact size allowance when delayed recovery is retired or consolidated, preserving repeated-run, calendar, stale-data, invalid-partition and missing-only tests."
   }
 }
