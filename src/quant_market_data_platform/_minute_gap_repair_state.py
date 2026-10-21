@@ -57,6 +57,15 @@ def existing_candidate(options: Any, queue: dict[str, Any], state: dict[str, Any
             continue
         if _sha256_file(source) != sha:
             continue
+        from quant_market_data_platform.minute_gap_repair import (
+            _QueueRowInvalid,
+            _require_native_provider_universe,
+        )
+
+        try:
+            _require_native_provider_universe(_read_json(source), date)
+        except _QueueRowInvalid:
+            continue
         candidate = Path(entry["candidate"]).resolve()
         relative = candidate.relative_to(
             (options.artifacts_root / "staging/tushare_minute_backfill_reverse/runs").resolve()

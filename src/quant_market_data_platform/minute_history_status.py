@@ -5,12 +5,12 @@ from __future__ import annotations
 import fcntl
 import json
 import shutil
-import sqlite3
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from quant_market_data_platform._minute_history_activity import observe_rows
 from quant_market_data_platform._minute_history_inventory import inventory, read_json
 
 _MIN_FREE = 10 * 1024**3
@@ -40,24 +40,6 @@ def _writer_active(root: Path, warnings: list[str]) -> bool:
     except OSError as exc:
         warnings.append(f"writer lock: {exc}")
     return False
-
-
-def _returned_rows(root: Path, day: str, warnings: list[str]) -> int:
-    path = root / "metadata/tushare/minute_quota/minute_quota.sqlite3"
-    if not path.exists():
-        return 0
-    try:
-        with sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True) as conn:
-            row = conn.execute(
-                "SELECT COALESCE(SUM(committed_rows),0) FROM request_attempts "
-                "WHERE quota_date=? AND consumer IN ('reverse_backfill','minute_gap_repair') "
-                "AND state='committed'",
-                (day,),
-            ).fetchone()
-            return int(row[0])
-    except (sqlite3.Error, ValueError) as exc:
-        warnings.append(f"quota ledger: {exc}")
-        return 0
 
 
 def _quota(preflight: dict[str, Any]) -> dict[str, Any]:
@@ -99,7 +81,9 @@ def _state(evidence: dict, now: datetime, stall_seconds: int) -> tuple[str, str]
     if evidence["marker_exists"] or evidence["blocked_by_audit"]:
         return "audit_blocked", f"persistent semantic audit block: {marker.get('acceptance', '')}"
     if (
-        not evidence["provenance"]["fresh"]
+        not (
+            evidence["provenance"]["fresh"] or evidence["active"] and evidence["activity"]["fresh"]
+        )
         or quota.get("quota_date") != evidence["day"]
         or evidence["warnings"]
     ):
@@ -213,7 +197,8 @@ def history_status(  # noqa: PLR0913 - public monitoring interface
         warnings.append("invalid blocked_by_audit flag")
     day = now.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d")
     progress = inventory(root, warnings, runtime_root)
-    progress["returned_rows_today"] = _returned_rows(root, day, warnings)
+    activity = observe_rows(root, day, now, warnings)
+    progress["returned_rows_today"] = activity["returned_rows_today"]
     last, changed = _progress_time(progress, previous, day, now, warnings)
     marker_path = runtime_root / "semantic-audit-blocked.json"
     marker = read_json(marker_path, warnings)
@@ -226,10 +211,12 @@ def history_status(  # noqa: PLR0913 - public monitoring interface
     exit_record = read_json(runtime_root / "last-main-exit.json", warnings)
     active = _writer_active(root, warnings)
     since, runnable_samples = _runnable(previous, active, changed, now)
-    free = preflight.get("free_disk_bytes", shutil.disk_usage(root).free)
+    disk_free = shutil.disk_usage(root).free
+    free = preflight.get("free_disk_bytes", disk_free)
     if type(free) is not int or free < 0:
         warnings.append("invalid free_disk_bytes")
         free = 0
+    free = min(free, disk_free)
     evidence = {
         "marker": marker,
         "blocked_by_audit": (
@@ -240,6 +227,7 @@ def history_status(  # noqa: PLR0913 - public monitoring interface
         "marker_exists": quarantine["blocked"],
         "quota": quota,
         "provenance": provenance,
+        "activity": activity,
         "day": day,
         "warnings": warnings,
         "free": free,
@@ -262,6 +250,7 @@ def history_status(  # noqa: PLR0913 - public monitoring interface
         "runnable_since": since if state in {"running", "stalled"} else None,
         "runnable_samples": runnable_samples if state in {"running", "stalled"} else 0,
         "provenance": provenance,
+        "activity_provenance": activity,
         "writer_active": active,
         "free_disk_bytes": free,
         "evidence_warnings": warnings,

@@ -6,11 +6,11 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 512,
-    "python_lines": 120547,
+    "python_files": 514,
+    "python_lines": 120861,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
-    "functions_over_250": 1,
+    "functions_over_250": 0,
     "functions_over_500": 0,
     "c901_file_ignores": 0,
     "files_over_800": 13,

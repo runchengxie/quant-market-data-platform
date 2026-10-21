@@ -374,3 +374,57 @@ def test_unrepresentable_raw_response_still_blocks_and_retains_json(tmp_path, mo
     result = run_gap_repair(GapRepairOptions(tmp_path, tmp_path / "runtime", min_free_bytes=0))
     assert result["status"] == "audit_blocked"
     assert list((tmp_path / "staging/minute_gap_repair").rglob("raw.json"))
+
+
+@pytest.mark.parametrize("persisted_candidate", [False, True])
+def test_outdated_provider_universe_is_preserved_without_retrying_successor_code(
+    tmp_path, monkeypatch, persisted_candidate
+):
+    import json
+
+    from quant_market_data_platform import minute_gap_repair as worker
+    from quant_market_data_platform._reverse_backfill_missing import missing_queue
+    from quant_market_data_platform.providers._a_share_mins_constants import (
+        HISTORICAL_CODE_TRANSITION_UNIVERSE_RULE,
+    )
+    from quant_market_data_platform.providers._a_share_mins_partition import _universe_hash
+
+    source = _queued(tmp_path, monkeypatch)
+    payload = json.loads(source.read_text())
+    payload["universe_rule"] = HISTORICAL_CODE_TRANSITION_UNIVERSE_RULE
+    payload["universe_hash"] = _universe_hash(
+        set(payload["expected_symbols"]), rule=payload["universe_rule"]
+    )
+    source.write_text(json.dumps(payload))
+    missing_queue(
+        tmp_path / "staging/tushare_minute_backfill_reverse",
+        set(),
+        report_path=tmp_path / "metadata/minute_backfill/reverse_scheduler/deferred_missing.json",
+    )
+    candidate_files = {}
+    if persisted_candidate:
+        from quant_market_data_platform import _minute_gap_repair_artifacts as artifacts
+
+        with monkeypatch.context() as old_worker:
+            old_worker.setattr(worker, "_require_native_provider_universe", lambda *args: None)
+            old_worker.setattr(worker, "_ledger", lambda _: Ledger())
+            old_worker.setattr(artifacts, "_fetch", lambda *args: _bars())
+            previous = run_gap_repair(
+                GapRepairOptions(tmp_path, tmp_path / "runtime", min_free_bytes=0)
+            )
+        assert previous["status"] == "candidate_ready"
+        candidate_files = {
+            path: path.read_bytes()
+            for path in Path(previous["candidate"]).iterdir()
+            if path.is_file()
+        }
+    original = source.read_bytes()
+    monkeypatch.setattr(worker, "_ledger", lambda _: pytest.fail("must not retry an invalid code"))
+    result = run_gap_repair(GapRepairOptions(tmp_path, tmp_path / "runtime", min_free_bytes=0))
+    assert result["status"] == "no_eligible_queue"
+    assert result["skipped"] == [
+        {"date": "20191213", "reason": "historical_code_transition_required"}
+    ]
+    assert source.read_bytes() == original
+    assert not (tmp_path / "metadata/tushare").exists()
+    assert all(path.read_bytes() == content for path, content in candidate_files.items())

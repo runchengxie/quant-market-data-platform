@@ -867,7 +867,7 @@ def test_historical_daily_intersection_can_retain_provider_only_symbols(
 ) -> None:
     class HistoricalProviderOnlyPro:
         def daily(self, *, trade_date: str, fields: str, limit: int, offset: int) -> pd.DataFrame:
-            symbols = ["000001.SZ", "000022.SZ", "000044.SZ"] if offset == 0 else []
+            symbols = ["000001.SZ", "000002.SZ", "000044.SZ"] if offset == 0 else []
             return pd.DataFrame({"ts_code": symbols, "trade_date": [trade_date] * len(symbols)})
 
         daily_basic = daily
@@ -898,7 +898,7 @@ def test_historical_daily_intersection_can_retain_provider_only_symbols(
 
     assert _sidecar(tmp_path)["expected_symbols"] == [
         "000001.SZ",
-        "000022.SZ",
+        "000002.SZ",
         "000044.SZ",
     ]
 
@@ -987,6 +987,12 @@ def test_historical_code_transition_augments_live_master_and_prefers_date_code()
         ("20220715", "300114.SZ", "302132.SZ", "300114.SZ"),
         ("20191213", "000043.SZ", "001914.SZ", "000043.SZ"),
         ("20191216", "000043.SZ", "001914.SZ", "001914.SZ"),
+        ("20170428", "000022.SZ", "001872.SZ", "000022.SZ"),
+        ("20181220", "000022.SZ", "001872.SZ", "000022.SZ"),
+        ("20181226", "000022.SZ", "001872.SZ", "001872.SZ"),
+        ("20170428", "601313.SH", "601360.SH", "601313.SH"),
+        ("20180214", "601313.SH", "601360.SH", "601313.SH"),
+        ("20180228", "601313.SH", "601360.SH", "601360.SH"),
     ],
 )
 def test_historical_code_transition_mirror_is_promotable_full_universe(
@@ -1930,3 +1936,12 @@ def test_cm_property_code_transition_has_one_native_code(trade_date, expected):
         {"000043.SZ", "001914.SZ", "000001.SZ"}, trade_date=trade_date
     )
     assert symbols == {expected, "000001.SZ"}
+
+
+@pytest.mark.parametrize(
+    "historical,successor,date",
+    [("000022.SZ", "001872.SZ", "20181224"), ("601313.SH", "601360.SH", "20180223")],
+)
+def test_port_and_360_code_change_suspensions_fail_closed(historical, successor, date):
+    with pytest.raises(RuntimeError, match="code-transition gap"):
+        _universe._apply_historical_code_transitions({historical, successor}, trade_date=date)
