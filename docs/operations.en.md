@@ -166,3 +166,12 @@ manifest, PIT, or vintage root seal, so the vintage remains incomplete.
 The shared ratchet `python_lines` baseline increases by exactly 64 lines for dataset selection
 and failed-vintage regression coverage. Complexity and all other limits stay unchanged; reclaim
 the corresponding line budget when the diagnostic entry point is consolidated or fixtures shrink.
+
+### Fundamentals archive order
+
+The periodic archive saves all selected raw datasets before strict normalization, PIT, and sealing.
+See [a-share-fundamentals.en.md](a-share-fundamentals.en.md). Normalization failure retains the
+other completed raw inputs without a root seal. The shared ratchet `python_lines` increases
+by exactly 137 lines for the two-phase orchestration and failure/reentry coverage. Complexity
+limits stay unchanged. Reclaim the corresponding line budget when orchestration entry points
+are consolidated or regression fixtures shrink.

@@ -148,6 +148,8 @@ From August 2026, formal revision-safe evidence must come from immutable periodi
 
 An ad-hoc long-history study must use a separate experiment artifacts root and a report-period window extended to 2008; it must not rewrite an already sealed snapshot for the same date. Fields such as `netprofit_yoy`, `or_yoy`, and `q_sales_yoy` may be used in field mappings. Such an archive is revision-safe only from its collection date onward; earlier report periods remain reconstructed PIT.
 
+The archive completes all selected raw downloads before normalizing and validating each dataset, then builds PIT and seals the vintage. A normalization conflict still fails strictly, leaving the other raw inputs retained and no root `SEALED.json`. Resuming reuses completed raw snapshots after matching their query identity and verifying integrity, without repeating provider requests.
+
 An interrupted same-day archive can be resumed. After `SEALED.json` exists, re-running performs full-chain verification only. The default systemd timer archives daily at 02:30 Asia/Shanghai, building a daily observation ladder. This cannot prove intraday revisions that appear and disappear between snapshots. Historical periods before the first observation remain `reconstructed_pit`. Monitor provider quota and storage after deployment; do not gain speed by weakening validation, overwriting existing vintages, or automatically publishing.
 
 ## Announcement-event research asset

@@ -101,3 +101,130 @@ def test_seal_verification_detects_child_content_tampering(tmp_path: Path) -> No
     (raw / "data" / "part.bin").write_bytes(b"tampered")
     with pytest.raises(PitProvenanceError, match="content integrity"):
         archive.verify_sealed_snapshot(root)
+
+
+def _archive_args(tmp_path):
+    return archive._prepare_args(
+        archive.build_parser().parse_args(
+            [
+                "--artifacts-root",
+                str(tmp_path),
+                "--snapshot-date",
+                "20261021",
+                "--api-url",
+                "https://api.tushare.pro",
+            ]
+        )
+    )
+
+
+def test_normalization_conflict_preserves_all_selected_raw_before_failure(tmp_path, monkeypatch):
+    from quant_market_data_platform.providers.tushare_a_share_fundamentals_support import (
+        FieldValidationError,
+    )
+
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    events = []
+
+    def download(options):
+        assert options.start_date == args.start_date
+        assert options.end_date == args.end_date
+        assert options.request_interval_seconds == args.request_interval_seconds
+        assert options.retry_attempts == args.retry_attempts
+        assert options.page_size == args.page_size
+        assert options.max_pages == args.max_pages
+        assert options.run_id == f"{options.dataset}-{args.snapshot_date}"
+        events.append(("download", options.dataset))
+        _child(root, f"raw/{options.dataset}")
+        return {"status": "completed"}
+
+    def normalize(**kwargs):
+        events.append(("normalize", kwargs["dataset"]))
+        raise FieldValidationError("ambiguous same-day revision")
+
+    monkeypatch.setattr(archive, "download_raw_fundamentals", download)
+    monkeypatch.setattr(archive, "build_normalized_fundamentals", normalize)
+    monkeypatch.setattr(archive, "_archive_pit", lambda *_: pytest.fail("PIT must not run"))
+    monkeypatch.setattr(archive, "_seal_snapshot", lambda *_: pytest.fail("must not seal"))
+    with pytest.raises(FieldValidationError, match="ambiguous same-day revision"):
+        archive.archive_vintage(args)
+    assert events == [("download", name) for name in args.datasets] + [("normalize", "income")]
+    for name in args.datasets:
+        assert (root / "raw" / name / "manifest.yml").is_file()
+    assert not (root / "SEALED.json").exists()
+    assert not (root / "pit").exists()
+
+
+@pytest.mark.parametrize("raises", [False, True])
+def test_raw_failure_prevents_normalization_and_seal(tmp_path, monkeypatch, raises):
+    args = _archive_args(tmp_path)
+    calls = []
+
+    def download(options):
+        calls.append(options.dataset)
+        if raises:
+            raise RuntimeError("provider unavailable")
+        return {"status": "partial"}
+
+    monkeypatch.setattr(archive, "download_raw_fundamentals", download)
+    monkeypatch.setattr(
+        archive, "build_normalized_fundamentals", lambda **_: pytest.fail("must not normalize")
+    )
+    monkeypatch.setattr(archive, "_archive_pit", lambda *_: pytest.fail("PIT must not run"))
+    monkeypatch.setattr(archive, "_seal_snapshot", lambda *_: pytest.fail("must not seal"))
+    with pytest.raises(RuntimeError, match="provider unavailable|snapshot is incomplete"):
+        archive.archive_vintage(args)
+    assert calls == ["income"]
+    assert not (archive.snapshot_root(tmp_path, args.snapshot_date) / "SEALED.json").exists()
+
+
+def test_sealed_archive_reentry_verifies_without_provider_requests(tmp_path, monkeypatch):
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    raw = [_child(root, f"raw/{name}") for name in args.datasets]
+    normalized = [_child(root, f"normalized/{name}") for name in args.datasets]
+    pit = _child(root, "pit")
+    archive._seal_snapshot(args, root, raw, normalized, pit)
+    monkeypatch.setattr(
+        archive, "download_raw_fundamentals", lambda *_: pytest.fail("must not request")
+    )
+    assert archive.archive_vintage(args)["status"] == "completed"
+    (raw[0] / "data" / "part.bin").write_bytes(b"tampered")
+    with pytest.raises(PitProvenanceError, match="content integrity"):
+        archive.archive_vintage(args)
+
+
+def test_completed_raw_reused_without_provider_context_on_unsealed_retry(tmp_path, monkeypatch):
+    from quant_market_data_platform.providers import tushare_a_share_fundamentals_part02 as raw_api
+    from quant_market_data_platform.providers.tushare_a_share_fundamentals_support import (
+        FieldValidationError,
+        asset_manifest_payload,
+    )
+
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    for name in args.datasets:
+        raw = _child(root, f"raw/{name}")
+        manifest = asset_manifest_payload(raw)
+        manifest.update(
+            dataset=name,
+            query={
+                "start_date": args.start_date,
+                "end_date": args.end_date,
+                "requested_report_types": ["provider_default"],
+            },
+            entitlement_mode="vip_batch",
+            source_run_id=f"{name}-{args.snapshot_date}",
+        )
+        write_manifest(raw / "manifest.yml", manifest)
+        seal_manifest(raw / "manifest.yml")
+    monkeypatch.setattr(raw_api, "_download_context", lambda *_: pytest.fail("must reuse raw"))
+
+    def conflict(**_):
+        raise FieldValidationError("ambiguous same-day revision")
+
+    monkeypatch.setattr(archive, "build_normalized_fundamentals", conflict)
+    with pytest.raises(FieldValidationError, match="ambiguous same-day revision"):
+        archive.archive_vintage(args)
+    assert not (root / "SEALED.json").exists()
