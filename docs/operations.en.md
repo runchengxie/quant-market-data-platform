@@ -150,10 +150,19 @@ The size baseline admits the quarantine evidence helpers and failure-path tests.
 
 ### Statement template diagnostics
 
-`python scripts/operations/audit_fundamentals_templates.py --vintage <sealed-vintage> --output <new-directory>`
+`python scripts/operations/audit_fundamentals_templates.py --vintage <vintage> --output <new-directory> [--dataset income]`
 replays normalization filters from complete raw v2 inputs and quarantines observation keys
 that remain ambiguous after provider revision selection. Diagnostic tables, conflicting rows,
 and a hash receipt go to a new external data directory. Original retrieval timestamps remain
 intact and actual generation time is recorded separately. The tool makes no API requests,
 publishes no normalized asset, and preserves sealed inputs and shared aliases. The strict
 builder continues to reject conflicting keys. Diagnostic quarantine grants no production exception.
+
+Repeat `--dataset` to select `income`, `balancesheet`, or `cashflow`; the default checks all three.
+For a failed vintage, select only datasets with complete raw v2 inputs. A normalized manifest
+is optional; its missing prior hash is recorded as `null`. Outputs contain no standard asset
+manifest, PIT, or vintage root seal, so the vintage remains incomplete.
+
+The shared ratchet `python_lines` baseline increases by exactly 64 lines for dataset selection
+and failed-vintage regression coverage. Complexity and all other limits stay unchanged; reclaim
+the corresponding line budget when the diagnostic entry point is consolidated or fixtures shrink.

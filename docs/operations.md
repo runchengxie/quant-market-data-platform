@@ -243,9 +243,17 @@ python scripts/operations/tushare_minute_history.py quarantine \
 
 ### 财报模板筛选诊断
 
-`python scripts/operations/audit_fundamentals_templates.py --vintage <sealed-vintage> --output <new-directory>`
+`python scripts/operations/audit_fundamentals_templates.py --vintage <vintage> --output <new-directory> [--dataset income]`
 从完整 raw v2 输入重放标准化筛选，隔离修订筛选后仍有歧义的观测键。
 诊断表、冲突原行和哈希回执保存在新的外部数据目录。
 原始抓取时间保持不变，实际生成时间单独记录。
 该工具不发起API请求，不发布标准化资产，也不修改封存输入或共享别名。
 严格构建器仍拒绝同键冲突，诊断隔离不构成生产豁免。
+
+`--dataset` 可重复指定 `income`、`balancesheet`、`cashflow`。省略时检查全部三张报表。
+失败 vintage 可仅选择已有完整 raw v2 的数据集，不要求存在 normalized manifest。
+缺失的旧 normalized 哈希在回执中为 `null`。输出不生成标准资产 manifest、PIT 或 vintage 根 seal，
+vintage 的不完整状态保持不变。
+
+本次 shared ratchet 的 `python_lines` 基线精确增加 64 行，用于数据集选择和失败 vintage 回归测试。
+复杂度及其他阈值保持原值。当诊断入口合并或测试夹具简化时收回相应行数预算。

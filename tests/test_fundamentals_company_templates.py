@@ -103,3 +103,60 @@ def test_diagnostic_quarantines_all_conflicts_and_preserves_observation(tmp_path
         assert len(pd.read_parquet(output / f"{name}_quarantined_rows.parquet")) == 2
     with pytest.raises(ValueError, match="new directory"):
         audit.run(tmp_path / "source", output)
+
+
+def test_diagnostic_accepts_failed_vintage_dataset_subset(tmp_path, monkeypatch):
+    import importlib.util
+    from pathlib import Path
+
+    pd = pytest.importorskip("pandas")
+    script = (
+        Path(__file__).resolve().parents[1] / "scripts/operations/audit_fundamentals_templates.py"
+    )
+    spec = importlib.util.spec_from_file_location("failed_template_audit", script)
+    assert spec is not None and spec.loader is not None
+    audit = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(audit)
+    vintage = tmp_path / "vintage"
+    raw = vintage / "raw" / "income"
+    raw.mkdir(parents=True)
+    (raw / "manifest.yml").write_text("fixture: raw\n")
+    observed = "2026-10-21T01:02:03+00:00"
+    base = {
+        "ts_code": "603093.SH",
+        "ann_date": "20260421",
+        "f_ann_date": "20260421",
+        "end_date": "20260331",
+        "report_type": "1",
+        "update_flag": "1",
+        "_source_retrieved_at": observed,
+    }
+    frame = pd.DataFrame(
+        [base | {"comp_type": "2", "value": 100}, base | {"comp_type": "7", "value": 101}]
+    )
+    monkeypatch.setattr(audit, "asset_manifest_payload", lambda _: {})
+    monkeypatch.setattr(
+        audit, "_revision_safe_raw_inputs", lambda *_: ({}, {"observed": observed}, [frame.copy()])
+    )
+    output = tmp_path / "diagnostic"
+    receipt = audit.run(vintage, output, datasets=("income",))
+    assert set(receipt["datasets"]) == {"income"}
+    details = receipt["datasets"]["income"]
+    assert details["old_normalized_manifest_sha256"] is None
+    assert details["raw_manifest_sha256"] == audit.file_sha256(raw / "manifest.yml")
+    assert details["source_observation"] == {"observed": observed}
+    pd.testing.assert_frame_equal(
+        pd.read_parquet(output / "income_quarantined_rows.parquet")[frame.columns], frame
+    )
+    assert details["quarantined_rows"] == 2
+    assert receipt["new_api_requests"] == 0
+    assert receipt["published_asset"] is False
+    assert receipt["historical_pit_certified"] is False
+    assert not list(tmp_path.rglob("SEALED.json"))
+    assert not (output / "manifest.yml").exists()
+    assert not (vintage / "pit").exists()
+    with pytest.raises(ValueError, match="new directory"):
+        audit.run(vintage, output, datasets=("income",))
+    with pytest.raises(ValueError, match="dataset"):
+        audit.run(vintage, tmp_path / "invalid", datasets=("unknown",))
+    assert not (tmp_path / "invalid").exists()
