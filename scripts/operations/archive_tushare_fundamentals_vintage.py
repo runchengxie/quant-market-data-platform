@@ -123,9 +123,8 @@ def _reuse_derived_snapshot(path: Path, *, expected_source_hashes: set[str]) -> 
     return manifest
 
 
-def _archive_dataset(args: argparse.Namespace, root: Path, dataset: str) -> tuple[Path, Path]:
+def _archive_raw_dataset(args: argparse.Namespace, root: Path, dataset: str) -> Path:
     raw = root / "raw" / dataset
-    normalized = root / "normalized" / dataset
     raw_manifest = download_raw_fundamentals(
         RawFundamentalsDownloadOptions(
             dataset=dataset,
@@ -148,6 +147,13 @@ def _archive_dataset(args: argparse.Namespace, root: Path, dataset: str) -> tupl
     )
     if raw_manifest.get("status") != "completed":
         raise RuntimeError(f"Raw {dataset} snapshot is incomplete: {raw}")
+    return raw
+
+
+def _archive_normalized_dataset(
+    args: argparse.Namespace, root: Path, dataset: str, raw: Path
+) -> Path:
+    normalized = root / "normalized" / dataset
     raw_manifest_hash = file_sha256(raw / "manifest.yml")
     normalized_manifest = _reuse_derived_snapshot(
         normalized,
@@ -166,7 +172,12 @@ def _archive_dataset(args: argparse.Namespace, root: Path, dataset: str) -> tupl
         ),
         label=f"Normalized {dataset}",
     )
-    return raw, normalized
+    return normalized
+
+
+def _archive_dataset(args: argparse.Namespace, root: Path, dataset: str) -> tuple[Path, Path]:
+    raw = _archive_raw_dataset(args, root, dataset)
+    return raw, _archive_normalized_dataset(args, root, dataset, raw)
 
 
 def _archive_pit(args: argparse.Namespace, root: Path, normalized: Sequence[Path]) -> Path:
@@ -286,12 +297,11 @@ def archive_vintage(args: argparse.Namespace) -> dict[str, object]:
     if (root / "SEALED.json").is_file():
         return verify_sealed_snapshot(root)
     root.mkdir(parents=True, exist_ok=True)
-    raw_dirs = []
-    normalized_dirs = []
-    for dataset in args.datasets:
-        raw, normalized = _archive_dataset(args, root, dataset)
-        raw_dirs.append(raw)
-        normalized_dirs.append(normalized)
+    raw_dirs = [_archive_raw_dataset(args, root, dataset) for dataset in args.datasets]
+    normalized_dirs = [
+        _archive_normalized_dataset(args, root, dataset, raw)
+        for dataset, raw in zip(args.datasets, raw_dirs, strict=True)
+    ]
     pit = _archive_pit(args, root, normalized_dirs)
     manifest = _seal_snapshot(args, root, raw_dirs, normalized_dirs, pit)
     verify_sealed_snapshot(root)

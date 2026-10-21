@@ -257,3 +257,11 @@ vintage 的不完整状态保持不变。
 
 本次 shared ratchet 的 `python_lines` 基线精确增加 64 行，用于数据集选择和失败 vintage 回归测试。
 复杂度及其他阈值保持原值。当诊断入口合并或测试夹具简化时收回相应行数预算。
+
+### 财报归档顺序
+
+定期归档先保存全部所选 raw，再执行严格归一化、PIT 和封存，详见
+[a-share-fundamentals.md](a-share-fundamentals.md)。归一化失败保留其他已完成 raw，
+不会生成根 seal。此次 shared ratchet 的 `python_lines` 精确增加 137 行，
+覆盖两阶段编排和失败、重入回归。复杂度阈值保持原值。
+当编排入口整合或回归夹具简化时，收回相应行数预算。

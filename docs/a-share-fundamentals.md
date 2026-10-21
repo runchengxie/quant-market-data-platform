@@ -214,6 +214,9 @@ manifest hash，并为自己的 parquet 建立 SHA-256 inventory。完成快照�
 
 下列入口默认通过 `https://proxy-a.example.com`，使用 `TUSHARE_TOKEN_2`，每个快照覆盖 2015 年起
 的 `income`、`balancesheet`、`cashflow` 和 `fina_indicator`，构建 normalized 与核心 PIT 后封存。
+归档先完成全部所选数据集的 raw 下载，再逐类归一化和校验，最后构建 PIT 并封存。
+归一化冲突继续严格失败，其他 raw 已留存，根目录不生成 `SEALED.json`。
+同日续跑复用身份匹配且完整性校验通过的已完成 raw，不重复请求供应商。
 它只写 `fundamentals_vintages/vintage=YYYYMMDD`，不会调用 publish，也不会切换 latest：
 
 ```bash
