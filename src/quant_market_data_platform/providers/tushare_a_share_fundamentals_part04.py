@@ -172,6 +172,10 @@ def _ensure_pit_batch_columns(batch: Any, mappings: Mapping[str, str]) -> None:
     for column in ("symbol", "report_period", "disclosure_date"):
         if column not in batch.columns:
             raise FieldValidationError(f"Normalized fundamentals are missing PIT column: {column}")
+    if "comp_type" in batch.columns:
+        batch["_source_comp_type"] = batch["comp_type"].fillna("").astype(str).str.strip()
+    elif "_source_comp_type" not in batch.columns:
+        batch["_source_comp_type"] = ""
     for column in PIT_SOURCE_COLUMNS:
         if column not in batch.columns:
             batch[column] = ""
@@ -304,6 +308,7 @@ def _pit_keep_columns() -> tuple[str, ...]:
         "disclosure_date",
         "available_date",
         "_source_dataset",
+        "_source_comp_type",
         "_source_raw_asset",
         "_source_run_id",
         "_source_retrieved_at",
@@ -501,6 +506,8 @@ def _pit_manifest(context: PitBuildContext, stats: PitOutputStats) -> dict[str, 
             "freshness_semantics": "latest_component_vintage_at_or_before_as_of",
             "query_range_semantics": "event_available_date_not_freshness",
             "ambiguous_same_day_revisions": "fail_closed",
+            "statement_template_provenance": "_source_comp_type",
+            "flat_pit_template_policy": "reject_multiple_templates_per_disclosed_source_report",
         },
         "totals": {
             "rows": stats.rows,

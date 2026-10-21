@@ -289,3 +289,7 @@ as-of 读取先限制 `available_date <= as_of_date`，再按报告期选择当�
 `(symbol, report_period)` 直接对原始数据取最后一行。入口为
 `load_announcement_event_as_of_panel`，返回 panel 和包含可见事件数、最终 panel 行数、日期及
 policy 的 audit。该 panel 仍是 research-only，不能替代完整 vendor revision history。
+
+标准化先将 `comp_type` 纳入事件键，再在同一模板内选择更新标记和公告日期，因此不同模板均可归档。模板信息通过 PIT 来源列 `_source_comp_type` 保留。默认 flat PIT 不合并同一来源、报告期和可用日的多个模板，即使财务值相同或一侧为空，也拒绝构建与查询。不同抓取时间不能决定模板优先级。旧资产缺少该列时保留未知身份，兼容既有读取。模板差异需要明确的选择契约才能发布单值 PIT。
+
+`_source_comp_type` 使用规范 JSON 对象保存来源数据集与模板的对应关系，例如 `{"balancesheet":"7","income":"2"}`。事件合并保留此对应关系，不分别拼接来源集合与模板集合。兼容单来源的旧标量模板。空值仍表示未知身份。多来源且模板非空的旧标量信息无法恢复对应关系，因此拒绝消费。

@@ -594,6 +594,40 @@ def schema_columns(paths: Sequence[Path]) -> set[str]:
     return columns
 
 
+def pit_template_identity(row: Mapping[str, Any]) -> dict[str, str]:
+    """Resolve optional provenance without guessing associations after coalescing."""
+    datasets = str(row.get("_source_dataset", "")).split(";")
+    value = row.get("_source_comp_type", "")
+    value = "" if value is None else str(value).strip()
+    value = "" if value in {"nan", "<NA>"} else value
+    if value.startswith("{"):
+        identity = json.loads(value)
+        if (
+            not isinstance(identity, dict)
+            or set(identity) != set(datasets)
+            or any(not isinstance(template, str) for template in identity.values())
+        ):
+            raise FieldValidationError("Invalid dataset-to-template provenance mapping.")
+        return identity
+    if len(datasets) > 1 and value:
+        raise FieldValidationError("Coalesced template provenance lacks dataset associations.")
+    return dict.fromkeys(datasets, value)
+
+
+def merge_pit_template_identity(rows: Sequence[Mapping[str, Any]]) -> str:
+    identity = {}
+    for row in rows:
+        for dataset, template in pit_template_identity(row).items():
+            if dataset in identity and identity[dataset] != template:
+                raise FieldValidationError("PIT fundamentals contain multiple company templates.")
+            identity[dataset] = template
+    return (
+        json.dumps(identity, sort_keys=True, separators=(",", ":"))
+        if any(identity.values())
+        else ""
+    )
+
+
 def assert_unambiguous_pit_events(frame: Any, value_columns: Sequence[str]) -> None:
     keys = [
         "symbol",
@@ -604,6 +638,17 @@ def assert_unambiguous_pit_events(frame: Any, value_columns: Sequence[str]) -> N
     ]
     if frame.empty or not set(keys) <= set(frame.columns):
         return
+    if "_source_comp_type" in frame:
+        seen: dict[tuple[str, ...], str] = {}
+        columns = [*keys[:3], "_source_dataset", "_source_comp_type"]
+        for row in frame.loc[:, columns].to_dict("records"):
+            for dataset, template in pit_template_identity(row).items():
+                key = tuple(str(row[column]) for column in keys[:3]) + (dataset,)
+                if seen.setdefault(key, template) != template:
+                    raise FieldValidationError(
+                        f"PIT fundamentals contain multiple company templates for {key}. "
+                        "Explicit selection is required."
+                    )
     duplicate_rows = frame[frame.duplicated(subset=keys, keep=False)]
     for key, group in duplicate_rows.groupby(keys, dropna=False, sort=False):
         conflicts = [

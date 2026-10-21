@@ -50,6 +50,7 @@ def _state_columns(value_columns: Sequence[str]) -> list[str]:
         "available_date",
         "disclosure_date",
         "source_dataset",
+        "source_comp_type",
         "source_raw_asset",
         "source_run_id",
         "source_retrieved_at",
@@ -64,6 +65,8 @@ def _state_columns(value_columns: Sequence[str]) -> list[str]:
 
 
 def _field_record_state(latest: Mapping[str, Any], *, field_name: str) -> dict[str, Any]:
+    template = latest.get("_source_comp_type", "")
+    template = "" if pandas().isna(template) else str(template)
     revision_payload = "|".join(
         str(latest.get(column, ""))
         for column in (
@@ -80,12 +83,15 @@ def _field_record_state(latest: Mapping[str, Any], *, field_name: str) -> dict[s
             field_name,
         )
     )
+    if template:
+        revision_payload += "|comp_type=" + template
     return {
         field_name: latest[field_name],
         f"{field_name}__report_period": latest["report_period"],
         f"{field_name}__available_date": latest["available_date"],
         f"{field_name}__disclosure_date": latest["disclosure_date"],
         f"{field_name}__source_dataset": latest["_source_dataset"],
+        f"{field_name}__source_comp_type": template,
         f"{field_name}__source_raw_asset": latest.get("_source_raw_asset", ""),
         f"{field_name}__source_run_id": latest["_source_run_id"],
         f"{field_name}__source_retrieved_at": latest.get("_source_retrieved_at", ""),
@@ -385,6 +391,7 @@ def load_pit_fundamentals_events(
         "disclosure_date",
         "available_date",
         *PIT_SOURCE_COLUMNS,
+        "_source_comp_type",
     }
     available_fields = sorted(available_columns - metadata)
     requested_fields = list(dict.fromkeys(str(field) for field in fields or available_fields))

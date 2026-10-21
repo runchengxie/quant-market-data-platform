@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 518,
-    "python_lines": 121938,
+    "python_files": 519,
+    "python_lines": 122322,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,8 +18,8 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "5da37968f6fa19f82b2f6f03d5a5e2086f6f06ae",
-    "reason": "Reviewed lifecycle implementation adds isolated retirement/state classification modules, a CLI wrapper, and regression tests. File/line growth is the new feature budget, not additional long functions, oversized files, or ignored complexity.",
-    "exit_condition": "Reduce the feature budget if these workflows are removed or consolidated while preserving their safety tests."
+    "source_revision": "5cde5426e1e7254a27c1e13613175c904108e7c2",
+    "reason": "Adds template-preserving normalization and fail-closed PIT provenance with isolated regression tests. File/line growth is an explicit feature budget; complexity and oversized-function/file budgets are unchanged.",
+    "exit_condition": "Reduce this file/line budget when the corresponding feature or tests are removed or consolidated."
   }
 }
