@@ -79,16 +79,33 @@ uv run python scripts/operations/restore_minute_partition_from_quarantine.py \
 
 确认输出后追加 `--apply`。已有完整分区默认禁止回退，只有经过人工核对才使用 `--allow-regression`。
 
-## Capture daily-clean raw inputs
+## 捕获 daily-clean 原始输入
 
 `marketdata governance snapshot-clean-inputs --artifacts-root "$DATA_PLATFORM_ROOT"
---start-date YYYYMMDD --end-date YYYYMMDD --out-dir NEW_PATH` creates an independent,
-date-filtered snapshot of daily, adjustment, daily-basic and limit-status inputs.
-Serialize raw writers first. The output must be a new path under the data root.
-A completed receipt pins source manifests and each captured file's SHA-256.
-Failed attempts are preserved without a completed receipt. Scheduled retention
-`apply` is disabled; use the reviewed lifecycle retirement conditions in
-[data governance](data-governance.en.md) before any data removal.
+--start-date YYYYMMDD --end-date YYYYMMDD --out-dir NEW_PATH` 捕获四类日期过滤后的输入：
+`daily`、`adj_factor`、`daily_basic`、`limit_status`。先串行化原始写入、快照捕获和退役操作。
+发布脚本应在已有 publication 锁内执行。输出必须是数据根下不存在的新路径。
+完成的 `snapshot_receipt.json` 固定源 manifest 散列与每个数据文件的 SHA256。
+失败尝试保留现场，不发布 completed receipt。
+
+追加 `--reuse-from PRIOR_SNAPSHOT`，可复用同一 `daily_clean_inputs` 根下已完成、未退役的
+带时间戳快照。仅当分片为只读普通文件，完整供体清单、receipt、实际 SHA256/大小均通过验证，
+且当前原始分片字节相同时，才创建快照之间的硬链接。原始输入始终与快照保持不同 inode。
+新 manifest 与 receipt 独立创建。新增或变更分片照常复制。硬链接跨文件系统时回退复制，
+权限等其他错误直接失败。
+
+发布脚本可使用互斥选项 `--reuse-latest-completed`：输出必须直接位于
+`assets/tushare/a_share/daily_clean_inputs`，按捕获时间和数字后缀选取最新完成的规范快照。
+退役目录和没有 receipt 的未完成尝试不参与选择。已完成候选无效时失败，不静默换用更旧版本。
+没有候选时全部复制。该选项不修改旧目录或 latest 发布形式。
+receipt 的 `storage` 记录供体路径及 receipt 指纹、复用/复制文件数与逻辑字节数。
+文件记录的 `storage_method` 区分硬链接和复制。这些字节数描述逻辑复用量，实际空间按 inode 与磁盘块另行统计。
+
+所有已发布快照分片必须保持只读，后续修正写到新路径，不能原地改写共享 inode。
+创建硬链接会改变供体 link count 与 ctime，但不改变其内容、权限或 mtime。
+移除任一快照中的硬链接名称不会使其他快照的数据消失。恢复依赖仍按退役 receipt 保护。
+原有读取路径与 manifest 布局保持不变，生产者回退后仍可读取已经生成的快照。
+定时 retention `apply` 仍禁用。删除前遵守[数据治理](data-governance.md)的审阅条件。
 
 
 ## Private JSON configuration
