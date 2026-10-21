@@ -37,6 +37,7 @@ from quant_market_data_platform.providers.tushare_a_share_fundamentals_support i
     manifest_seal_checks,
     manifest_source_bundle_observations,
     manifest_source_vintage_dates,
+    pit_template_identity,
     schema_columns,
 )
 from quant_market_data_platform.providers.tushare_common import pandas
@@ -262,6 +263,8 @@ class _ValidationStats:
     dates: set[str] = field(default_factory=set)
     duplicate_count: int = 0
     event_key_duplicate_count: int = 0
+    template_ambiguity_count: int = 0
+    seen_templates: dict[tuple[str, ...], str] = field(default_factory=dict)
     missing_provenance_count: int = 0
     seen_keys: set[tuple[str, ...]] = field(default_factory=set)
     seen_event_keys: set[tuple[str, ...]] = field(default_factory=set)
@@ -287,6 +290,15 @@ def _duplicate_key_count(
 
 def _update_validation_stats(stats: _ValidationStats, frame: Any) -> None:
     pd = pandas()
+    if "_source_comp_type" not in frame:
+        frame = frame.assign(_source_comp_type="")
+    for row in frame.to_dict("records"):
+        for dataset, template in pit_template_identity(row).items():
+            key = tuple(
+                str(row[column]) for column in ("symbol", "report_period", "available_date")
+            ) + (dataset,)
+            previous = stats.seen_templates.setdefault(key, template)
+            stats.template_ambiguity_count += int(previous != template)
     stats.rows += int(len(frame))
     stats.symbols.update(frame["symbol"].dropna().astype(str).unique().tolist())
     stats.dates.update(frame["available_date"].dropna().astype(str).unique().tolist())
@@ -332,7 +344,7 @@ def _scan_validation_frames(
     stats = _ValidationStats()
     missing: list[str] = []
     scanner = ParquetBatchScanner(
-        columns=sorted(required),
+        columns=sorted(required | {"_source_comp_type"}),
         batch_rows=batch_rows,
         memory_policy=memory_policy,
         stage="pit_fundamentals_validate",
@@ -366,6 +378,11 @@ def _validation_checks(
     if not missing:
         checks.extend(
             [
+                {
+                    "id": "unique_statement_template_per_event",
+                    "passed": stats.template_ambiguity_count == 0,
+                    "conflicts": stats.template_ambiguity_count,
+                },
                 {"id": "availability_delay_semantics", "passed": stats.availability_ok},
                 {"id": "disclosure_after_report_period", "passed": stats.disclosure_ok},
                 {
@@ -452,7 +469,9 @@ def validate_pit_fundamentals(
         required.update(PIT_SOURCE_COLUMNS)
     available_columns = schema_columns(files) if files else set()
     missing = sorted(required - available_columns)
-    value_columns = sorted(available_columns - required - set(PIT_SOURCE_COLUMNS))
+    value_columns = sorted(
+        available_columns - required - set(PIT_SOURCE_COLUMNS) - {"_source_comp_type"}
+    )
     scanner = ParquetBatchScanner(columns=[])
     stats = _ValidationStats()
     if not missing:

@@ -357,3 +357,7 @@ TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
 ## 海外前向研究回执
 
 `overseas-receipt-v1` 是独立追加档案，不进入现有 published asset 或港股生产契约。每次新请求的 CSV 与开始/完成回执写入 owner 数据目录，按内容 SHA256 供下游核验。[格式和时间判定](operations/overseas-forward.md)描述原始来源日期、假设闭市时间、缺失/失败状态与不合格补跑。研究预测由 QMR 管理。
+
+三张报表的 normalized v2 在供应商 revision 选择前规范化 `comp_type` 的空白，并将其加入 `semantics.dedupe_keys`。`semantics.statement_template_identity` 明确记录模板维度。更新标记和公告日期仅在同一模板内排序，同模板冲突仍拒绝。不同模板的观测全部保留，不建立数值大小、非空数量或抓取时间优先级。PIT v2 新增可选来源列 `_source_comp_type`，as-of 字段溯源增加 `<field>__source_comp_type`。flat PIT 构建、流式验证和查询对同一 symbol、报告期、可用日及来源的多模板记录拒绝，即使值相同、为空或抓取时间不同。需另有明确的模板选择契约才能生成单值。旧资产缺少模板列时按未知模板兼容读取，不推断公司类型，也不补写旧资产。schema 仍为 v2，模板能力由 manifest semantics 和实际列共同标识。
+
+`_source_comp_type` 使用规范 JSON 对象保存来源数据集与模板的对应关系，例如 `{"balancesheet":"7","income":"2"}`。事件合并保留此对应关系，不分别拼接来源集合与模板集合。兼容单来源的旧标量模板。空值仍表示未知身份。多来源且模板非空的旧标量信息无法恢复对应关系，因此拒绝消费。
