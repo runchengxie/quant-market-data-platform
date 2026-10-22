@@ -536,3 +536,30 @@ def test_sealed_child_with_lost_completion_metadata_cannot_be_rebuilt(tmp_path, 
                     end_date="20200102",
                 )
             )
+
+
+def test_retry_mapping_order_preserves_effective_duplicate_source_semantics(tmp_path):
+    args = _archive_args(tmp_path)
+    args.field_mappings = ("roe=a", "roe=b")
+    parameters = archive.resolved_retry_parameters(args)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    archive.begin_attempt(root, parameters)
+    args.field_mappings = ("roe=b", "roe=a")
+    with pytest.raises(RuntimeError, match="identity.*changed"):
+        archive.begin_attempt(root, archive.resolved_retry_parameters(args))
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "https://exa mple.com",
+        "https://example.com/a b",
+        "https://bad_host.example",
+        "https://-bad.example",
+        "https://example.com\n/token",
+    ],
+)
+def test_endpoint_rejects_whitespace_and_invalid_hostname_without_echo(endpoint):
+    with pytest.raises(ValueError) as error:
+        archive._validate_api_url(endpoint)
+    assert endpoint not in str(error.value)

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import ipaddress
 import json
+import re
 import subprocess
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
@@ -13,8 +15,11 @@ from uuid import uuid4
 
 def endpoint_identity(value: str | None) -> str:
     """Hash a canonical endpoint without retaining credentials in retry evidence."""
+    raw = str(value or "").strip()
+    if any(character.isspace() or ord(character) < 32 for character in raw):
+        raise ValueError("Invalid TuShare API URL.")
     try:
-        parts = urlsplit(str(value or "").strip())
+        parts = urlsplit(raw)
         port = parts.port
     except ValueError:
         raise ValueError("Invalid TuShare API URL.") from None
@@ -29,7 +34,16 @@ def endpoint_identity(value: str | None) -> str:
         raise ValueError("An explicit credential-free TuShare API URL is required.")
     host = parts.hostname.lower()
     if ":" in host:
+        try:
+            ipaddress.IPv6Address(host)
+        except ValueError:
+            raise ValueError("Invalid TuShare API hostname.") from None
         host = f"[{host}]"
+    elif not all(
+        re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label)
+        for label in host.rstrip(".").split(".")
+    ):
+        raise ValueError("Invalid TuShare API hostname.")
     if port is not None and (parts.scheme.lower(), port) not in {("http", 80), ("https", 443)}:
         host = f"{host}:{port}"
     canonical = urlunsplit((parts.scheme.lower(), host, parts.path.rstrip("/"), "", ""))
@@ -71,7 +85,7 @@ def resolved_retry_parameters(args: argparse.Namespace) -> dict[str, object]:
         "run_ids": {name: f"{name}-{args.snapshot_date}" for name in sorted(args.datasets)},
         "api_url_sha256": endpoint_identity(args.api_url),
         "report_types": sorted(set(getattr(args, "report_types", None) or ["provider_default"])),
-        "field_mappings": sorted(set(args.field_mappings)),
+        "field_mappings": list(args.field_mappings),
         "available_delay_days": args.available_delay_days,
         "max_observation_age_days": args.max_observation_age_days,
         "observation_frequency": args.observation_frequency,
