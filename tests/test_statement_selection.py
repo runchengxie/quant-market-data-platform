@@ -308,3 +308,44 @@ def test_report_hash_binds_selector_bytes_actually_parsed(selector, monkeypatch)
     assert report["valid"] is True
     assert report["policy_version"] == "1"
     assert report["selector_sha256"] == expected
+
+
+@pytest.mark.parametrize("equal_values", [False, True])
+def test_single_category_duplicate_candidates_rejected_without_decisions(selector, equal_values):
+    path = selector[0] / "normalized.parquet"
+    frame = pd.read_parquet(path)
+    frame["comp_type"] = "2"
+    if equal_values:
+        frame["revenue"] = 10.0
+    frame.to_parquet(path)
+    selector[1]["normalized_inputs"][0]["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    selector[1]["decisions"] = []
+    with pytest.raises(ValueError, match="duplicate_candidate_identity"):
+        run(selector)
+
+
+@pytest.mark.parametrize("has_decision", [False, True])
+def test_oversized_delay_is_cli_exit_two(selector, has_decision, capsys):
+    from quant_market_data_platform.cli import main
+
+    root, payload = selector
+    payload["available_delay_days"] = 10**20
+    if not has_decision:
+        payload["decisions"] = []
+    path = root / "selector.json"
+    path.write_text(json.dumps(payload))
+    assert main(["tushare", "validate-a-share-statement-selector", "--selector", str(path)]) == 2
+    assert json.loads(capsys.readouterr().out)["valid"] is False
+
+
+def test_calendar_overflow_is_cli_exit_two(selector, capsys):
+    from quant_market_data_platform.cli import main
+
+    root, payload = selector
+    decision = payload["decisions"][0]
+    decision["disclosure_date"] = "99991231"
+    decision["available_date"] = "99991231"
+    path = root / "selector.json"
+    path.write_text(json.dumps(payload))
+    assert main(["tushare", "validate-a-share-statement-selector", "--selector", str(path)]) == 2
+    assert json.loads(capsys.readouterr().out)["valid"] is False

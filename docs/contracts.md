@@ -378,7 +378,7 @@ TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
 | --- | --- |
 | `schema_version` | 固定 `statement-selector.v1` |
 | `policy_id` / `policy_version` | 非空字符串，由决策提供方明确命名及版本化 |
-| `available_delay_days` | 至少 1 的整数，按自然日计算 |
+| `available_delay_days` | 至少 1 的整数，按自然日计算，日期运算必须在 YYYYMMDD 可表示范围内 |
 | `normalized_inputs` | 非空数组，每个 dataset 一个完整 Parquet 文件 |
 | `decisions` | 精确事件决定数组。允许为空，以列出全部未覆盖事件 |
 
@@ -390,6 +390,8 @@ SHA256 是完整文件实际校验，必须为 64 位小写十六进制。源文
 报告的 selector 哈希直接来自实际解析的同一份字节。文件必须保留
 `symbol`、`report_period`、`disclosure_date`、`comp_type`、`report_type`、
 `_source_retrieved_at`。身份非空，日期为有效 YYYYMMDD，报告期不得晚于披露日。
+全部输入按 symbol、报告期、披露日、comp_type 检查候选身份唯一性，
+单类别事件、财务值完全相同的重复行和空 decisions 也拒绝。
 本版仅接受 normalized `report_type="1"`，不能把后发 `report_type=4` 修订
 解释为原公告时可得数据。`comp_type` 按输入字符串核对，不假定类别全集。
 

@@ -165,8 +165,8 @@ def _contract(payload: dict[str, Any]) -> tuple[int, dict[tuple[str, ...], list[
     _text(payload["policy_id"])
     _text(payload["policy_version"])
     delay = payload["available_delay_days"]
-    if type(delay) is not int or delay < 1:
-        raise ValueError("available_delay_days must be a positive integer")
+    if type(delay) is not int or not 1 <= delay <= (datetime.max - datetime.min).days:
+        raise ValueError("available_delay_days must be a positive integer within datetime range")
     if not isinstance(payload["decisions"], list):
         raise ValueError("decisions must be a list")
     decisions: dict[tuple[str, ...], list[dict[str, Any]]] = {}
@@ -176,6 +176,8 @@ def _contract(payload: dict[str, Any]) -> tuple[int, dict[tuple[str, ...], list[
 
 
 def _validate_identity(frame: Any) -> None:
+    if frame.duplicated(subset=[*_KEYS, "comp_type"]).any():
+        raise ValueError("duplicate_candidate_identity in normalized source")
     if frame[_IDENTITY].isna().any().any():
         raise ValueError("Null statement identity or observation")
     if not frame["report_type"].eq("1").all():
@@ -225,7 +227,7 @@ def _conflicts(source: BinaryIO) -> tuple[Any, Any]:
     return frame, pd.concat(groups, ignore_index=True) if groups else frame.iloc[:0]
 
 
-def _selection_error(group: Any, rules: list[dict[str, Any]], candidates: list[str]) -> str | None:
+def _selection_error(rules: list[dict[str, Any]], candidates: list[str]) -> str | None:
     if not rules:
         return "uncovered_event"
     if len(rules) > 1:
@@ -235,8 +237,6 @@ def _selection_error(group: Any, rules: list[dict[str, Any]], candidates: list[s
         return "ambiguous_selection"
     if allowed[0] not in candidates:
         return "absent_comp_type"
-    if group["comp_type"].duplicated().any():
-        return "duplicate_candidate_identity"
     return None
 
 
@@ -272,7 +272,7 @@ def _event(
     row["field_differences"] = json.loads(
         group[["comp_type", *row["differing_fields"]]].to_json(orient="records")
     )
-    code = _selection_error(group, rules, candidates)
+    code = _selection_error(rules, candidates)
     if code:
         return row, [{"code": code, "event": list(key)}]
     decision = rules[0]
@@ -309,7 +309,7 @@ def validate_statement_selector(*, selector_path: str | Path) -> dict[str, Any]:
     try:
         delay, decisions = _contract(payload)
         return _report(path, payload, delay, decisions, selector_sha256)
-    except (KeyError, TypeError, AttributeError) as error:
+    except (KeyError, TypeError, AttributeError, OverflowError) as error:
         raise ValueError(f"Malformed statement selector: {error}") from error
 
 
