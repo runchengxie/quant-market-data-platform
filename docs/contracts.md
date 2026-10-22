@@ -361,3 +361,63 @@ TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
 三张报表的 normalized v2 在供应商 revision 选择前规范化 `comp_type` 的空白，并将其加入 `semantics.dedupe_keys`。`semantics.statement_template_identity` 明确记录模板维度。更新标记和公告日期仅在同一模板内排序，同模板冲突仍拒绝。不同模板的观测全部保留，不建立数值大小、非空数量或抓取时间优先级。PIT v2 新增可选来源列 `_source_comp_type`，as-of 字段溯源增加 `<field>__source_comp_type`。flat PIT 构建、流式验证和查询对同一 symbol、报告期、可用日及来源的多模板记录拒绝，即使值相同、为空或抓取时间不同。需另有明确的模板选择契约才能生成单值。旧资产缺少模板列时按未知模板兼容读取，不推断公司类型，也不补写旧资产。schema 仍为 v2，模板能力由 manifest semantics 和实际列共同标识。
 
 `_source_comp_type` 使用规范 JSON 对象保存来源数据集与模板的对应关系，例如 `{"balancesheet":"7","income":"2"}`。事件合并保留此对应关系，不分别拼接来源集合与模板集合。兼容单来源的旧标量模板。空值仍表示未知身份。多来源且模板非空的旧标量信息无法恢复对应关系，因此拒绝消费。
+
+### 显式公司类别选择：只读预检 v1
+
+`comp_type` 是供应商的公司类别，`report_type` 才是报表类型。现有代码中的
+`template identity`用于保留类别身份，不表示供应商定义了另一种报表口径。
+`statement-selector.v1` 仅描述人为提供的精确事件决定，验证器不推断类别优先级。
+其 `valid` 只表示机械覆盖、输入身份、文件哈希和时间约束合格，不证明经济选择正确，
+也不证明证据内容、审批或历史送达时间。报告始终为 `publication_ready=false`、
+`evidence_content_verified=false`。该契约尚未接入任何 PIT 构建或发布入口。
+现有多类别失败保护保持有效。
+
+顶层必须且只能包含以下字段。未知字段（包括字段投影）拒绝。
+
+| 字段 | v1 约束 |
+| --- | --- |
+| `schema_version` | 固定 `statement-selector.v1` |
+| `policy_id` / `policy_version` | 非空字符串，由决策提供方明确命名及版本化 |
+| `available_delay_days` | 至少 1 的整数，按自然日计算，日期运算必须在 YYYYMMDD 可表示范围内 |
+| `normalized_inputs` | 非空数组，每个 dataset 一个完整 Parquet 文件 |
+| `decisions` | 精确事件决定数组。允许为空，以列出全部未覆盖事件 |
+
+每个 input 必须且只能包含 `dataset`、`path`、`sha256`。dataset 限
+`income`、`balancesheet`、`cashflow`。相对路径以 selector 文件所在目录解析。
+SHA256 是完整文件实际校验，必须为 64 位小写十六进制。源文件以同一只读文件描述符
+完成读取前后哈希及两遍扫描，并核对读前、读后的 inode、路径身份和变更元数据。
+原子替换、链接改向或扫描中改写均拒绝，解析失败也执行读后一致性检查。
+报告的 selector 哈希直接来自实际解析的同一份字节。文件必须保留
+`symbol`、`report_period`、`disclosure_date`、`comp_type`、`report_type`、
+`_source_retrieved_at`。身份非空，日期为有效 YYYYMMDD，报告期不得晚于披露日。
+全部输入按 symbol、报告期、披露日、comp_type 检查候选身份唯一性，
+单类别事件、财务值完全相同的重复行和空 decisions 也拒绝。
+本版仅接受 normalized `report_type="1"`，不能把后发 `report_type=4` 修订
+解释为原公告时可得数据。`comp_type` 按输入字符串核对，不假定类别全集。
+
+每个 decision 必须且只能包含 `dataset`、`symbol`、`report_period`、
+`disclosure_date`、`available_date`、`allowed_comp_types`、`observed_at`、
+`evidence`、`reason`。精确主键包含 dataset、symbol、报告期、披露日和可用日。
+`available_date` 必须等于披露日加指定延迟。`allowed_comp_types` 必须恰选一个
+实际候选，不能按字段补空、值相等或更新标记自动决定。每个多类别事件必须恰好覆盖
+一次。漏选、重复覆盖、类别不存在、候选身份重复、无对应冲突事件的规则均拒绝。
+字段差异仅供审阅，绝不参与选择，验证器不提供字段投影。
+
+`observed_at` 记录决定的实际观察时间。`evidence` 必须且只能包含 `uri`、
+`sha256`、`observed_at`。理由为非空 `reason`。URI 必须有 scheme，证据 SHA256
+只验证格式，不抓取 URI，也不核验证据字节。所有观察时间必须含时区且不得在未来。
+证据和源观察不能晚于决定。填写时间及证据真实性仍须决策提供方负责。
+
+`statement-selection-report.v1` 在顶层绑定 selector 文件哈希、policy 身份及
+所有输入哈希。`decision_ledger` 保留每个冲突事件的候选、选择、拒绝类别、源哈希、
+逐字段数值差异（含缺失）、原始 source/decision/evidence 观察时间和理由。
+`conservative_available_from_preview` 取披露日及三种实际观察时间在上海的日期最大值，
+再加延迟，仅是保守预览，不能替代现有 PIT 可用时点契约。
+该预览晚于历史可用日时标记 `reconstructed`。未覆盖事件也按源观察时间标记历史重建。
+不产生数据资产、manifest、seal、current 别名或经济选择。
+
+共享清点基线为此独立预检精确增加 2 个 Python 文件、739 行：验证器 361 行、
+28 项契约与竞态回归测试 351 行、CLI 接线和帮助 27 行。
+`python_files` 为 526，`python_lines` 为 124368。结构债务、复杂度、长行、
+超大文件及测试规模阈值均保持原值。预检退役或合并且保留等效覆盖、身份、
+时间和源文件一致性保护后，收回对应文件及行数清点额度。
