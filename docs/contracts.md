@@ -361,3 +361,18 @@ TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
 三张报表的 normalized v2 在供应商 revision 选择前规范化 `comp_type` 的空白，并将其加入 `semantics.dedupe_keys`。`semantics.statement_template_identity` 明确记录模板维度。更新标记和公告日期仅在同一模板内排序，同模板冲突仍拒绝。不同模板的观测全部保留，不建立数值大小、非空数量或抓取时间优先级。PIT v2 新增可选来源列 `_source_comp_type`，as-of 字段溯源增加 `<field>__source_comp_type`。flat PIT 构建、流式验证和查询对同一 symbol、报告期、可用日及来源的多模板记录拒绝，即使值相同、为空或抓取时间不同。需另有明确的模板选择契约才能生成单值。旧资产缺少模板列时按未知模板兼容读取，不推断公司类型，也不补写旧资产。schema 仍为 v2，模板能力由 manifest semantics 和实际列共同标识。
 
 `_source_comp_type` 使用规范 JSON 对象保存来源数据集与模板的对应关系，例如 `{"balancesheet":"7","income":"2"}`。事件合并保留此对应关系，不分别拼接来源集合与模板集合。兼容单来源的旧标量模板。空值仍表示未知身份。多来源且模板非空的旧标量信息无法恢复对应关系，因此拒绝消费。
+
+
+## 亚洲指数运维回执
+
+`overseas-index-operational-v1` 用于运维恢复，与研究采集窗口和已发布市场资产分开。
+每次运行使用独立目录，依次写入 `started.json`、各指数原始 CSV，最后写入
+`receipt.json`。消费者只接受最终回执。支持 HSI、N225、KS11。
+来源记录包含 CSV 文件名、SHA256、行数、交易日期、`tushare-compatible` 来源标识、
+路由主机名和带时区的 UTC 请求时间。回执还记录请求日期、运行起止时间和代码哈希。
+整体状态为 `complete`、`partial` 或 `failed`；单一来源状态为 `ok`、`empty` 或 `failed`。
+失败只记录异常类型和脱敏分类 `permission`、`transport`、`provider`，不保存原始异常消息。
+分类依据已知错误特征，无法识别的提供方错误归入 `provider`。
+
+消费者校验准确的交易日、有限正数收盘价、文件哈希、大小上限和观察截止时间。
+晚到的回执不能作为较早报告的证据。本协议不改变研究资格或当前资产别名。

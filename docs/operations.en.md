@@ -207,3 +207,21 @@ are consolidated or regression fixtures shrink.
 `archive_state.json` atomically records the archive phase, dataset, completed child manifest hashes, and failure type. Same-day fundamentals conflicts also record the business key; arbitrary exception text is excluded to avoid exposing request details. This is diagnostic progress evidence: `running` can also indicate an interrupted process. Completion still requires validated `manifest.yml` and `SEALED.json`. Retries reuse completed children, and an already sealed successful archive does not rewrite its state receipt.
 
 Delayed margin recovery and receipt states: [A-share operations](operations/a-share-tushare.en.md#delayed-margin-inputs-for-the-evening-producer).
+
+
+## Operational Asian index capture
+
+Use the installed owner environment and existing private provider configuration:
+
+```bash
+marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python -m quant_market_data_platform.overseas_index_capture --root "$DATA_PLATFORM_ROOT/reports/index-recovery/capture" --date 20261021 --symbols HSI,N225,KS11
+```
+
+The command emits a JSON `receipt` path and exits 0 for complete capture or 1
+for partial/failed capture. It uses the configured `TUSHARE_TOKEN_2` route and
+one logical `index_global` request per code, with a 21-day lookback and a
+12-second transport timeout. Transport failover can visit configured routes;
+the deployment caller must enforce a 45-second process-group deadline.
+The module does not enforce that total deadline itself. Keep all outputs outside
+the source repository. Interrupted runs retain `started.json` for inspection.
+This endpoint provides index closes, not restored Hong Kong equity production.

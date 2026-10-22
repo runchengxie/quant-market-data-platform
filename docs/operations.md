@@ -297,3 +297,19 @@ vintage 的不完整状态保持不变。
 当编排入口整合或回归夹具简化时，收回相应行数预算。
 
 归档目录中的 `archive_state.json` 原子记录当前阶段、数据集、已完成子清单哈希及失败类型。基本面同日修订冲突还会记录业务键。其他异常文本不写入，避免泄露请求信息。此文件仅供进度诊断，`running` 也可能表示进程被中断。完成证明仍以通过校验的 `manifest.yml` 和 `SEALED.json` 为准。重试继续复用已完成子资产，已封存成功的归档不改写状态文件。
+
+
+## 亚洲指数运维采集
+
+使用已安装的 owner 环境和既有私有配置：
+
+```bash
+marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python -m quant_market_data_platform.overseas_index_capture --root "$DATA_PLATFORM_ROOT/reports/index-recovery/capture" --date 20261021 --symbols HSI,N225,KS11
+```
+
+命令输出包含 `receipt` 路径的 JSON，全部成功时返回 0，部分或全部失败时返回 1。
+采集沿用 `TUSHARE_TOKEN_2` 的既有路由，每个指数发起一次逻辑 `index_global` 请求，
+向前查询 21 天，单次传输超时为 12 秒。传输故障切换可能访问多个已配置路由；
+部署调用方必须另行施加 45 秒进程组期限，模块自身不保证总运行时限。
+所有输出放在源码仓库外，中断运行保留 `started.json` 供排查。
+该入口只采集指数收盘数据，不恢复港股股票生产能力。
