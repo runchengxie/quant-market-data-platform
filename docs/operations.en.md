@@ -63,8 +63,11 @@ Only cross-device hardlink errors fall back to copying; other errors fail closed
 Publishers holding their existing publication lock can use the mutually exclusive
 `--reuse-latest-completed` option. Output must be a direct child of
 `assets/tushare/a_share/daily_clean_inputs`. Selection uses capture timestamp and
-numeric suffix, skips retired directories and unreceipted attempts, and rejects
-invalid completed candidates. With no candidate, capture copies every shard.
+numeric suffix. It skips historical archive symlinks (including dangling links)
+without resolving or reading their targets, retired directories and unreceipted
+attempts, and rejects invalid real completed candidates. Explicit `--reuse-from`
+still rejects symlinks and requires a canonical real snapshot directory.
+With no candidate, capture copies every shard.
 No old directories or latest publication representation are changed.
 
 Receipt `storage` records donor receipt fingerprint, reused/copied file counts
