@@ -163,6 +163,7 @@ def _download_options(output: Path | str, **overrides: object) -> RawFundamental
         "start_date": "20251231",
         "end_date": "20251231",
         "entitlement_mode": "vip_batch",
+        "api_url": "https://api.tushare.pro",
     }
     values.update(overrides)
     return RawFundamentalsDownloadOptions(**values)

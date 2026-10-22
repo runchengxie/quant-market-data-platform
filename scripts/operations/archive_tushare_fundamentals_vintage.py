@@ -31,6 +31,13 @@ from quant_market_data_platform.providers.tushare_a_share_fundamentals_support i
     require_asset_integrity,
 )
 from quant_market_data_platform.providers.tushare_common import write_manifest
+from quant_market_data_platform.providers.tushare_fundamentals_retry import (
+    begin_attempt,
+    endpoint_identity,
+    record_derived_identity,
+    require_derived_identity,
+    resolved_retry_parameters,
+)
 
 _StepResult = TypeVar("_StepResult")
 
@@ -83,11 +90,7 @@ def snapshot_root(artifacts_root: Path, snapshot_date: str) -> Path:
 
 
 def _validate_api_url(api_url: str | None) -> None:
-    value = str(api_url or "").strip().rstrip("/")
-    if not value or not re.fullmatch(r"https?://[^/\s]+(?:/[^?\s#]*)?", value):
-        raise ValueError(
-            "An explicit TuShare API URL is required (use --api-url or configuration)."
-        )
+    endpoint_identity(api_url)
 
 
 def _require_passed(validation: Mapping[str, object], *, label: str) -> None:
@@ -105,11 +108,16 @@ def _require_passed(validation: Mapping[str, object], *, label: str) -> None:
     raise RuntimeError(f"{label} validation failed: {', '.join(failed) or 'unknown check'}")
 
 
-def _reuse_derived_snapshot(path: Path, *, expected_source_hashes: set[str]) -> dict | None:
+def _reuse_derived_snapshot(
+    path: Path, *, expected_source_hashes: set[str], expected_identity: object
+) -> dict | None:
     manifest = asset_manifest_payload(path)
+    if (path / "manifest.seal.json").exists():
+        require_asset_integrity(path, manifest)
     if manifest.get("status") != "completed" or manifest.get("immutable_snapshot") is not True:
         return None
     require_asset_integrity(path, manifest)
+    require_derived_identity(path, expected_identity)
     source_integrity = manifest.get("source_integrity")
     values = (
         [source_integrity]
@@ -160,9 +168,11 @@ def _archive_normalized_dataset(
 ) -> Path:
     normalized = root / "normalized" / dataset
     raw_manifest_hash = file_sha256(raw / "manifest.yml")
+    identity = resolved_retry_parameters(args)["semantic"]
     normalized_manifest = _reuse_derived_snapshot(
         normalized,
         expected_source_hashes={raw_manifest_hash},
+        expected_identity=identity,
     )
     if normalized_manifest is None:
         normalized_manifest = build_normalized_fundamentals(
@@ -170,6 +180,7 @@ def _archive_normalized_dataset(
             raw_dir=raw,
             out_dir=normalized,
         )
+        record_derived_identity(normalized, identity)
     _require_passed(
         validate_normalized_fundamentals(
             asset_dir=normalized,
@@ -188,7 +199,10 @@ def _archive_dataset(args: argparse.Namespace, root: Path, dataset: str) -> tupl
 def _archive_pit(args: argparse.Namespace, root: Path, normalized: Sequence[Path]) -> Path:
     pit = root / "pit"
     source_hashes = {file_sha256(path / "manifest.yml") for path in normalized}
-    manifest = _reuse_derived_snapshot(pit, expected_source_hashes=source_hashes)
+    identity = resolved_retry_parameters(args)["semantic"]
+    manifest = _reuse_derived_snapshot(
+        pit, expected_source_hashes=source_hashes, expected_identity=identity
+    )
     if manifest is None:
         build_pit_fundamentals(
             PitBuildOptions(
@@ -201,6 +215,7 @@ def _archive_pit(args: argparse.Namespace, root: Path, normalized: Sequence[Path
                 batch_rows=args.batch_rows,
             )
         )
+        record_derived_identity(pit, identity)
     _require_passed(
         validate_pit_fundamentals(
             asset_dir=pit,
@@ -299,6 +314,14 @@ def verify_sealed_snapshot(root: Path) -> dict[str, object]:
 def _write_archive_state(root: Path, state: dict[str, object]) -> None:
     """Atomically replace progress evidence; it is never a completion certificate."""
     state["updated_at_utc"] = datetime.now(UTC).isoformat()
+    attempt_id = state.get("attempt_id")
+    if attempt_id:
+        attempt = root / "attempts" / str(attempt_id)
+        with (attempt / f"event-{datetime.now(UTC).strftime('%Y%m%dT%H%M%S%f')}.json").open(
+            "x", encoding="utf-8"
+        ) as event:
+            json.dump(state, event, indent=2)
+        (attempt / "archive_state.json").write_text(json.dumps(state, indent=2) + "\n")
     with tempfile.NamedTemporaryFile(
         mode="w", encoding="utf-8", prefix=".archive_state.", dir=root, delete=False
     ) as handle:
@@ -343,11 +366,12 @@ def archive_vintage(args: argparse.Namespace) -> dict[str, object]:
     root = snapshot_root(args.artifacts_root, args.snapshot_date)
     if (root / "SEALED.json").is_file():
         return verify_sealed_snapshot(root)
-    root.mkdir(parents=True, exist_ok=True)
+    attempt_id = begin_attempt(root, resolved_retry_parameters(args))
     completed: list[dict[str, str]] = []
     state: dict[str, object] = {
         "schema_version": "tushare.fundamentals.archive_state.v1",
         "snapshot_date": args.snapshot_date,
+        "attempt_id": attempt_id,
         "completed_children": completed,
     }
     raw_dirs = []
