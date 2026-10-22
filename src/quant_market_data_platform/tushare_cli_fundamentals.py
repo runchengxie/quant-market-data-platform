@@ -101,6 +101,14 @@ def _add_tushare_fundamentals_state_parsers(subparsers: argparse._SubParsersActi
 
 
 def _add_tushare_fundamentals_asset_parsers(subparsers: argparse._SubParsersAction) -> None:
+    selector = subparsers.add_parser(
+        "validate-a-share-statement-selector",
+        help="Read-only mechanical selector audit; never certifies or builds publishable PIT.",
+        description="Validate explicit company category choices without building PIT. "
+        "Success verifies mechanical constraints only; evidence bytes and economic choices "
+        "are not certified. No files or current aliases are written.",
+    )
+    selector.add_argument("--selector", required=True, help="Versioned selector JSON path.")
     ledger = subparsers.add_parser(
         "build-a-share-statement-version-ledger",
         help="Retain verified financial statement observations with strict visibility bounds.",

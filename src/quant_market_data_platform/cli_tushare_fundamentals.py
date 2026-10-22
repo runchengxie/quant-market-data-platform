@@ -30,6 +30,7 @@ def _tushare_fundamentals_raw_handlers() -> dict[str, Callable[[argparse.Namespa
         ),
         "build-a-share-announcement-event-pit": _handle_tushare_announcement_event_pit,
         "build-a-share-statement-version-ledger": _handle_statement_version_ledger,
+        "validate-a-share-statement-selector": _handle_statement_selector,
     }
 
 
@@ -158,6 +159,24 @@ def _handle_tushare_fundamentals_download(args: argparse.Namespace) -> int:
         )
     )
     return print_tushare_summary(summary)
+
+
+def _handle_statement_selector(args: argparse.Namespace) -> int:
+    from quant_market_data_platform.statement_selection import validate_statement_selector
+
+    try:
+        report = validate_statement_selector(selector_path=args.selector)
+    except (ValueError, OSError) as error:
+        print_tushare_summary(
+            {
+                "valid": False,
+                "publication_ready": False,
+                "errors": [{"code": "invalid_contract", "message": str(error)}],
+            }
+        )
+        return 2
+    print_tushare_summary(report)
+    return 0 if report["valid"] else 1
 
 
 def _handle_statement_version_ledger(args: argparse.Namespace) -> int:

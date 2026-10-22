@@ -298,6 +298,40 @@ vintage 的不完整状态保持不变。
 
 归档目录中的 `archive_state.json` 原子记录当前阶段、数据集、已完成子清单哈希及失败类型。基本面同日修订冲突还会记录业务键。其他异常文本不写入，避免泄露请求信息。此文件仅供进度诊断，`running` 也可能表示进程被中断。完成证明仍以通过校验的 `manifest.yml` 和 `SEALED.json` 为准。重试继续复用已完成子资产，已封存成功的归档不改写状态文件。
 
+### 公司类别 selector 只读预检
+
+```bash
+marketdata tushare validate-a-share-statement-selector --selector <selector.json>
+```
+
+该命令只核验显式决定的机械约束并向 stdout 输出 JSON，不请求供应商、不写资产。
+使用已有完整 normalized 文件，字段格式见[选择契约](contracts.md#显式公司类别选择只读预检-v1)。
+检查成功退出 0。未覆盖、重复覆盖、类别不存在等选择问题退出 1，保留逐事件错误清单。
+格式、文件、哈希或时间约束不合格、日期运算溢出、输入候选身份重复，
+以及读取中输入发生变化时退出 2。可以先提交 `decisions: []` 的文件，
+取得全部冲突清单，再由有证据的决策方填写。命令本身不生成选择。
+
+最小盘点文件如下（路径和哈希必须替换为实际输入。仅供盘点使用）：
+
+```json
+{
+  "schema_version": "statement-selector.v1",
+  "policy_id": "coverage-inventory-only",
+  "policy_version": "1",
+  "available_delay_days": 1,
+  "normalized_inputs": [
+    {"dataset": "income", "path": "normalized/income/data/part.parquet", "sha256": "<actual-sha256>"}
+  ],
+  "decisions": []
+}
+```
+
+`valid=true` 不证明经济类别选择正确，也不证明 URI 对应的证据内容已核验。
+报告固定 `publication_ready=false`、`evidence_content_verified=false`。
+保守可用时间仅为审阅预览，历史决定标记 `reconstructed`，不能追认历史 PIT。
+预检没有接入构建、发布或旧 seal。现有 flat PIT 的多类别保护继续拒绝构建。
+如需保存报告，将 stdout 重定向到独立任务数据目录，不覆盖共享结果或封存资产。
+
 
 ## 亚洲指数运维采集
 
