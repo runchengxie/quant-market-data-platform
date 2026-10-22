@@ -430,7 +430,7 @@ SHA256 是完整文件实际校验，必须为 64 位小写十六进制。源文
 `receipt.json`。消费者只接受最终回执。支持 HSI、N225、KS11。
 来源记录包含 CSV 文件名、SHA256、行数、交易日期、`tushare-compatible` 来源标识、
 路由主机名和带时区的 UTC 请求时间。回执还记录请求日期、运行起止时间和代码哈希。
-整体状态为 `complete`、`partial` 或 `failed`；单一来源状态为 `ok`、`empty` 或 `failed`。
+整体状态为 `complete`、`partial` 或 `failed`。单一来源状态为 `ok`、`empty` 或 `failed`。
 失败只记录异常类型和脱敏分类 `permission`、`transport`、`provider`，不保存原始异常消息。
 分类依据已知错误特征，无法识别的提供方错误归入 `provider`。
 
