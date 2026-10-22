@@ -331,3 +331,19 @@ marketdata tushare validate-a-share-statement-selector --selector <selector.json
 保守可用时间仅为审阅预览，历史决定标记 `reconstructed`，不能追认历史 PIT。
 预检没有接入构建、发布或旧 seal。现有 flat PIT 的多类别保护继续拒绝构建。
 如需保存报告，将 stdout 重定向到独立任务数据目录，不覆盖共享结果或封存资产。
+
+
+## 亚洲指数运维采集
+
+使用已安装的 owner 环境和既有私有配置：
+
+```bash
+marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python -m quant_market_data_platform.overseas_index_capture --root "$DATA_PLATFORM_ROOT/reports/index-recovery/capture" --date 20261021 --symbols HSI,N225,KS11
+```
+
+命令输出包含 `receipt` 路径的 JSON，全部成功时返回 0，部分或全部失败时返回 1。
+采集沿用 `TUSHARE_TOKEN_2` 的既有路由，每个指数发起一次逻辑 `index_global` 请求，
+向前查询 21 天，单次传输超时为 12 秒。传输故障切换可能访问多个已配置路由。
+部署调用方必须另行施加 45 秒进程组期限，模块自身不保证总运行时限。
+所有输出放在源码仓库外，中断运行保留 `started.json` 供排查。
+该入口只采集指数收盘数据，不恢复港股股票生产能力。

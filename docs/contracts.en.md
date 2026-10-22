@@ -237,3 +237,22 @@ Statement observation ledgers accept per-security `income`, `balancesheet` and `
 Statement normalized v2 canonicalizes whitespace in `comp_type` and includes it in `semantics.dedupe_keys` before provider revision selection. `semantics.statement_template_identity` identifies this dimension; updates and announcements are ordered only within a template, and conflicting rows within one template still fail. All distinct templates survive. No numeric, non-null-count, or retrieval-time precedence is implied. PIT v2 adds optional provenance `_source_comp_type`, with `<field>__source_comp_type` in as-of field provenance. Flat PIT building, streaming validation, and queries reject multiple templates for the same symbol, report period, availability date, and source, including equal values, nulls, and distinct retrieval times. A separate explicit selection contract is required to produce one value. Legacy assets without this column remain readable with unknown template identity; no company type is inferred and existing assets are not rewritten. Schema versions remain v2; manifest semantics and actual columns identify template support.
 
 `_source_comp_type` stores a canonical JSON object mapping each source dataset to its template, for example `{"balancesheet":"7","income":"2"}`. Coalescing preserves these associations; separate dataset and template sets are insufficient. A legacy scalar template is accepted only for a single source, and empty provenance means unknown identity. Coalesced scalar provenance with known templates and multiple sources is rejected because its associations cannot be recovered.
+
+
+## Operational Asian index receipts
+
+`overseas-index-operational-v1` is an operational recovery protocol, separate
+from research capture windows and published market assets. Each exclusive run
+contains `started.json`, one raw CSV per requested code, and a final
+`receipt.json`. Only the final receipt is consumable. Supported codes are HSI,
+N225 and KS11. Source entries bind CSV basename, SHA256, row count, source dates,
+provider (`tushare-compatible`), route hostname and aware UTC request times.
+The receipt includes requested date, start/completion times and code hash.
+Overall status is `complete`, `partial` or `failed`; source status is `ok`,
+`empty` or `failed`. Failures expose exception class and a sanitized category
+(`permission`, `transport`, `provider`), never the raw exception message.
+Unrecognized provider errors remain `provider`; classification is best effort.
+
+Consumers validate exact exchange sessions, finite positive closes, byte hashes,
+size limits and observation cutoff. A later receipt cannot support an earlier
+report. No research qualification or current asset alias is changed.
