@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 from urllib.parse import urlparse
 from zoneinfo import ZoneInfo
 
@@ -16,12 +17,57 @@ _KEYS = ["symbol", "report_period", "disclosure_date"]
 _IDENTITY = [*_KEYS, "comp_type", "report_type", "_source_retrieved_at"]
 
 
-def _digest(path: Path) -> str:
+def _stream_digest(stream: BinaryIO) -> str:
+    stream.seek(0)
     digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
+    for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+        digest.update(chunk)
     return digest.hexdigest()
+
+
+def _file_identity(stat: os.stat_result) -> tuple[int, ...]:
+    return (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+
+
+def _source_matches(
+    source: Path, stream: BinaryIO, identity: tuple[int, ...], alias: tuple[int, ...]
+) -> bool:
+    try:
+        return (
+            _file_identity(os.fstat(stream.fileno())) == identity
+            and _file_identity(source.stat()) == identity
+            and _file_identity(source.lstat()) == alias
+        )
+    except OSError:
+        return False
+
+
+def _verify_scan(
+    source: Path, stream: BinaryIO, identity: tuple[int, ...], alias: tuple[int, ...], expected: str
+) -> None:
+    message = "Normalized source changed during validation; expected checksum cannot certify scan"
+    try:
+        final_digest = _stream_digest(stream)
+    except OSError as error:
+        raise ValueError(message) from error
+    if final_digest != expected or not _source_matches(source, stream, identity, alias):
+        raise ValueError(message)
+
+
+def _verified_conflicts(source: Path, expected: str) -> tuple[Any, Any]:
+    """Pin one descriptor and reject content, inode or path changes during both scans."""
+    with source.open("rb") as stream:
+        identity = _file_identity(os.fstat(stream.fileno()))
+        alias = _file_identity(source.lstat())
+        if not _source_matches(source, stream, identity, alias):
+            raise ValueError("Normalized source changed while opening")
+        if _stream_digest(stream) != expected:
+            raise ValueError("Normalized source checksum mismatch")
+        stream.seek(0)
+        try:
+            return _conflicts(stream)
+        finally:
+            _verify_scan(source, stream, identity, alias, expected)
 
 
 def _sha(value: Any) -> str:
@@ -146,7 +192,7 @@ def _validate_identity(frame: Any) -> None:
         raise ValueError("Report period cannot follow disclosure")
 
 
-def _conflicts(source: Path) -> tuple[Any, Any]:
+def _conflicts(source: BinaryIO) -> tuple[Any, Any]:
     """Scan identity batches, then materialize only conflicting financial rows."""
     import pandas as pd
     import pyarrow.parquet as pq
@@ -257,21 +303,25 @@ def _event(
 def validate_statement_selector(*, selector_path: str | Path) -> dict[str, Any]:
     """Check mechanical coverage and lineage only; return an unpublishable preview."""
     path = Path(selector_path).expanduser().resolve()
-    payload = json.loads(path.read_text())
+    selector_bytes = path.read_bytes()
+    payload = json.loads(selector_bytes)
+    selector_sha256 = hashlib.sha256(selector_bytes).hexdigest()
     try:
         delay, decisions = _contract(payload)
-        return _report(path, payload, delay, decisions)
+        return _report(path, payload, delay, decisions, selector_sha256)
     except (KeyError, TypeError, AttributeError) as error:
         raise ValueError(f"Malformed statement selector: {error}") from error
 
 
-def _report(path: Path, payload: dict, delay: int, decisions: dict) -> dict[str, Any]:
+def _report(
+    path: Path, payload: dict, delay: int, decisions: dict, selector_sha256: str
+) -> dict[str, Any]:
     inputs = payload["normalized_inputs"]
     if not isinstance(inputs, list) or not inputs:
         raise ValueError("normalized_inputs must be a nonempty list")
     report: dict[str, Any] = {
         "schema_version": "statement-selection-report.v1",
-        "selector_sha256": _digest(path),
+        "selector_sha256": selector_sha256,
         "policy_id": payload["policy_id"],
         "policy_version": payload["policy_version"],
         "evidence_content_verified": False,
@@ -292,9 +342,7 @@ def _report(path: Path, payload: dict, delay: int, decisions: dict) -> dict[str,
         source = Path(entry["path"]).expanduser()
         source = source if source.is_absolute() else path.parent / source
         expected = _sha(entry["sha256"])
-        if _digest(source) != expected:
-            raise ValueError(f"Normalized source checksum mismatch: {dataset}")
-        identity, conflicts = _conflicts(source)
+        identity, conflicts = _verified_conflicts(source, expected)
         report["normalized_inputs"].append(
             {"dataset": dataset, "sha256": expected, "rows": len(identity)}
         )

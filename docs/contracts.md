@@ -384,7 +384,10 @@ TuShare [top_inst](https://tushare.pro/document/2?doc_id=107) 的 `buy`、
 
 每个 input 必须且只能包含 `dataset`、`path`、`sha256`。dataset 限
 `income`、`balancesheet`、`cashflow`。相对路径以 selector 文件所在目录解析。
-SHA256 是完整文件实际校验，必须为 64 位小写十六进制。文件必须保留
+SHA256 是完整文件实际校验，必须为 64 位小写十六进制。源文件以同一只读文件描述符
+完成读取前后哈希及两遍扫描，并核对读前、读后的 inode、路径身份和变更元数据。
+原子替换、链接改向或扫描中改写均拒绝，解析失败也执行读后一致性检查。
+报告的 selector 哈希直接来自实际解析的同一份字节。文件必须保留
 `symbol`、`report_period`、`disclosure_date`、`comp_type`、`report_type`、
 `_source_retrieved_at`。身份非空，日期为有效 YYYYMMDD，报告期不得晚于披露日。
 本版仅接受 normalized `report_type="1"`，不能把后发 `report_type=4` 修订

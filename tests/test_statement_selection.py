@@ -207,3 +207,104 @@ def test_malformed_cli_contract_reports_exit_two(selector, capsys):
     path.write_text("{}")
     assert main(["tushare", "validate-a-share-statement-selector", "--selector", str(path)]) == 2
     assert json.loads(capsys.readouterr().out)["valid"] is False
+
+
+@pytest.mark.parametrize("replacement", ["atomic", "symlink"])
+def test_source_path_replacement_after_hash_is_rejected(selector, monkeypatch, replacement):
+    from quant_market_data_platform import statement_selection
+
+    root, payload = selector
+    original_path = root / "normalized.parquet"
+    changed = root / "changed.parquet"
+    frame = pd.read_parquet(original_path)
+    frame["revenue"] = [999.0, 888.0]
+    frame.to_parquet(changed)
+    source_path = original_path
+    if replacement == "symlink":
+        source_path = root / "source-link.parquet"
+        source_path.symlink_to(original_path)
+        payload["normalized_inputs"][0]["path"] = str(source_path)
+    scan = statement_selection._conflicts
+
+    def replace_before_scan(source):
+        if replacement == "atomic":
+            changed.replace(original_path)
+        else:
+            source_path.unlink()
+            source_path.symlink_to(changed)
+        return scan(source)
+
+    monkeypatch.setattr(statement_selection, "_conflicts", replace_before_scan)
+    with pytest.raises(ValueError, match="changed|checksum"):
+        run(selector)
+
+
+@pytest.mark.parametrize("restore", [False, True])
+def test_source_change_during_scan_is_rejected_even_if_restored(selector, monkeypatch, restore):
+    import pyarrow.parquet as pq
+
+    path = selector[0] / "normalized.parquet"
+    original_bytes = path.read_bytes()
+    parquet_file = pq.ParquetFile
+
+    class ChangingParquet:
+        def __init__(self, source):
+            self.inner = parquet_file(source)
+            self.schema_arrow = self.inner.schema_arrow
+
+        def iter_batches(self, **kwargs):
+            yield from self.inner.iter_batches(**kwargs)
+            if "columns" not in kwargs:
+                path.write_bytes(b"changed-input")
+                if restore:
+                    path.write_bytes(original_bytes)
+
+    monkeypatch.setattr(pq, "ParquetFile", ChangingParquet)
+    with pytest.raises(ValueError, match="changed|checksum"):
+        run(selector)
+
+
+def test_parser_failure_after_input_changes_is_cli_exit_two(selector, monkeypatch, capsys):
+    from quant_market_data_platform import statement_selection
+    from quant_market_data_platform.cli import main
+
+    run(selector)
+
+    def failed_scan(source):
+        (selector[0] / "normalized.parquet").write_bytes(b"truncated")
+        raise ValueError("parquet parsing failed")
+
+    monkeypatch.setattr(statement_selection, "_conflicts", failed_scan)
+    assert (
+        main(
+            [
+                "tushare",
+                "validate-a-share-statement-selector",
+                "--selector",
+                str(selector[0] / "selector.json"),
+            ]
+        )
+        == 2
+    )
+    report = json.loads(capsys.readouterr().out)
+    assert report["valid"] is False
+    assert "checksum" in report["errors"][0]["message"]
+
+
+def test_report_hash_binds_selector_bytes_actually_parsed(selector, monkeypatch):
+    from quant_market_data_platform import statement_selection
+
+    root, payload = selector
+    expected = hashlib.sha256(json.dumps(payload).encode()).hexdigest()
+    contract = statement_selection._contract
+
+    def replace_selector_after_parse(parsed):
+        replacement = {**payload, "policy_version": "different"}
+        (root / "selector.json").write_text(json.dumps(replacement))
+        return contract(parsed)
+
+    monkeypatch.setattr(statement_selection, "_contract", replace_selector_after_parse)
+    report = run(selector)
+    assert report["valid"] is True
+    assert report["policy_version"] == "1"
+    assert report["selector_sha256"] == expected
