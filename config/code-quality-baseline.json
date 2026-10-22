@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 529,
-    "python_lines": 125028,
+    "python_lines": 125027,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -19,8 +19,8 @@
   },
   "change_record": {
     "source_revision": "29ad8b0bca4cfb466ccd06242313ee8727875516",
-    "reason": "Add one retry identity/attempt module and fail-closed fixture coverage: one file and 432 lines. Complexity and oversized-file budgets remain unchanged.",
-    "exit_condition": "Remove this one-file/432-line allowance after consolidation into a shared asset transaction interface that retains legacy rejection, semantic identity checks and immutable attempt history; preserve prior retirement conditions."
+    "reason": "Add one retry identity/attempt module and fail-closed fixture coverage: one file and 431 lines. Complexity and oversized-file budgets remain unchanged.",
+    "exit_condition": "Remove this one-file/431-line allowance after consolidation into a shared asset transaction interface that retains legacy rejection, semantic identity checks and immutable attempt history; preserve prior retirement conditions."
   },
   "previous_change_records": [
     {

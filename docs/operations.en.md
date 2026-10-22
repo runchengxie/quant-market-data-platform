@@ -210,7 +210,7 @@ New archives write `retry_identity.json` before provider access. It records date
 
 Every execution creates `attempts/<id>/` with sanitized `parameters.json`, exact previous receipt bytes when present, attempt state, and append-only stage events. The root state file is only the latest progress index. Nonempty legacy output without a complete recorded identity fails with `identity is unproven` before writes or provider calls. Current defaults must never fill unknown legacy parameters. Preserve such output for offline investigation and plan an isolated destination separately. Run one writer per vintage. Revision discovery requires a source release checkout containing Git metadata and both `src/` and `scripts/`, and any revision change conservatively blocks retry.
 
-This change increases only the shared inventory budget by one Python file and 432 lines, leaving complexity limits unchanged. Remove that allowance when a shared asset transaction interface retains legacy rejection, semantic comparison, and attempt history coverage.
+This change increases only the shared inventory budget by one Python file and 431 lines, leaving complexity limits unchanged. Remove that allowance when a shared asset transaction interface retains legacy rejection, semantic comparison, and attempt history coverage.
 
 Delayed margin recovery and receipt states: [A-share operations](operations/a-share-tushare.en.md#delayed-margin-inputs-for-the-evening-producer).
 

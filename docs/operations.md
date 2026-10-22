@@ -352,4 +352,4 @@ marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python -m quant_market
 所有输出放在源码仓库外，中断运行保留 `started.json` 供排查。
 该入口只采集指数收盘数据，不恢复港股股票生产能力。
 
-本次 vintage 重试保护新增一个独立身份/attempt 模块和 fixture 负面路径覆盖，shared ratchet 只将 Python 文件库存增加 1、行数库存增加 432。复杂度和大文件预算不变。退出条件：若以后将重试身份、attempt 事件和 derived 语义校验整合进统一的资产事务接口，并保留 legacy 拒绝、参数变化拒绝及历史 receipt 保全覆盖，则移除本次增量预算。
+本次 vintage 重试保护新增一个独立身份/attempt 模块和 fixture 负面路径覆盖，shared ratchet 只将 Python 文件库存增加 1、行数库存增加 431。复杂度和大文件预算不变。退出条件：若以后将重试身份、attempt 事件和 derived 语义校验整合进统一的资产事务接口，并保留 legacy 拒绝、参数变化拒绝及历史 receipt 保全覆盖，则移除本次增量预算。
