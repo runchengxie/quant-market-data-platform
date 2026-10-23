@@ -491,3 +491,7 @@ hash、完整 inventory 与旧指针/旧版本 receipt CAS。它不自动取得�
 `intent.json` 是带完整性摘要的持久事务意图，包含事务身份、old/new 指针和双方 prepared
 receipt hash。pending 状态阻止新事务。只读操作要求已有完整 catalog，缺 marker/lock
 会失败而不初始化或修复。独立源环境或安装包目录（含 pyproject/venv）不得用作 artifact root。
+
+当前 publication v1 使用保守 nonnegative quantity profile。`rqchl` 官方字段说明为
+融券偿还量，尚无明确的 signed 调整策略。源观测中保留的负值会阻断此 profile 的 publication。
+该策略不判断 vendor 对错或 legacy 采集的合法性，后续符号语义须单独核实并版本化。
