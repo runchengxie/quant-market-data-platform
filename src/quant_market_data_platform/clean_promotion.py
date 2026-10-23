@@ -84,6 +84,8 @@ def _metadata(context: Mapping[str, Any]) -> list[Path]:
         Path(context["evidence_out"]),
     ]
     paths = [_contained(root, path) for path in paths]
+    if any(path.is_symlink() or (path.exists() and not path.is_file()) for path in paths):
+        raise ValueError("Linked metadata outputs must be physical files")
     resolved = [path.resolve() for path in paths]
     inputs = {Path(path).resolve() for path in context["reports"].values()}
     if len(set(resolved)) != len(paths):

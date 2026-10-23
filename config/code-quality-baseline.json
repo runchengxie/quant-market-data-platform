@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 541,
-    "python_lines": 128062,
+    "python_lines": 128092,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "474b374c417d6ec482137ab01b21dbad08e0f64c",
-    "reason": "Add full-inventory SHA-confirmed retained-directory clean migration, explicit archived rollback, clean-only and recurring linked promotion modes, and fault-injection fixtures: three files and 904 net Python lines. Extracting the metadata phase reduces functions_over_100 from 38 to 37; all other complexity/oversized budgets remain unchanged.",
-    "exit_condition": "Remove this three-file/904-line allowance when a shared asset release controller subsumes physical rollback, source-independent journal recovery and linked promotion with equivalent metadata boundary and interruption tests; preserve earlier retirement conditions."
+    "source_revision": "b0b47a0cdf6dd10269286292b3c128c23725b9fd",
+    "reason": "Reject existing nonregular linked-metadata outputs before raw/universe mutation and cover both modes in dry-run/apply: 30 Python lines, no new files or complexity allowances.",
+    "exit_condition": "Remove this 30-line allowance when equivalent metadata leaf-type preflight and byte/inode nonmutation regressions are consolidated; preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "474b374c417d6ec482137ab01b21dbad08e0f64c",
+      "reason": "Add full-inventory SHA-confirmed retained-directory clean migration, explicit archived rollback, clean-only and recurring linked promotion modes, and fault-injection fixtures: three files and 904 net Python lines. Extracting the metadata phase reduces functions_over_100 from 38 to 37; all other complexity/oversized budgets remain unchanged.",
+      "exit_condition": "Remove this three-file/904-line allowance when a shared asset release controller subsumes physical rollback, source-independent journal recovery and linked promotion with equivalent metadata boundary and interruption tests; preserve earlier retirement conditions."
+    },
     {
       "source_revision": "933bbb93d17a2a7a2d38ade4bcc7f470cbc34436",
       "reason": "Add strict installed git-archive source provenance and a real noneditable install regression: two Python files and 285 lines. Existing complexity and oversized-file limits remain unchanged.",

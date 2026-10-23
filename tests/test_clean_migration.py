@@ -462,3 +462,31 @@ def test_outside_metadata_rejected_before_any_directory_or_asset_mutation(tmp_pa
         run_a_share_current_promotion(**options)
     assert not outside.parent.exists()
     assert [(path.stat().st_ino, path.read_bytes()) for path in (raw, universe)] == before
+
+
+@pytest.mark.parametrize("mode", ["clean_only_linked", "clean_linked"])
+@pytest.mark.parametrize("apply", [False, True])
+def test_directory_metadata_rejected_before_asset_mutation(tmp_path, mode, apply):
+    from quant_market_data_platform.tushare_refresh import run_a_share_current_promotion
+
+    target = prepared_promotion(tmp_path)
+    alias = tmp_path / "assets/tushare/a_share/daily/a_share_all_daily_clean_latest"
+    if mode == "clean_linked":
+        alias.rename(alias.with_name("fixture_previous"))
+        alias.symlink_to(target.name, target_is_directory=True)
+    destination = tmp_path / "reports/health-directory"
+    destination.mkdir()
+    raw = tmp_path / "assets/tushare/a_share/daily/a_share_all_daily_latest/manifest.yml"
+    universe = tmp_path / "assets/universe/a_share_all_full_by_date.csv"
+    before = [(path.stat().st_ino, path.read_bytes()) for path in (raw, universe)]
+    with pytest.raises(ValueError, match="metadata outputs must be physical files"):
+        run_a_share_current_promotion(
+            artifacts_root=tmp_path,
+            start_date="20240102",
+            end_date="20260529",
+            current_health_report=destination,
+            apply=apply,
+            **{mode: True},
+        )
+    assert destination.is_dir()
+    assert [(path.stat().st_ino, path.read_bytes()) for path in (raw, universe)] == before
