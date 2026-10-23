@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 539,
-    "python_lines": 127777,
+    "python_files": 541,
+    "python_lines": 128062,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "3c90ce03c713038afde650af84aa108698708d31",
+    "source_revision": "474b374c417d6ec482137ab01b21dbad08e0f64c",
     "reason": "Add full-inventory SHA-confirmed retained-directory clean migration, explicit archived rollback, clean-only and recurring linked promotion modes, and fault-injection fixtures: three files and 904 net Python lines. Extracting the metadata phase reduces functions_over_100 from 38 to 37; all other complexity/oversized budgets remain unchanged.",
     "exit_condition": "Remove this three-file/904-line allowance when a shared asset release controller subsumes physical rollback, source-independent journal recovery and linked promotion with equivalent metadata boundary and interruption tests; preserve earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "933bbb93d17a2a7a2d38ade4bcc7f470cbc34436",
+      "reason": "Add strict installed git-archive source provenance and a real noneditable install regression: two Python files and 285 lines. Existing complexity and oversized-file limits remain unchanged.",
+      "exit_condition": "Remove this two-file/285-line allowance when archive and Git source discovery are consolidated with equivalent installed-package, malformed-provenance and legacy-read-only coverage; preserve earlier retirement conditions."
+    },
     {
       "source_revision": "5b213c6c5ade5301ba64c7c5c171e36b0e77ba05",
       "reason": "Add explicit POSIX clean-only linked publisher, durable metadata rollback journal, read-only migration planner and fail-closed fixtures: two files and 573 Python lines. No complexity or oversized-file budgets increased.",

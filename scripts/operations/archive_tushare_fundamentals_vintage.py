@@ -36,7 +36,13 @@ from quant_market_data_platform.providers.tushare_fundamentals_retry import (
     endpoint_identity,
     record_derived_identity,
     require_derived_identity,
-    resolved_retry_parameters,
+)
+from quant_market_data_platform.providers.tushare_fundamentals_retry import (
+    resolved_retry_parameters as _resolved_retry_parameters,
+)
+
+resolved_retry_parameters = partial(
+    _resolved_retry_parameters, source_root=Path(__file__).resolve().parents[2]
 )
 
 _StepResult = TypeVar("_StepResult")
