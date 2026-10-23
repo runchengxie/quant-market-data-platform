@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 556,
-    "python_lines": 131404,
+    "python_files": 559,
+    "python_lines": 132107,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "110e397f54ccb57c86fc7f862b7931472cc45974",
-    "reason": "Add independent partial reconstructed statement research asset and exact-disclosure opt-in reader with lineage, conflict, missingness and temporal boundary regressions: two files and 248 Python lines. No complexity or oversized-file budgets increased.",
-    "exit_condition": "Remove this two-file/248-line allowance when retired or consolidated with equivalent source-bound lineage, explicit partial acceptance, no fallback and no future-value exposure tests. Preserve prior retirement conditions."
+    "source_revision": "1d96c3901684d97064a4aab22d7b71dbf30fad42",
+    "reason": "Add bounded read-only operational overview, CLI and malformed/freshness regressions: 3 files and 703 lines; structural budgets unchanged.",
+    "exit_condition": "Remove this allowance if the unified overview is retired or consolidated with equivalent bounded reads, incident/date separation and invalid-evidence regressions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "110e397f54ccb57c86fc7f862b7931472cc45974",
+      "reason": "Add independent partial reconstructed statement research asset and exact-disclosure opt-in reader with lineage, conflict, missingness and temporal boundary regressions: two files and 248 Python lines. No complexity or oversized-file budgets increased.",
+      "exit_condition": "Remove this two-file/248-line allowance when retired or consolidated with equivalent source-bound lineage, explicit partial acceptance, no fallback and no future-value exposure tests. Preserve prior retirement conditions."
+    },
     {
       "source_revision": "58253d5e9ffdb638554b733428599d0549733345",
       "reason": "Add repeatable external retention evidence roots with fail-closed structured evidence checks and regression coverage: exactly one Python file and 141 net lines. No complexity, oversized-file or reserved-headroom allowances.",

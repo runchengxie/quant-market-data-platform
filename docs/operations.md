@@ -523,3 +523,7 @@ legacy `*_latest` 仍由现有 mirror 写分区和 manifest。不得把这些目
 
 `marketdata governance plan-retention --reference-root <directory>` 可重复指定研究和回滚证据目录。
 详见[保留引用与独立输入](data-governance.md#保留引用与独立输入)。该入口仅生成计划。
+
+### 数据运行状态
+
+[统一只读检查入口](operations/data-status.md) 汇总发布日期、质量缺口和服务历史状态。
