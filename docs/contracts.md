@@ -466,3 +466,22 @@ metadata 备份还原，恢复前再次验证原实体完整摘要。POSIX 目�
 release evidence 四份 metadata，用于受控同版本迁移。`--clean-linked` 保留正常 raw/universe
 promotion，并将 clean 与这四份 metadata 放入可恢复发布。raw/universe 的切换位于该恢复边界
 之外，失败后可能保留它们的新状态。两个模式均显式启用，默认物化方式继续保留。
+
+## 融资 publication catalog
+
+`tushare.{margin,margin_detail}.publication.v1` manifest 保留原候选内容和逐文件来源，
+另含完整源 candidate inventory、lineage hash 和质量范围。prepared receipt 为
+`tushare.margin.publication.v1`，绑定 inventory SHA256。采用/回滚 receipt 为
+`tushare.margin.adoption.v1`。版本目录只创建一次，采用前校验 caller 固定的 receipt
+hash、完整 inventory 与旧指针/旧版本 receipt CAS。它不自动取得全市场或 PIT 认证。
+
+验收范围是原生 schema、主键、输入 hash、声明日期范围及数值合法性。可空 name 和旧 null
+按原值保留并统计，非空 numeric 不能为负数或无穷。原候选的 production_eligible 不因
+扫描完成而提升。source revision 无构建证据时明确 null，不能以基线 commit 冒称新功能来源。
+
+此合同是独立 catalog 的 opt-in 投影。默认资产别名、legacy writer、原始观察时间和消费者
+采用状态保持各自职责。默认消费者采用必须单独验证，prepare 和导出合同仅记录各自步骤。
+
+`intent.json` 是带完整性摘要的持久事务意图，包含事务身份、old/new 指针和双方 prepared
+receipt hash。pending 状态阻止新事务。只读操作要求已有完整 catalog，缺 marker/lock
+会失败而不初始化或修复。独立源环境或安装包目录（含 pyproject/venv）不得用作 artifact root。
