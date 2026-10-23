@@ -256,3 +256,9 @@ Unrecognized provider errors remain `provider`; classification is best effort.
 Consumers validate exact exchange sessions, finite positive closes, byte hashes,
 size limits and observation cutoff. A later receipt cannot support an earlier
 report. No research qualification or current asset alias is changed.
+
+## Daily-clean build versions
+
+Each `plan-a-share-current-refresh` plan assigns a unique clean output ID and carries that path through building, validation, universe construction and promotion. A second same-day plan uses a new directory. Save and execute commands from the same plan. Standalone promotion without `--daily-clean-dir` retains the legacy dated-directory fallback.
+
+The clean builder rejects symlink outputs, completed manifests and manifests whose incomplete state cannot be established, before deleting existing data or staging. A failed output without a manifest, or one explicitly marked failed, running, building or pending, remains rebuildable. This protects the build entry point, not filesystem immutability or concurrent writers. Latest remains a materialized copy and raw publication is unchanged.

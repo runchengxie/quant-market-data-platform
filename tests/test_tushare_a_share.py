@@ -1942,3 +1942,38 @@ def test_endpoint_failover_rotates_only_transport_failures() -> None:
 
     assert failover.daily() == "ok"
     assert client.urls == ["https://proxy-a.example.com", "https://proxy-b.example.com"]
+
+
+def test_refresh_plans_keep_same_day_clean_outputs_distinct_and_pinned(tmp_path):
+    plans = [
+        build_a_share_current_refresh_plan(
+            artifacts_root=tmp_path, start_date="20240102", end_date="20260529"
+        )
+        for _ in range(2)
+    ]
+    outputs = []
+    for plan in plans:
+        stages = {s["name"]: s for s in plan["stages"]}
+        command = stages["daily_clean_build"]["command"]
+        output = command[command.index("--out-dir") + 1]
+        outputs.append(output)
+        for name in ("daily_clean_validate_baseline", "daily_clean_validate_research"):
+            assert output in stages[name]["command"]
+        assert output in stages["universe_build"]["command"]
+        assert output in stages["promote_current"]["command"]
+    assert outputs[0] != outputs[1]
+    assert not tmp_path.exists() or not list(tmp_path.iterdir())
+
+
+def test_refresh_clean_attempt_is_visible_to_retention_classifier(tmp_path):
+    from pathlib import Path
+
+    from quant_market_data_platform.daily_retention_state import daily_attempt_state
+
+    plan = build_a_share_current_refresh_plan(
+        artifacts_root=tmp_path, start_date="20240102", end_date="20260529"
+    )
+    command = plan["stages"][1]["command"]
+    state = daily_attempt_state(Path(command[command.index("--out-dir") + 1]))
+    assert state is not None and state[0] == "review"
+    assert "uncompleted clean" in state[1]
