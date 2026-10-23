@@ -11,6 +11,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from quant_market_data_platform._minute_history_activity import observe_rows
+from quant_market_data_platform._minute_history_completion import completed_pass
 from quant_market_data_platform._minute_history_inventory import inventory, read_json
 from quant_market_data_platform._minute_history_pipeline import pipeline
 
@@ -77,10 +78,38 @@ def _preflight(runtime: Path, now: datetime, warnings: list[str]) -> tuple[dict,
     }
 
 
+def _download_complete(marker: dict, progress: dict, active: bool) -> bool:
+    """Require both the terminal receipt and current inventory; never certify quality."""
+    result = marker.get("result")
+    if not isinstance(result, dict):
+        return False
+    return (
+        not active
+        and marker.get("status") == "first_pass_complete_with_gaps"
+        and result.get("status") == "download_pass_complete_with_gaps"
+        and result.get("reason") == "reverse_history_is_complete_or_exhausted"
+        and result.get("quality_pending") is True
+        and result.get("deferred_dates") == 0
+        and result.get("semantic_quarantine_dates") == progress["semantic_quarantine_dates"]
+        and progress["settled_dates"] > 0
+        and progress["remaining_open_dates"] == 0
+        and progress["deferred_dates"] == 0
+    )
+
+
 def _state(evidence: dict, now: datetime, stall_seconds: int) -> tuple[str, str]:
     marker, quota = evidence["marker"], evidence["quota"]
     if evidence["marker_exists"] or evidence["blocked_by_audit"]:
         return "audit_blocked", f"persistent semantic audit block: {marker.get('acceptance', '')}"
+    if evidence["download_complete"] and not evidence["warnings"]:
+        return (
+            ("storage_wait", "free storage below configured minimum")
+            if evidence["free"] < evidence["min_free"]
+            else (
+                "download_complete_with_gaps",
+                "acquisition pass complete; quality acceptance pending",
+            )
+        )
     if (
         not (
             evidence["provenance"]["fresh"] or evidence["active"] and evidence["activity"]["fresh"]
@@ -239,6 +268,13 @@ def history_status(  # noqa: PLR0913 - public monitoring interface
         "active": active,
     }
     marker_complete = read_json(runtime_root / "download-complete.json", warnings)
+    evidence.update(
+        completion=marker_complete, completion_path=runtime_root / "download-complete.json"
+    )
+    evidence["download_complete"] = _download_complete(
+        marker_complete, progress, active
+    ) and completed_pass(evidence, progress, root, now)
+
     state, reason = _state(evidence, now, stall_seconds)
     return {
         "state": state,
