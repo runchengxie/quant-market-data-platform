@@ -6,8 +6,10 @@ import argparse
 import hashlib
 import ipaddress
 import json
+import platform
 import re
 import subprocess
+from importlib import metadata
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
@@ -50,6 +52,28 @@ def endpoint_identity(value: str | None) -> str:
     return hashlib.sha256(canonical.encode()).hexdigest()
 
 
+def runtime_identity() -> dict[str, object]:
+    """Identify the installed implementation, including explicit SDK absence offline."""
+    packages = {}
+    for name in ("numpy", "pandas", "pyarrow", "PyYAML", "tushare"):
+        try:
+            value = metadata.version(name)
+        except metadata.PackageNotFoundError:
+            if name != "tushare":
+                raise RuntimeError(
+                    "Vintage runtime identity is unproven: required package missing."
+                ) from None
+            value = "not_installed"
+        if not value:
+            raise RuntimeError("Vintage runtime identity is unproven: package version missing.")
+        packages[name] = value
+    return {
+        "python_implementation": platform.python_implementation(),
+        "python_version": platform.python_version(),
+        "packages": packages,
+    }
+
+
 def resolved_retry_parameters(args: argparse.Namespace) -> dict[str, object]:
     """Record code revision and resolved parameters; operational knobs are separate."""
     source = Path(__file__).resolve().parents[3]
@@ -77,6 +101,7 @@ def resolved_retry_parameters(args: argparse.Namespace) -> dict[str, object]:
         "schema_version": "tushare.fundamentals.retry_identity.v1",
         "source_revision": revision,
         "implementation_sha256": digest.hexdigest(),
+        "runtime": runtime_identity(),
         "snapshot_date": args.snapshot_date,
         "start_date": args.start_date,
         "end_date": args.end_date,

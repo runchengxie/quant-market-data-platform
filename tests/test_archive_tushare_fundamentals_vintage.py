@@ -563,3 +563,46 @@ def test_endpoint_rejects_whitespace_and_invalid_hostname_without_echo(endpoint)
     with pytest.raises(ValueError) as error:
         archive._validate_api_url(endpoint)
     assert endpoint not in str(error.value)
+
+
+@pytest.mark.parametrize("dependency", ["pandas", "pyarrow", "tushare"])
+def test_retry_identity_rejects_actual_runtime_dependency_change(tmp_path, monkeypatch, dependency):
+    from importlib import metadata
+
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    archive.begin_attempt(root, archive.resolved_retry_parameters(args))
+    original = metadata.version
+    monkeypatch.setattr(
+        metadata,
+        "version",
+        lambda name: "changed-version" if name == dependency else original(name),
+    )
+    with pytest.raises(RuntimeError, match="identity.*changed"):
+        archive.begin_attempt(root, archive.resolved_retry_parameters(args))
+
+
+def test_retry_identity_requires_runtime_versions_for_required_dependencies(tmp_path, monkeypatch):
+    from importlib import metadata
+
+    original = metadata.version
+
+    def version(name):
+        if name == "pandas":
+            raise metadata.PackageNotFoundError(name)
+        return original(name)
+
+    monkeypatch.setattr(metadata, "version", version)
+    with pytest.raises(RuntimeError, match="runtime.*unproven"):
+        archive.resolved_retry_parameters(_archive_args(tmp_path))
+
+
+def test_retry_identity_rejects_python_runtime_change(tmp_path, monkeypatch):
+    from quant_market_data_platform.providers import tushare_fundamentals_retry as retry
+
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    archive.begin_attempt(root, archive.resolved_retry_parameters(args))
+    monkeypatch.setattr(retry.platform, "python_version", lambda: "different")
+    with pytest.raises(RuntimeError, match="identity.*changed"):
+        archive.begin_attempt(root, archive.resolved_retry_parameters(args))
