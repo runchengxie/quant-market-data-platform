@@ -495,3 +495,23 @@ receipt hash。pending 状态阻止新事务。只读操作要求已有完整 ca
 当前 publication v1 使用保守 nonnegative quantity profile。`rqchl` 官方字段说明为
 融券偿还量，尚无明确的 signed 调整策略。源观测中保留的负值会阻断此 profile 的 publication。
 该策略不判断 vendor 对错或 legacy 采集的合法性，后续符号语义须单独核实并版本化。
+
+### 原始分区的请求范围与存储范围
+
+TuShare 按 `trade_date` 分区的原始镜像保留 `query.start_date/end_date` 作为本次请求范围，
+`run_totals` 和 written/skipped/empty 列表仍描述本次运行。增量写入不会把这些字段改成历史范围。
+`totals` 延续现有累计统计规则。
+
+新写入的 `stored_coverage`（`stored_trade_date_extent.v1`）独立记录磁盘分区的起止日期、
+分区数、文件数和相对路径、大小、纳秒修改时间组成的 SHA-256 inventory。
+读取 manifest summary 时重新扫描资产本身的 `data/`，只有 inventory 完全匹配才标为
+`verified`。健康检查优先采用该存储范围。文件删除、替换、新增或证据格式异常均标为
+`invalid` 并产生 warning，范围退回原有请求字段。旧 manifest 没有证据时为 `unknown`，
+不会因为目录里存在历史文件就自动升级为已验证。
+
+这里证明的是现存分区范围，不证明交易日连续、每个交易日证券齐全或供应商返回完整。
+这些要求继续由对应覆盖审计和完整性凭证验证。inventory 使用文件元数据，不能替代内容校验和。
+历史镜像可在写入任务停止后运行 `scripts/operations/reconcile_trade_date_manifest.py`：
+默认只预览，`--apply` 更新累计统计和存储范围，保留请求与运行凭证。
+对账前后若 inventory 或原 manifest 发生变化则拒绝更新。调用方仍必须保证写入任务全程静止。
+下一次普通或全跳过的增量写入也会生成最新存储范围，无须重拉供应商数据。

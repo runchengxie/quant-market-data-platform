@@ -7,8 +7,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
 import yaml
+
+from quant_market_data_platform.providers.tushare_a_share_manifests import _stored_partition_totals
+from quant_market_data_platform.stored_coverage import trade_date_inventory
 
 
 class ManifestReconciliationError(RuntimeError):
@@ -20,7 +22,8 @@ def reconcile_manifest(asset_dir: Path, *, apply: bool = False) -> dict[str, Any
     data_dir = asset_dir / "data"
     if not manifest_path.is_file() or not data_dir.is_dir():
         raise ManifestReconciliationError(f"manifest or data directory is missing: {asset_dir}")
-    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    original_text = manifest_path.read_text(encoding="utf-8")
+    manifest = yaml.safe_load(original_text)
     if not isinstance(manifest, dict) or manifest.get("status") != "completed":
         raise ManifestReconciliationError(f"asset is not completed: {asset_dir}")
     partitions = sorted(
@@ -28,28 +31,28 @@ def reconcile_manifest(asset_dir: Path, *, apply: bool = False) -> dict[str, Any
     )
     if not partitions:
         raise ManifestReconciliationError(f"no trade-date partitions: {asset_dir}")
-    frames = [pd.read_parquet(path / "part.parquet") for path in partitions]
-    rows = sum(len(frame) for frame in frames)
-    dates = [path.name.split("=", 1)[1] for path in partitions]
+    inventory = trade_date_inventory(data_dir)
+    stored_totals = _stored_partition_totals(data_dir)
+    rows = stored_totals["rows"]
     totals = manifest.setdefault("totals", {})
     if not isinstance(totals, dict):
         raise ManifestReconciliationError(f"manifest totals is not a mapping: {asset_dir}")
-    totals.update({"rows": rows, "files": len(partitions)})
-    if "symbol" in frames[0].columns:
-        totals["symbols"] = int(pd.concat(frames, ignore_index=True)["symbol"].nunique())
-    elif "ts_code" in frames[0].columns:
-        totals["symbols"] = int(pd.concat(frames, ignore_index=True)["ts_code"].nunique())
-    manifest["written_trade_dates"] = dates
-    manifest["skipped_trade_dates"] = []
-    manifest["empty_trade_dates"] = []
+    totals.update(stored_totals)
+    manifest["stored_coverage"] = inventory
     result = {
         "asset": str(asset_dir),
         "rows": rows,
-        "files": len(partitions),
-        "first_date": dates[0],
-        "last_date": dates[-1],
+        "files": stored_totals["files"],
+        "first_date": inventory["start_date"],
+        "last_date": inventory["end_date"],
         "status": "planned" if not apply else "reconciled",
     }
+    if inventory != trade_date_inventory(data_dir) or original_text != manifest_path.read_text(
+        encoding="utf-8"
+    ):
+        raise ManifestReconciliationError(
+            "asset changed during reconciliation; stop writers and retry"
+        )
     if apply:
         manifest_path.write_text(
             yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False), encoding="utf-8"
