@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 563,
-    "python_lines": 132746,
+    "python_lines": 132825,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "71e40a0da03530fe88d70d4b212701d3af6a8cfa",
-    "reason": "Expose existing exchange minute-partition validation through a read-only public CLI and real Parquet subprocess regressions: exactly two Python files and 166 net lines. No complexity, oversized-file, ignore, coverage or reserved-headroom allowances.",
-    "exit_condition": "Remove this two-file/166-line allowance if the CLI is retired or consolidated into another public validation interface with equivalent hash/sidecar/date/exchange checks, read-only behavior and failure regressions. Preserve prior retirement conditions."
+    "source_revision": "f241094f8648b093ea4e43b2c6d00a0df4d72af7",
+    "reason": "Expose existing exchange minute-partition validation through a read-only public CLI and real Parquet subprocess regressions: exactly two Python files and 166 net lines. Preserve merged identical-minute-candidate validation and all structural budgets; no complexity, ignore, coverage or reserved-headroom allowance.",
+    "exit_condition": "Remove this two-file/166-line allowance if the CLI is retired or consolidated with equivalent hash/sidecar/date/exchange validation, read-only behavior and failure regressions. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "71e40a0da03530fe88d70d4b212701d3af6a8cfa",
+      "reason": "Allow explicitly audited byte-identical triples without dropping candidates, with real consumer replay and malformed third-candidate regressions: 79 Python lines, no new files or structural budget changes.",
+      "exit_condition": "Remove this allowance if triple-candidate adjudication is retired or consolidated with equivalent complete input binding, all-candidate preservation and rejection coverage. Preserve prior retirement conditions."
+    },
     {
       "source_revision": "40e9048c23a6a934a0064bc541f4742aad47a22b",
       "reason": "Separate raw stored partition extent from incremental request provenance, revalidate inventory and freshness, and publish reconciled manifests atomically with failure regressions: exactly two Python files and 473 net lines over main with merged external-retention evidence, historical-minute receipts, partial research assets and operational overview. No complexity, oversized-file or reserved-headroom allowances.",
