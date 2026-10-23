@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 551,
-    "python_lines": 130418,
+    "python_files": 553,
+    "python_lines": 130891,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "58253d5e9ffdb638554b733428599d0549733345",
-    "reason": "Add repeatable external retention evidence roots with fail-closed structured evidence checks and regression coverage: exactly one Python file and 141 net lines. No complexity, oversized-file or reserved-headroom allowances.",
-    "exit_condition": "Remove this one-file/141-line allowance when external evidence reference scanning is consolidated with equivalent donor, alias, unreadable/malformed evidence and CLI coverage. Preserve all earlier retirement conditions."
+    "source_revision": "6ab13c2082e68f882276728401a2d23d5f12c28e",
+    "reason": "Separate raw stored partition extent from incremental request provenance, revalidate inventory and freshness, and publish reconciled manifests atomically with failure regressions: exactly two Python files and 473 net lines over the merged external-retention evidence feature. No complexity, oversized-file or reserved-headroom allowances.",
+    "exit_condition": "Remove this two-file/473-line allowance when a shared manifest inventory and atomic publication implementation subsumes extent, stale/concurrent/symlink evidence checks, provenance preservation and publication failure regressions. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "58253d5e9ffdb638554b733428599d0549733345",
+      "reason": "Add repeatable external retention evidence roots with fail-closed structured evidence checks and regression coverage: exactly one Python file and 141 net lines. No complexity, oversized-file or reserved-headroom allowances.",
+      "exit_condition": "Remove this one-file/141-line allowance when external evidence reference scanning is consolidated with equivalent donor, alias, unreadable/malformed evidence and CLI coverage. Preserve all earlier retirement conditions."
+    },
     {
       "source_revision": "1298debbb2c5e88373ec6cac56ba2748fa78642c",
       "reason": "Add separate opt-in financing catalog CLI, immutable source-hash versions, durable CAS adoption/recovery and regression coverage: exactly 5 Python files and 1298 lines over the parent revision. No complexity, oversized-file, coverage or reserved headroom increases.",
