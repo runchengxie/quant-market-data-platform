@@ -495,3 +495,9 @@ receipt hash。pending 状态阻止新事务。只读操作要求已有完整 ca
 当前 publication v1 使用保守 nonnegative quantity profile。`rqchl` 官方字段说明为
 融券偿还量，尚无明确的 signed 调整策略。源观测中保留的负值会阻断此 profile 的 publication。
 该策略不判断 vendor 对错或 legacy 采集的合法性，后续符号语义须单独核实并版本化。
+
+## 历史分钟回溯覆盖凭证
+
+`historical_minute_retrospective_coverage.v1` 仅证明明确分区的独立历史覆盖与原生 241 行
+语义一致。当前主表不提供历史 PIT 认证，跨源 0.99 验收和全市场发布仍为独立门禁。
+清单、候选裁决和消费者重放要求见[历史分钟独立覆盖凭证](operations/historical-minute-coverage-receipts.md)。
