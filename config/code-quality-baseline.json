@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 550,
-    "python_lines": 130277,
+    "python_files": 552,
+    "python_lines": 130525,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,9 +18,9 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "1298debbb2c5e88373ec6cac56ba2748fa78642c",
-    "reason": "Add separate opt-in financing catalog CLI, immutable source-hash versions, durable CAS adoption/recovery and regression coverage: exactly 5 Python files and 1298 lines over the parent revision. No complexity, oversized-file, coverage or reserved headroom increases.",
-    "exit_condition": "Remove this exact file/line allowance when an owner release controller subsumes the financing catalog with equivalent immutable lineage, explicit opt-in projection, interruption recovery and legacy-writer isolation tests. Preserve all earlier retirement conditions."
+    "source_revision": "1a12b6132b8fce291c228964b732494866683abf",
+    "reason": "Add independent partial reconstructed statement research asset and exact-disclosure opt-in reader with lineage, conflict, missingness and temporal boundary regressions: two files and 248 Python lines. No complexity or oversized-file budgets increased.",
+    "exit_condition": "Remove this two-file/248-line allowance when retired or consolidated with equivalent source-bound lineage, explicit partial acceptance, no fallback and no future-value exposure tests. Preserve prior retirement conditions."
   },
   "previous_change_records": [
     {
@@ -112,6 +112,11 @@
       "source_revision": "aab9afc6eb19b87c5938b5e4b9e772e0bb52fb83",
       "reason": "Add read-only hash-bound statement projection consensus and precision/null/source-race regressions: two files and 355 Python lines. All complexity and oversized-file limits remain unchanged.",
       "exit_condition": "Remove this two-file/355-line allowance if the diagnostic is retired or consolidated with equivalent all-category retention, lossless values, source binding and reconstructed-time coverage; preserve earlier retirement conditions."
+    },
+    {
+      "source_revision": "1298debbb2c5e88373ec6cac56ba2748fa78642c",
+      "reason": "Add separate opt-in financing catalog CLI, immutable source-hash versions, durable CAS adoption/recovery and regression coverage: exactly 5 Python files and 1298 lines over the parent revision. No complexity, oversized-file, coverage or reserved headroom increases.",
+      "exit_condition": "Remove this exact file/line allowance when an owner release controller subsumes the financing catalog with equivalent immutable lineage, explicit opt-in projection, interruption recovery and legacy-writer isolation tests. Preserve all earlier retirement conditions."
     }
   ]
 }
