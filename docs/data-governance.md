@@ -295,3 +295,29 @@ marketdata governance snapshot-clean-inputs \
 捕获使用独立 inode，优先采用 reflink，否则复制普通文件。每个文件与来源 manifest
 均记录 SHA-256，并在完成前重新核对来源。已有输出不会被覆盖，完成 receipt 最后原子发布。
 失败尝试保留用于检查，旧输入树继续作为历史证据。复制旧链接的当前目标无法重建过去运行的字节。
+
+规划目录外的研究与恢复证据时，重复指定 `--reference-root`：
+
+```bash
+marketdata governance plan-retention \
+  --artifacts-root "$DATA_PLATFORM_ROOT" \
+  --reference-root "$RESEARCH_EVIDENCE_ROOT" \
+  --reference-root "$ROLLOUT_EVIDENCE_ROOT" \
+  --out "$AUDIT_ROOT/retention-plan.tsv"
+```
+
+附加目录必须可读取。其中 JSON、JSONL 和 YAML 证据还会检查语法。路径缺失、证据损坏、
+无法读取或超出扫描上限，均使尚未确认的候选降为 `review`。引用原因包含证据的完整路径。
+这些目录由操作者按消费者与恢复边界列全。仍须逐一确认所有下游的使用状态。
+本命令不检查活跃任务是否已停机，不能据其结果直接执行退役。
+
+`retain_newest: 2` 用于筛选候选，总目录数量还取决于其他保护条件。最新版本之外的 current、回滚、
+供体、历史研究引用和未完成尝试仍受保护。物理 latest 迁移保留的 backup 和 journal 也必须
+一起保留，直到另行验证恢复替代物。不能仅凭最新 symlink 已上线而移除物理回滚副本。
+`logical_bytes` 是逐路径逻辑大小。`allocated_bytes` 是目录内去重 inode 的分配量。
+`reclaimable_bytes` 排除了目录外仍有硬链接的 inode。跨目录汇总不能直接相加当作释放承诺，
+还应核对共享 inode、文件系统压缩、快照与仍打开的句柄。
+
+可逆归档须先固定报告、源版本与证据哈希，补齐后继验证、所有消费者的释放证据及锁和任务检查，
+再生成独立归档并验证逐文件恢复。保存原 manifest、receipt、journal 和供体映射，确认可恢复后
+才可单独评审 payload 退役。目录年龄和本报告均不授权移动或删除。
