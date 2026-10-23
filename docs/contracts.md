@@ -455,3 +455,14 @@ manifest 的 `output_dir` 必须等于真实版本目录。不接受链接 manif
 current contract、registry 并执行 health 检查，但不能改写 raw、universe 或未声明资源。
 alias 与 JSON 有分别写入的窗口，reader 仍须固定真实版本并在契约失配时停止或重新加载。
 独占锁只协调使用此 API 的 writer，不替代部署层停写。禁止并行手工改 alias 或 metadata。
+
+实体 clean latest 的转换先比较源与目标的完整相对目录、文件集合、size 和逐文件 SHA256，
+包括 manifest。只有字节等价版本可以在显式确认库存摘要后迁移。原实体通过同目录 rename
+保留在唯一 physical rollback 目录，不自动删除。中断恢复或显式 rollback 使用原目录及声明
+metadata 备份还原，恢复前再次验证原实体完整摘要。POSIX 目录 rename 与链接创建有短暂缺口，
+迁移期间须停止 writer 并让消费者固定版本。
+
+`promote-a-share-current --clean-only-linked` 只切 clean 及 current contract、registry、health、
+release evidence 四份 metadata，用于受控同版本迁移。`--clean-linked` 保留正常 raw/universe
+promotion，并将 clean 与这四份 metadata 放入可恢复发布。raw/universe 的切换位于该恢复边界
+之外，失败后可能保留它们的新状态。两个模式均显式启用，默认物化方式继续保留。

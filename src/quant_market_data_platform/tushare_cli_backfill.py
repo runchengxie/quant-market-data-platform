@@ -97,6 +97,20 @@ def add_tushare_refresh_parser(subparsers: argparse._SubParsersAction) -> None:
     promote.add_argument("--daily-basic-dir")
     promote.add_argument("--limit-status-dir")
     promote.add_argument("--daily-clean-dir")
+    promote.add_argument(
+        "--clean-linked",
+        action="store_true",
+        help="Keep full raw/universe promotion, using recoverable relative clean link.",
+    )
+    promote.add_argument(
+        "--clean-only-linked",
+        action="store_true",
+        help="Publish only clean relative link and current metadata; leave raw/universe unchanged.",
+    )
+    promote.add_argument(
+        "--clean-migration-sha256",
+        help="Explicit full inventory SHA256 confirmation for physical latest migration.",
+    )
     promote.add_argument("--universe-by-date")
     promote.add_argument("--universe-symbols")
     promote.add_argument("--universe-meta")

@@ -304,7 +304,6 @@ def _apply_promotion(
     checks: Mapping[str, Any],
     options: AShareCurrentPromotionOptions,
 ) -> dict[str, Any]:
-    root = Path(context["root"])
     refresh_paths = context["refresh_paths"]
     if not isinstance(refresh_paths, AShareCurrentRefreshPaths):
         raise ValueError("refresh_paths must be AShareCurrentRefreshPaths.")
@@ -320,10 +319,11 @@ def _apply_promotion(
         )
         for dataset, path in raw_sources.items()
     }
-    alias_updates["daily_clean"] = _replace_latest_symlink(
-        alias_path=refresh_paths.aliases["daily_clean"],
-        target=Path(context["daily_clean"]),
-    )
+    if not options.clean_linked:
+        alias_updates["daily_clean"] = _replace_latest_symlink(
+            alias_path=refresh_paths.aliases["daily_clean"],
+            target=Path(context["daily_clean"]),
+        )
     file_updates: dict[str, dict[str, Any]] = {
         key: _copy_release_file(
             source=Path(path),
@@ -350,6 +350,27 @@ def _apply_promotion(
             target=version_path,
         )
 
+    if options.clean_linked:
+        from quant_market_data_platform.clean_promotion import finish_linked_promotion
+
+        return finish_linked_promotion(
+            context,
+            checks,
+            options,
+            {"alias_updates": alias_updates, "file_updates": file_updates},
+            finish=_finish_promotion,
+        )
+    return _finish_promotion(context, checks, options, alias_updates, file_updates)
+
+
+def _finish_promotion(
+    context: Mapping[str, Any],
+    checks: Mapping[str, Any],
+    options: AShareCurrentPromotionOptions,
+    alias_updates: Mapping[str, Any],
+    file_updates: Mapping[str, Any],
+) -> dict[str, Any]:
+    root = Path(context["root"])
     contract_output = current_contract_path(root, market="a_share")
     contract = build_current_contract(
         root,
@@ -408,9 +429,23 @@ def _apply_promotion(
 
 
 def _run_a_share_current_promotion(options: AShareCurrentPromotionOptions) -> dict[str, Any]:
+    if options.clean_linked and options.clean_only_linked:
+        raise ValueError("Choose one linked publication mode")
+    if options.clean_migration_sha256 and not options.clean_only_linked:
+        raise ValueError("Migration confirmation requires clean-only-linked mode")
     context = _build_promotion_context(options)
+    if options.clean_only_linked:
+        from quant_market_data_platform.clean_promotion import run_clean_only_promotion
+
+        return run_clean_only_promotion(context, options, finish=_finish_promotion)
+    if options.clean_linked:
+        from quant_market_data_platform.clean_promotion import preflight_recurring_linked
+
+        preflight_recurring_linked(context, apply=options.apply)
     checks = _validate_promotion_inputs(context)
     actions = _promotion_actions(context)
+    if options.clean_linked:
+        actions["alias_updates"]["daily_clean"]["materialized"] = "false"
     if not options.apply:
         return {
             "schema_version": "tushare.a_share.current_release.v1",
