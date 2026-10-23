@@ -13,6 +13,7 @@ def observe_rows(root: Path, day: str, now: datetime, warnings: list[str]) -> di
     path = root / "metadata/tushare/minute_quota/minute_quota.sqlite3"
     result: dict[str, Any] = {
         "source": "quota_ledger",
+        "ledger_readable": False,
         "returned_rows_today": 0,
         "last_returned_rows_at": None,
         "age_seconds": None,
@@ -37,6 +38,7 @@ def observe_rows(root: Path, day: str, now: datetime, warnings: list[str]) -> di
             result.update(
                 last_returned_rows_at=at.isoformat(), age_seconds=age, fresh=-60 <= age <= 600
             )
+        result["ledger_readable"] = True
     except (sqlite3.Error, ValueError, TypeError) as exc:
         warnings.append(f"quota ledger activity: {exc}")
     return result
