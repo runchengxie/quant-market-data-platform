@@ -47,6 +47,7 @@ from quant_market_data_platform.providers.tushare_a_share_fundamentals_support i
 from quant_market_data_platform.providers.tushare_a_share_fundamentals_support import (
     file_sha256 as _file_sha256,
 )
+from quant_market_data_platform.publication_lock import publication_lock
 
 
 def _normalized_snapshot_name(artifacts_root: Path, normalized_dirs: Sequence[Path]) -> Path:
@@ -89,13 +90,12 @@ def publish_fundamentals_assets(
     pit_dir: str | Path,
     target_date: str,
 ) -> dict[str, Any]:
-    from quant_market_data_platform.contract import build_current_contract, write_current_contract
+    from quant_market_data_platform.contract import build_current_contract
     from quant_market_data_platform.paths import (
         candidate_asset_paths,
         current_contract_path,
         dataset_registry_path,
     )
-    from quant_market_data_platform.registry import write_combined_dataset_registry
 
     root = Path(artifacts_root).expanduser().resolve()
     normalized = [Path(path).expanduser().resolve() for path in normalized_dirs]
@@ -146,28 +146,29 @@ def publish_fundamentals_assets(
             label="Normalized fundamentals union",
         )
         normalized_target = composite_dir
-    _replace_symlink(aliases["normalized_fundamentals"], normalized_target)
-    _replace_symlink(aliases["pit_fundamentals"], pit)
-    contract = build_current_contract(
-        root,
-        market="a_share",
-        provider="tushare",
-        generated_by="marketdata tushare publish-a-share-fundamentals",
-        target_date=expected_target,
-    )
-    contract_path = current_contract_path(root, market="a_share")
-    write_current_contract(contract_path, contract)
-    contracts = [contract]
-    write_combined_dataset_registry(dataset_registry_path(root), contracts)
-    return {
-        "status": "published",
-        "normalized_validation": normalized_validation,
-        "composite_validation": composite_validation,
-        "pit_validation": pit_validation,
-        "normalized_asset": str(normalized_target),
-        "current_contract": str(contract_path),
-        "dataset_registry": str(dataset_registry_path(root)),
-    }
+    with publication_lock(root):
+        _replace_symlink(aliases["normalized_fundamentals"], normalized_target)
+        _replace_symlink(aliases["pit_fundamentals"], pit)
+        contract = build_current_contract(
+            root,
+            market="a_share",
+            provider="tushare",
+            generated_by="marketdata tushare publish-a-share-fundamentals",
+            target_date=expected_target,
+        )
+        contract_path = current_contract_path(root, market="a_share")
+        from quant_market_data_platform.current_publication import commit_current
+
+        commit_current(root, contract_path, contract)
+        return {
+            "status": "published",
+            "normalized_validation": normalized_validation,
+            "composite_validation": composite_validation,
+            "pit_validation": pit_validation,
+            "normalized_asset": str(normalized_target),
+            "current_contract": str(contract_path),
+            "dataset_registry": str(dataset_registry_path(root)),
+        }
 
 
 def publish_pit_fundamentals_asset(
@@ -176,13 +177,12 @@ def publish_pit_fundamentals_asset(
     pit_dir: str | Path,
     target_date: str,
 ) -> dict[str, Any]:
-    from quant_market_data_platform.contract import build_current_contract, write_current_contract
+    from quant_market_data_platform.contract import build_current_contract
     from quant_market_data_platform.paths import (
         candidate_asset_paths,
         current_contract_path,
         dataset_registry_path,
     )
-    from quant_market_data_platform.registry import write_combined_dataset_registry
 
     root = Path(artifacts_root).expanduser().resolve()
     pit = Path(pit_dir).expanduser().resolve()
@@ -193,32 +193,33 @@ def publish_pit_fundamentals_asset(
     )
     _require_fundamentals_validation(pit_validation, label="PIT fundamentals")
     aliases = candidate_asset_paths(root, market="a_share", provider="tushare")
-    normalized_alias = aliases["normalized_fundamentals"]
-    if not normalized_alias.exists():
-        raise ValueError(
-            "PIT fundamentals promotion requires an existing normalized_fundamentals alias."
+    with publication_lock(root):
+        normalized_alias = aliases["normalized_fundamentals"]
+        if not normalized_alias.exists():
+            raise ValueError(
+                "PIT fundamentals promotion requires an existing normalized_fundamentals alias."
+            )
+        normalized_validation = validate_normalized_fundamentals(
+            asset_dir=normalized_alias,
+            target_date=expected_target,
         )
-    normalized_validation = validate_normalized_fundamentals(
-        asset_dir=normalized_alias,
-        target_date=expected_target,
-    )
-    _require_fundamentals_validation(normalized_validation, label="Normalized fundamentals")
-    _replace_symlink(aliases["pit_fundamentals"], pit)
-    contract = build_current_contract(
-        root,
-        market="a_share",
-        provider="tushare",
-        generated_by="marketdata tushare publish-a-share-pit-fundamentals",
-        target_date=expected_target,
-    )
-    contract_path = current_contract_path(root, market="a_share")
-    write_current_contract(contract_path, contract)
-    contracts = [contract]
-    write_combined_dataset_registry(dataset_registry_path(root), contracts)
-    return {
-        "status": "published",
-        "normalized_validation": normalized_validation,
-        "pit_validation": pit_validation,
-        "current_contract": str(contract_path),
-        "dataset_registry": str(dataset_registry_path(root)),
-    }
+        _require_fundamentals_validation(normalized_validation, label="Normalized fundamentals")
+        _replace_symlink(aliases["pit_fundamentals"], pit)
+        contract = build_current_contract(
+            root,
+            market="a_share",
+            provider="tushare",
+            generated_by="marketdata tushare publish-a-share-pit-fundamentals",
+            target_date=expected_target,
+        )
+        contract_path = current_contract_path(root, market="a_share")
+        from quant_market_data_platform.current_publication import commit_current
+
+        commit_current(root, contract_path, contract)
+        return {
+            "status": "published",
+            "normalized_validation": normalized_validation,
+            "pit_validation": pit_validation,
+            "current_contract": str(contract_path),
+            "dataset_registry": str(dataset_registry_path(root)),
+        }

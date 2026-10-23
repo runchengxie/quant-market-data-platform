@@ -80,6 +80,7 @@ def _metadata(context: Mapping[str, Any]) -> list[Path]:
     paths = [
         current_contract_path(root, market="a_share"),
         dataset_registry_path(root),
+        root / "metadata/current_assets/.registry-pending.json",
         Path(context["current_health_report"]),
         Path(context["evidence_out"]),
     ]

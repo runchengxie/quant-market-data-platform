@@ -308,3 +308,49 @@ def test_existing_temporary_metadata_is_preserved(tmp_path, monkeypatch):
     with pytest.raises(FileExistsError):
         publication._write(path, b"new")
     assert temporary.read_text() == "other writer"
+
+
+def test_old_rollback_refuses_metadata_written_by_later_publisher(tmp_path):
+    target = version(tmp_path, "new")
+    alias = tmp_path / "latest"
+    metadata = tmp_path / "current.json"
+    metadata.write_text("old")
+    publication.publish_clean(
+        root=tmp_path,
+        alias=alias,
+        target=target,
+        metadata=[metadata],
+        commit=lambda: metadata.write_text("published"),
+    )
+    metadata.write_text("later minute publication")
+    with pytest.raises(ValueError, match="Metadata changed"):
+        publication.rollback_clean(root=tmp_path, alias=alias)
+    assert metadata.read_text() == "later minute publication"
+    assert alias.resolve() == target
+
+
+def test_unproven_crash_metadata_refuses_recovery(tmp_path):
+    import json
+
+    target = version(tmp_path, "new")
+    alias = tmp_path / "latest"
+    metadata = tmp_path / "current.json"
+    metadata.write_text("old")
+    publication.publish_clean(
+        root=tmp_path,
+        alias=alias,
+        target=target,
+        metadata=[metadata],
+        commit=lambda: metadata.write_text("new"),
+    )
+    journal = tmp_path / ".latest.clean-publication-lock/journal.json"
+    state = json.loads(journal.read_text())
+    state["status"] = "prepared"
+    del state["metadata_hashes"]
+    journal.write_text(json.dumps(state))
+    before = journal.read_bytes()
+    with pytest.raises(ValueError, match="ownership is unproven"):
+        publication.recover_clean(root=tmp_path, alias=alias)
+    assert metadata.read_text() == "new"
+    assert alias.resolve() == target
+    assert journal.read_bytes() == before

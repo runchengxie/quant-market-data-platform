@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import argparse
 import json
+from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
+
+from quant_market_data_platform.publication_lock import publication_lock
 
 from .contract import build_current_contract, write_current_contract
 from .contract_health import (
@@ -175,31 +178,47 @@ def handle_contract_build(args: argparse.Namespace) -> int:
     output = current_contract_path(root, market=args.market)
     if args.out is not None:
         output = Path(args.out).expanduser().resolve()
-    registry_output = dataset_registry_path(root)
+    shared = output == current_contract_path(root, market=args.market)
+    registry_output = (
+        dataset_registry_path(root) if shared else output.parent / "dataset_registry.csv"
+    )
     if args.registry_out is not None:
         registry_output = Path(args.registry_out).expanduser().resolve()
-    payload = build_current_contract(
-        root,
-        market=args.market,
-        provider=args.provider,
-        generated_by=args.generated_by,
-        target_date=args.target_date,
-    )
-    payload = _with_contract_path(payload, output)
-    if args.dry_run:
-        print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
-        return 0
-    write_current_contract(output, payload)
-    print(f"current_contract: {output}")
-    if not args.no_registry:
-        contracts = _load_registry_contracts(
+    if not shared and not args.no_registry and registry_output == dataset_registry_path(root):
+        raise ValueError("Custom contracts require --registry-out outside the shared registry")
+    guard = publication_lock(root) if not args.dry_run and shared else nullcontext()
+    with guard:
+        payload = build_current_contract(
             root,
-            market="all",
-            override_payload=payload,
+            market=args.market,
+            provider=args.provider,
+            generated_by=args.generated_by,
+            target_date=args.target_date,
         )
-        write_combined_dataset_registry(registry_output, contracts)
-        print(f"dataset_registry: {registry_output}")
-    return 0
+        payload = _with_contract_path(payload, output)
+        if args.dry_run:
+            print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+            return 0
+        canonical_pair = (
+            shared and registry_output == dataset_registry_path(root) and not args.no_registry
+        )
+        if canonical_pair:
+            from .current_publication import commit_current
+
+            commit_current(root, output, payload)
+        else:
+            write_current_contract(output, payload)
+        print(f"current_contract: {output}")
+        if not args.no_registry and not canonical_pair:
+            contracts = _load_registry_contracts(
+                root,
+                market="all",
+                override_payload=payload,
+            )
+            write_combined_dataset_registry(registry_output, contracts)
+        if not args.no_registry:
+            print(f"dataset_registry: {registry_output}")
+        return 0
 
 
 def handle_contract_inspect(args: argparse.Namespace) -> int:
@@ -228,14 +247,19 @@ def handle_registry_build(args: argparse.Namespace) -> int:
     output = dataset_registry_path(root)
     if args.out is not None:
         output = Path(args.out).expanduser().resolve()
-    contracts = _load_registry_contracts(
-        root,
-        market=args.market,
-        explicit_contract=args.contract,
-    )
-    if args.dry_run:
-        print(render_combined_dataset_registry_csv(contracts), end="")
+    if output == dataset_registry_path(root) and (args.contract or args.market != "all"):
+        raise ValueError("Selected registry inputs require --out outside the shared registry")
+    shared = output == dataset_registry_path(root)
+    guard = publication_lock(root) if shared and not args.dry_run else nullcontext()
+    with guard:
+        contracts = _load_registry_contracts(
+            root,
+            market=args.market,
+            explicit_contract=args.contract,
+        )
+        if args.dry_run:
+            print(render_combined_dataset_registry_csv(contracts), end="")
+            return 0
+        write_combined_dataset_registry(output, contracts)
+        print(str(output))
         return 0
-    write_combined_dataset_registry(output, contracts)
-    print(str(output))
-    return 0

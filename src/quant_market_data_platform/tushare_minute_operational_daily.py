@@ -189,6 +189,13 @@ def _backfill_failure_reason(path: Path) -> str | None:
     return None
 
 
+def _sync_current_catalog(root: Path, paths: _OperationalPaths, base_max: str) -> None:
+    from .minute_publication import reconcile_operational_catalog
+
+    promotion = paths.metadata_root / "promotions" / f"minute_1m_tushare_v1_{base_max}.json"
+    reconcile_operational_catalog(root, paths.alias, promotion)
+
+
 def run_operational_daily(options: OperationalDailyOptions) -> dict[str, Any]:
     """Catch up every missing open date, publish a successor, and move only TuShare."""
 
@@ -198,6 +205,7 @@ def run_operational_daily(options: OperationalDailyOptions) -> dict[str, Any]:
     target = _latest_open_date(paths.trade_calendar, _target_date(options))
     base_max = str(base_receipt["summary"]["date_max"])
     if target <= base_max:
+        _sync_current_catalog(root, paths, base_max)
         return {
             "status": "noop",
             "reason": "operational_version_is_current",

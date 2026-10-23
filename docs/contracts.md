@@ -548,3 +548,13 @@ status 消费，不能从候选中自行补值。
 `historical_minute_retrospective_coverage.v1` 仅证明明确分区的独立历史覆盖与原生 241 行
 语义一致。当前主表不提供历史 PIT 认证，跨源 0.99 验收和全市场发布仍为独立门禁。
 清单、候选裁决和消费者重放要求见[历史分钟独立覆盖凭证](operations/historical-minute-coverage-receipts.md)。
+
+### Current metadata 一致性边界
+
+目录发布使用 root 级独占锁协调所有内置 writer。current contract 是权威描述，
+`dataset_registry.csv` 是各市场契约的派生目录。单个文件原子替换，成对更新采用可重试的
+pending 状态。消费者需要一致快照时应固定 current contract 和不可变资产版本。
+
+分钟目录同步只更新 `minute_1m_tushare`、生成时间和生成者，原有契约 `target_date`
+继续表示整体发布目标日期。分钟最新日期从该资产的 `as_of` 和 receipt summary 读取。
+该同步不改变数据质量门禁、来源语义或资产业务 schema。

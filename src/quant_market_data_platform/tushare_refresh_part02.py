@@ -9,7 +9,6 @@ from typing import Any
 
 from quant_market_data_platform.contract import (
     build_current_contract,
-    write_current_contract,
 )
 from quant_market_data_platform.contract_health import (
     ContractInspectionOptions,
@@ -22,7 +21,7 @@ from quant_market_data_platform.paths import (
     dataset_registry_path,
     resolve_artifacts_root,
 )
-from quant_market_data_platform.registry import write_combined_dataset_registry
+from quant_market_data_platform.publication_lock import publication_lock
 from quant_market_data_platform.tushare_backfill import build_a_share_backfill_plan
 from quant_market_data_platform.tushare_refresh_part01 import (
     PROMOTION_RAW_DATASETS,
@@ -304,63 +303,64 @@ def _apply_promotion(
     checks: Mapping[str, Any],
     options: AShareCurrentPromotionOptions,
 ) -> dict[str, Any]:
-    refresh_paths = context["refresh_paths"]
-    if not isinstance(refresh_paths, AShareCurrentRefreshPaths):
-        raise ValueError("refresh_paths must be AShareCurrentRefreshPaths.")
-    raw_sources = context["raw_sources"]
-    universe_files = context["universe_files"]
-    if not isinstance(raw_sources, Mapping) or not isinstance(universe_files, Mapping):
-        raise ValueError("promotion context is malformed.")
+    with publication_lock(Path(context["root"])):
+        refresh_paths = context["refresh_paths"]
+        if not isinstance(refresh_paths, AShareCurrentRefreshPaths):
+            raise ValueError("refresh_paths must be AShareCurrentRefreshPaths.")
+        raw_sources = context["raw_sources"]
+        universe_files = context["universe_files"]
+        if not isinstance(raw_sources, Mapping) or not isinstance(universe_files, Mapping):
+            raise ValueError("promotion context is malformed.")
 
-    alias_updates = {
-        dataset: _replace_latest_symlink(
-            alias_path=refresh_paths.aliases[dataset],
-            target=Path(path),
-        )
-        for dataset, path in raw_sources.items()
-    }
-    if not options.clean_linked:
-        alias_updates["daily_clean"] = _replace_latest_symlink(
-            alias_path=refresh_paths.aliases["daily_clean"],
-            target=Path(context["daily_clean"]),
-        )
-    file_updates: dict[str, dict[str, Any]] = {
-        key: _copy_release_file(
-            source=Path(path),
-            destination=(
-                getattr(
-                    refresh_paths,
-                    f"universe_version_{key.removeprefix('universe_')}",
-                    None,
-                )
-                or refresh_paths.aliases[key]
-            ),
-            copy_manifest=True,
-        )
-        for key, path in universe_files.items()
-    }
-    for key in universe_files:
-        version_path = getattr(
-            refresh_paths,
-            f"universe_version_{key.removeprefix('universe_')}",
-            refresh_paths.aliases[key],
-        )
-        file_updates[key]["alias"] = _publish_file_alias(
-            alias_path=refresh_paths.aliases[key],
-            target=version_path,
-        )
+        alias_updates = {
+            dataset: _replace_latest_symlink(
+                alias_path=refresh_paths.aliases[dataset],
+                target=Path(path),
+            )
+            for dataset, path in raw_sources.items()
+        }
+        if not options.clean_linked:
+            alias_updates["daily_clean"] = _replace_latest_symlink(
+                alias_path=refresh_paths.aliases["daily_clean"],
+                target=Path(context["daily_clean"]),
+            )
+        file_updates: dict[str, dict[str, Any]] = {
+            key: _copy_release_file(
+                source=Path(path),
+                destination=(
+                    getattr(
+                        refresh_paths,
+                        f"universe_version_{key.removeprefix('universe_')}",
+                        None,
+                    )
+                    or refresh_paths.aliases[key]
+                ),
+                copy_manifest=True,
+            )
+            for key, path in universe_files.items()
+        }
+        for key in universe_files:
+            version_path = getattr(
+                refresh_paths,
+                f"universe_version_{key.removeprefix('universe_')}",
+                refresh_paths.aliases[key],
+            )
+            file_updates[key]["alias"] = _publish_file_alias(
+                alias_path=refresh_paths.aliases[key],
+                target=version_path,
+            )
 
-    if options.clean_linked:
-        from quant_market_data_platform.clean_promotion import finish_linked_promotion
+        if options.clean_linked:
+            from quant_market_data_platform.clean_promotion import finish_linked_promotion
 
-        return finish_linked_promotion(
-            context,
-            checks,
-            options,
-            {"alias_updates": alias_updates, "file_updates": file_updates},
-            finish=_finish_promotion,
-        )
-    return _finish_promotion(context, checks, options, alias_updates, file_updates)
+            return finish_linked_promotion(
+                context,
+                checks,
+                options,
+                {"alias_updates": alias_updates, "file_updates": file_updates},
+                finish=_finish_promotion,
+            )
+        return _finish_promotion(context, checks, options, alias_updates, file_updates)
 
 
 def _finish_promotion(
@@ -370,62 +370,61 @@ def _finish_promotion(
     alias_updates: Mapping[str, Any],
     file_updates: Mapping[str, Any],
 ) -> dict[str, Any]:
-    root = Path(context["root"])
-    contract_output = current_contract_path(root, market="a_share")
-    contract = build_current_contract(
-        root,
-        market="a_share",
-        provider="tushare",
-        generated_by="marketdata tushare promote-a-share-current",
-        target_date=options.end_date,
-    )
-    write_current_contract(contract_output, contract)
-    registry_output = dataset_registry_path(root)
-    write_combined_dataset_registry(
-        registry_output,
-        _load_existing_contracts(root, a_share_contract=contract),
-    )
-    health_report = Path(context["current_health_report"])
-    health = inspect_current_contract(
-        ContractInspectionOptions(
-            artifacts_root=root,
+    with publication_lock(Path(context["root"])):
+        root = Path(context["root"])
+        contract_output = current_contract_path(root, market="a_share")
+        contract = build_current_contract(
+            root,
             market="a_share",
             provider="tushare",
+            generated_by="marketdata tushare promote-a-share-current",
             target_date=options.end_date,
-            required_start_date=options.start_date,
-            assets=list(context["required_assets"]),
-            fail_on_severity=options.fail_on_severity,
         )
-    )
-    write_current_contract_health_report(health, output=health_report, output_format="json")
-    exit_code = current_contract_health_exit_code(health)
-    if exit_code:
-        raise RuntimeError(f"A 股 current promotion health gate failed; see {health_report}")
+        from quant_market_data_platform.current_publication import commit_current
 
-    evidence_out = Path(context["evidence_out"])
-    evidence = {
-        "schema_version": "tushare.a_share.current_release.v1",
-        "status": "passed",
-        "dry_run": False,
-        "market": "a_share",
-        "provider": "tushare",
-        "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-        "artifacts_root": str(root),
-        "query": {"start_date": options.start_date, "end_date": options.end_date},
-        "required_assets": list(context["required_assets"]),
-        "checks": checks,
-        "publication": {
-            "alias_updates": alias_updates,
-            "file_updates": file_updates,
-            "current_contract": str(contract_output),
-            "dataset_registry": str(registry_output),
-            "current_health_report": str(health_report),
-            "release_evidence": str(evidence_out),
-        },
-        "quality_verdict": health.get("quality_verdict", {}),
-    }
-    _write_release_evidence(evidence_out, evidence)
-    return evidence
+        commit_current(root, contract_output, contract)
+        registry_output = dataset_registry_path(root)
+        health_report = Path(context["current_health_report"])
+        health = inspect_current_contract(
+            ContractInspectionOptions(
+                artifacts_root=root,
+                market="a_share",
+                provider="tushare",
+                target_date=options.end_date,
+                required_start_date=options.start_date,
+                assets=list(context["required_assets"]),
+                fail_on_severity=options.fail_on_severity,
+            )
+        )
+        write_current_contract_health_report(health, output=health_report, output_format="json")
+        exit_code = current_contract_health_exit_code(health)
+        if exit_code:
+            raise RuntimeError(f"A 股 current promotion health gate failed; see {health_report}")
+
+        evidence_out = Path(context["evidence_out"])
+        evidence = {
+            "schema_version": "tushare.a_share.current_release.v1",
+            "status": "passed",
+            "dry_run": False,
+            "market": "a_share",
+            "provider": "tushare",
+            "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "artifacts_root": str(root),
+            "query": {"start_date": options.start_date, "end_date": options.end_date},
+            "required_assets": list(context["required_assets"]),
+            "checks": checks,
+            "publication": {
+                "alias_updates": alias_updates,
+                "file_updates": file_updates,
+                "current_contract": str(contract_output),
+                "dataset_registry": str(registry_output),
+                "current_health_report": str(health_report),
+                "release_evidence": str(evidence_out),
+            },
+            "quality_verdict": health.get("quality_verdict", {}),
+        }
+        _write_release_evidence(evidence_out, evidence)
+        return evidence
 
 
 def _run_a_share_current_promotion(options: AShareCurrentPromotionOptions) -> dict[str, Any]:
