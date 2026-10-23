@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 529,
-    "python_lines": 125230,
+    "python_files": 531,
+    "python_lines": 125803,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "e0b278d985ec939709ef533545a3b2d1c7b44934",
-    "reason": "Add unique per-plan daily-clean output paths and fail-closed output guards with payload-preservation regressions: 135 Python lines, no new files. All complexity and oversized-file budgets remain unchanged.",
-    "exit_condition": "Remove this 135-line allowance if these entry-point guards and plan-path regressions are consolidated with equivalent non-destructive rebuild coverage; preserve earlier feature retirement conditions."
+    "source_revision": "2e801a6c90bde23ea12bffff9af741d9727c431a",
+    "reason": "Add explicit POSIX clean-only linked publisher, durable metadata rollback journal, read-only migration planner and fail-closed fixtures: two files and 573 Python lines. No complexity or oversized-file budgets increased.",
+    "exit_condition": "Remove this two-file/573-line allowance when a shared recoverable publication controller replaces this opt-in clean publisher with equivalent interruption, retention and path-safety coverage; preserve earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "e0b278d985ec939709ef533545a3b2d1c7b44934",
+      "reason": "Add unique per-plan daily-clean output paths and fail-closed output guards with payload-preservation regressions: 135 Python lines, no new files. All complexity and oversized-file budgets remain unchanged.",
+      "exit_condition": "Remove this 135-line allowance if these entry-point guards and plan-path regressions are consolidated with equivalent non-destructive rebuild coverage; preserve earlier feature retirement conditions."
+    },
     {
       "source_revision": "29ad8b0bca4cfb466ccd06242313ee8727875516",
       "reason": "Add one retry identity/attempt module and fail-closed fixture coverage: one file and 499 lines. Complexity and oversized-file budgets remain unchanged.",
