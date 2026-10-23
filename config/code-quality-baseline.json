@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 558,
-    "python_lines": 131877,
+    "python_files": 561,
+    "python_lines": 132580,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,20 +18,20 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "e617a44d7b4f23e2e55f7837e6b2fe6a0b7ea88f",
-    "reason": "Separate raw stored partition extent from incremental request provenance, revalidate inventory and freshness, and publish reconciled manifests atomically with failure regressions: exactly two Python files and 473 net lines over main with merged external-retention evidence, historical-minute receipts and partial research assets. No complexity, oversized-file or reserved-headroom allowances.",
+    "source_revision": "40e9048c23a6a934a0064bc541f4742aad47a22b",
+    "reason": "Separate raw stored partition extent from incremental request provenance, revalidate inventory and freshness, and publish reconciled manifests atomically with failure regressions: exactly two Python files and 473 net lines over main with merged external-retention evidence, historical-minute receipts, partial research assets and operational overview. No complexity, oversized-file or reserved-headroom allowances.",
     "exit_condition": "Remove this two-file/473-line allowance when a shared manifest inventory and atomic publication implementation subsumes extent, stale/concurrent/symlink evidence checks, provenance preservation and publication failure regressions. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
     {
+      "source_revision": "1d96c3901684d97064a4aab22d7b71dbf30fad42",
+      "reason": "Add bounded read-only operational overview, CLI and malformed/freshness regressions: 3 files and 703 lines; structural budgets unchanged.",
+      "exit_condition": "Remove this allowance if the unified overview is retired or consolidated with equivalent bounded reads, incident/date separation and invalid-evidence regressions."
+    },
+    {
       "source_revision": "110e397f54ccb57c86fc7f862b7931472cc45974",
       "reason": "Add independent partial reconstructed statement research asset and exact-disclosure opt-in reader with lineage, conflict, missingness and temporal boundary regressions: two files and 248 Python lines. No complexity or oversized-file budgets increased.",
       "exit_condition": "Remove this two-file/248-line allowance when retired or consolidated with equivalent source-bound lineage, explicit partial acceptance, no fallback and no future-value exposure tests. Preserve prior retirement conditions."
-    },
-    {
-      "source_revision": "1a12b6132b8fce291c228964b732494866683abf",
-      "reason": "Add bounded retrospective independent-coverage receipt issuance, exact candidate repair lineage adjudication and fail-closed consumer replay tests: exactly 3 Python files and 738 lines. Includes commit-tree provenance and complete column/type union validation. No complexity or oversized-file allowance increases.",
-      "exit_condition": "Remove this exact file/line allowance when a shared coverage receipt framework subsumes bounded independent universe replay, immutable input identity, explicit candidate repair lineage and consumer partition/hash checks with equivalent tests; preserve previous retirement conditions."
     },
     {
       "source_revision": "58253d5e9ffdb638554b733428599d0549733345",
@@ -132,6 +132,11 @@
       "source_revision": "aab9afc6eb19b87c5938b5e4b9e772e0bb52fb83",
       "reason": "Add read-only hash-bound statement projection consensus and precision/null/source-race regressions: two files and 355 Python lines. All complexity and oversized-file limits remain unchanged.",
       "exit_condition": "Remove this two-file/355-line allowance if the diagnostic is retired or consolidated with equivalent all-category retention, lossless values, source binding and reconstructed-time coverage; preserve earlier retirement conditions."
+    },
+    {
+      "source_revision": "1a12b6132b8fce291c228964b732494866683abf",
+      "reason": "Add bounded retrospective independent-coverage receipt issuance, exact candidate repair lineage adjudication and fail-closed consumer replay tests: exactly 3 Python files and 738 lines. Includes commit-tree provenance and complete column/type union validation. No complexity or oversized-file allowance increases.",
+      "exit_condition": "Remove this exact file/line allowance when a shared coverage receipt framework subsumes bounded independent universe replay, immutable input identity, explicit candidate repair lineage and consumer partition/hash checks with equivalent tests; preserve previous retirement conditions."
     }
   ]
 }
