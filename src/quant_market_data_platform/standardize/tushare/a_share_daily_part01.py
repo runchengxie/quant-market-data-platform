@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, cast
 
 import pandas as pd
+import yaml
 
 from quant_market_data_platform.runtime_memory import MemoryPolicy
 from quant_market_data_platform.standardize.normalize import normalize_ts_code
@@ -454,7 +455,25 @@ def _load_suspension_trade_date_frame(
 
 
 def _prepare_output_dirs(out_dir: str | Path) -> tuple[Path, Path, Path]:
-    output_dir = Path(out_dir).expanduser().resolve()
+    requested = Path(out_dir).expanduser()
+    if requested.is_symlink():
+        raise ValueError("daily_clean output must not be a symlink; use a new version directory")
+    output_dir = requested.resolve()
+    manifest = output_dir / "manifest.yml"
+    if manifest.is_symlink():
+        raise ValueError("Cannot rebuild daily_clean through a linked manifest")
+    if manifest.exists():
+        try:
+            payload = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+        except (OSError, yaml.YAMLError) as error:
+            raise ValueError("Cannot verify existing daily_clean output manifest") from error
+        if not isinstance(payload, dict) or payload.get("status") not in {
+            "failed",
+            "running",
+            "building",
+            "pending",
+        }:
+            raise ValueError("Refusing to overwrite completed or unknown daily_clean output")
     data_dir = output_dir / "data"
     staging_dir = output_dir / "_daily_clean_staging"
     if data_dir.exists():

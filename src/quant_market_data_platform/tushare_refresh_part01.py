@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from quant_market_data_platform.contract import (
     infer_manifest_path,
@@ -414,6 +415,12 @@ def build_a_share_current_refresh_plan(
         segment=segment,
     )
     paths = _resolve_refresh_paths(root, raw_plan, start_date=start_date, end_date=end_date)
+    paths = replace(
+        paths,
+        daily_clean_output=paths.daily_clean_output.with_name(
+            f"{paths.daily_clean_output.name}_st.{uuid4().hex}"
+        ),
+    )
     return {
         "schema_version": "tushare.a_share.current_refresh_plan.v1",
         "market": "a_share",

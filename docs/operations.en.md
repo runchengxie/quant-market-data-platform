@@ -231,3 +231,5 @@ the deployment caller must enforce a 45-second process-group deadline.
 The module does not enforce that total deadline itself. Keep all outputs outside
 the source repository. Interrupted runs retain `started.json` for inspection.
 This endpoint provides index closes, not restored Hong Kong equity production.
+
+For a same-day daily-clean rebuild, generate a new plan and use its new clean output directory. Do not build into a completed version or latest. Preserve failed-run evidence and choose a new directory when needed. See [daily-clean build versions](contracts.en.md#daily-clean-build-versions).

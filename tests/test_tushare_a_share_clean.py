@@ -705,3 +705,77 @@ def test_research_validation_rejects_st_availability_disagreeing_with_source(tmp
     checks = {row["check"]: row for row in summary["checks"]}
     assert summary["status"] == "failed"
     assert checks["st_availability_consistency"]["affected_rows"] == 1
+
+
+def test_rebuild_refuses_completed_daily_clean_before_deleting_payload(tmp_path):
+    import pytest
+
+    root = tmp_path / "published"
+    (root / "data").mkdir(parents=True)
+    payload = root / "data" / "unique.parquet"
+    payload.write_bytes(b"original published bytes")
+    manifest = root / "manifest.yml"
+    manifest.write_text("dataset: daily_clean\nstatus: completed\n")
+    original_manifest = manifest.read_bytes()
+    with pytest.raises(ValueError, match="completed"):
+        build_a_share_daily_clean(daily_dir=tmp_path / "missing-input", out_dir=root)
+    assert payload.read_bytes() == b"original published bytes"
+    assert manifest.read_bytes() == original_manifest
+
+
+def test_rebuild_refuses_daily_clean_symlink_without_touching_target(tmp_path):
+    import pytest
+
+    root = tmp_path / "version"
+    (root / "data").mkdir(parents=True)
+    payload = root / "data" / "unique.parquet"
+    payload.write_bytes(b"original")
+    alias = tmp_path / "latest"
+    alias.symlink_to(root, target_is_directory=True)
+    with pytest.raises(ValueError, match="symlink"):
+        build_a_share_daily_clean(daily_dir=tmp_path / "missing-input", out_dir=alias)
+    assert alias.is_symlink()
+    assert payload.read_bytes() == b"original"
+
+
+def test_rebuild_refuses_invalid_manifest_without_deleting_payload(tmp_path):
+    import pytest
+
+    root = tmp_path / "invalid"
+    (root / "data").mkdir(parents=True)
+    payload = root / "data" / "unique.parquet"
+    payload.write_bytes(b"original")
+    (root / "manifest.yml").write_text("status: [unterminated")
+    with pytest.raises(ValueError, match="manifest"):
+        build_a_share_daily_clean(daily_dir=tmp_path / "missing-input", out_dir=root)
+    assert payload.read_bytes() == b"original"
+
+
+def test_rebuild_refuses_manifest_without_known_incomplete_status(tmp_path):
+    import pytest
+
+    root = tmp_path / "unknown"
+    (root / "data").mkdir(parents=True)
+    payload = root / "data" / "unique.parquet"
+    payload.write_bytes(b"original")
+    (root / "manifest.yml").write_text("dataset: daily_clean\n")
+    with pytest.raises(ValueError, match="unknown"):
+        build_a_share_daily_clean(daily_dir=tmp_path / "missing-input", out_dir=root)
+    assert payload.read_bytes() == b"original"
+
+
+def test_rebuild_refuses_linked_manifest_before_deleting_payload(tmp_path):
+    import pytest
+
+    for dangling in (False, True):
+        root = tmp_path / str(dangling)
+        (root / "data").mkdir(parents=True)
+        payload = root / "data" / "unique.parquet"
+        payload.write_bytes(b"original")
+        target = tmp_path / f"manifest-target-{dangling}"
+        if not dangling:
+            target.write_text("dataset: daily_clean\nstatus: failed\n")
+        (root / "manifest.yml").symlink_to(target)
+        with pytest.raises(ValueError, match="manifest"):
+            build_a_share_daily_clean(daily_dir=tmp_path / "missing-input", out_dir=root)
+        assert payload.read_bytes() == b"original"
