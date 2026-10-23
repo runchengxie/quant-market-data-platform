@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 553,
-    "python_lines": 131015,
+    "python_files": 554,
+    "python_lines": 131156,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -23,6 +23,11 @@
     "exit_condition": "Remove this exact file/line allowance when a shared coverage receipt framework subsumes bounded independent universe replay, immutable input identity, explicit candidate repair lineage and consumer partition/hash checks with equivalent tests; preserve previous retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "58253d5e9ffdb638554b733428599d0549733345",
+      "reason": "Add repeatable external retention evidence roots with fail-closed structured evidence checks and regression coverage: exactly one Python file and 141 net lines. No complexity, oversized-file or reserved-headroom allowances.",
+      "exit_condition": "Remove this one-file/141-line allowance when external evidence reference scanning is consolidated with equivalent donor, alias, unreadable/malformed evidence and CLI coverage. Preserve all earlier retirement conditions."
+    },
     {
       "source_revision": "1298debbb2c5e88373ec6cac56ba2748fa78642c",
       "reason": "Add separate opt-in financing catalog CLI, immutable source-hash versions, durable CAS adoption/recovery and regression coverage: exactly 5 Python files and 1298 lines over the parent revision. No complexity, oversized-file, coverage or reserved headroom increases.",

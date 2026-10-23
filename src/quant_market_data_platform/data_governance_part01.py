@@ -476,6 +476,7 @@ def plan_data_governance(
     rules: Sequence[GovernanceRule],
     *,
     protected_paths: Sequence[str | Path] = (),
+    reference_roots: Sequence[str | Path] = (),
 ) -> list[PlanItem]:
     """Build a deterministic retention plan without changing the filesystem."""
 
@@ -500,7 +501,7 @@ def plan_data_governance(
             raise TypeError(f"Unsupported governance rule: {type(rule).__name__}")
     from .retention_references import protect_retained_references
 
-    return protect_retained_references(normalized_root, items)
+    return protect_retained_references(normalized_root, items, reference_roots=reference_roots)
 
 
 def _validate_inventory_schema(payload: Mapping[str, object]) -> None:
