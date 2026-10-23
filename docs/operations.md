@@ -527,3 +527,17 @@ legacy `*_latest` 仍由现有 mirror 写分区和 manifest。不得把这些目
 ### 数据运行状态
 
 [统一只读检查入口](operations/data-status.md) 汇总发布日期、质量缺口和服务历史状态。
+
+## 只读分钟分区校验
+
+已安装的 owner CLI 可在不访问供应商、不修改输入的情况下校验 SH/SZ 交易所分钟 overlay：
+
+```bash
+marketdata tushare validate-minute-partition \
+  --data-root /path/to/minute-overlay --trade-date 20260706 --exchange SZ
+```
+
+`--data-root` 下应存在 `trade_date=YYYYMMDD` 分区。命令复用完整分区校验，检查
+completeness sidecar、文件哈希、分钟网格和交易所 universe。成功时仅向标准输出写入
+版本化 JSON。证据缺失、篡改、日期或交易所不匹配时非零退出，不输出成功回执。
+此命令不会生成 marker、刷新凭据或发起数据采集。消费者应使用已安装且固定版本的 CLI。

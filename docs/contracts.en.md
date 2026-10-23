@@ -262,3 +262,16 @@ report. No research qualification or current asset alias is changed.
 Each `plan-a-share-current-refresh` plan assigns a unique clean output ID and carries that path through building, validation, universe construction and promotion. A second same-day plan uses a new directory. Save and execute commands from the same plan. Standalone promotion without `--daily-clean-dir` retains the legacy dated-directory fallback.
 
 The clean builder rejects symlink outputs, completed manifests and manifests whose incomplete state cannot be established, before deleting existing data or staging. A failed output without a manifest, or one explicitly marked failed, running, building or pending, remains rebuildable. This protects the build entry point, not filesystem immutability or concurrent writers. Latest remains a materialized copy and raw publication is unchanged.
+
+## Exchange minute validation CLI receipt
+
+`marketdata tushare validate-minute-partition` returns
+`validation_schema_version=marketdata.minute_exchange_overlay.v1`, `exchange=SH|SZ`
+and the existing `schema_version=tushare.a_share.minute_partition.promotion.v1`.
+Fields are `trade_date`, `partition_path`, `sidecar_path`, `partition_sha256`,
+`sidecar_sha256`, `rows`, `symbols`, `market_symbol_counts`,
+`expected_bars_per_symbol`, `universe_hash`, `universe_rule`, `universe_source`
+and `mirror_generated_at`. The owner validates the full partition and its exact
+exchange rule. Consumers reject unsupported schemas, mismatched dates or
+exchanges, missing fields and failed commands; freshness claims do not replace
+this validation.
