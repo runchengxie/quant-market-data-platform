@@ -17,6 +17,12 @@ from uuid import uuid4
 
 import yaml
 
+from quant_market_data_platform.clean_migration import (
+    CleanMigrationTarget,
+    physical_plan,
+    restore_physical,
+)
+
 
 def _contained(root: Path, path: Path) -> Path:
     path = Path(os.path.abspath(path.expanduser()))
@@ -60,6 +66,7 @@ def plan_clean_migration(*, root: Path, alias: Path, target: Path) -> dict[str, 
     """Read-only plan. Physical aliases require a separately coordinated migration."""
     root, alias, target = _paths(root, alias, target)
     physical = alias.is_dir() and not alias.is_symlink()
+    details = physical_plan(alias, target) if physical else {}
     return {
         "root": str(root),
         "alias_path": str(alias),
@@ -68,7 +75,8 @@ def plan_clean_migration(*, root: Path, alias: Path, target: Path) -> dict[str, 
         "materialized": "false",
         "requires_explicit_migration": physical,
         "rollback_source": str(alias) if physical else None,
-        "apply_supported": not physical,
+        "apply_supported": not physical or details["equivalent"],
+        **details,
     }
 
 
@@ -131,6 +139,20 @@ def _restore_metadata(root: Path, snapshots: list[dict[str, Any]]) -> None:
             _write(path, content)
 
 
+def _read_journal(path: Path) -> dict[str, Any]:
+    if path.is_symlink() or path.parent.is_symlink():
+        raise ValueError("Publication journal must be physical")
+    state = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(state, dict) or state.get("status") not in {
+        "prepared",
+        "committed",
+        "rolled_back",
+        "rollback_requested",
+    }:
+        raise ValueError("Unknown publication journal state")
+    return state
+
+
 def recover_clean(*, root: Path, alias: Path) -> dict[str, Any]:
     """Rollback the active owner journal. Never infer ownership from directory age."""
     root = root.expanduser().resolve(strict=True)
@@ -139,12 +161,23 @@ def recover_clean(*, root: Path, alias: Path) -> dict[str, Any]:
     if lock.is_symlink():
         raise ValueError("Publication lock must be physical")
     journal = lock / "journal.json"
-    state = json.loads(journal.read_text(encoding="utf-8"))
+    state = _read_journal(journal)
     if state["root"] != str(root) or state["alias"] != str(alias):
         raise ValueError("Journal identity does not match publication")
     if state["status"] == "committed":
         return state
     if state["status"] == "rolled_back":
+        return state
+    if state.get("old_kind") == "directory":
+        restore_physical(
+            alias=alias,
+            backup=_contained(root, Path(state["physical_backup"])),
+            expected_sha256=state["source_sha256"],
+            new_link=state["new_link"],
+            restore_metadata=lambda: _restore_metadata(root, state["metadata"]),
+        )
+        state["status"] = "rolled_back"
+        _save(journal, state)
         return state
     if alias.exists() and not alias.is_symlink():
         raise ValueError("Refusing recovery over a physical alias")
@@ -164,22 +197,8 @@ def recover_clean(*, root: Path, alias: Path) -> dict[str, Any]:
     return state
 
 
-def publish_clean(
-    *, root: Path, alias: Path, target: Path, metadata: Iterable[Path], commit: Callable[[], object]
-) -> dict[str, Any]:
-    """Explicit opt-in API. Callback writes declared JSON and checks health.
-
-    Only this clean alias and declared metadata are recovered. The callback must
-    not modify raw aliases, universe files, providers or any undeclared resource.
-    Journals remain for inspection; acknowledge them before another publication.
-    """
-    if os.name != "posix":
-        raise ValueError("Clean linked publication is currently POSIX-only")
-    root, alias, target = _paths(root, alias, target)
-    plan = plan_clean_migration(root=root, alias=alias, target=target)
-    if plan["requires_explicit_migration"]:
-        raise ValueError("Physical latest requires explicit coordinated migration")
-    snapshots: list[dict[str, Any]] = []
+def _metadata_paths(root: Path, alias: Path, target: Path, metadata: Iterable[Path]) -> list[Path]:
+    paths = []
     for entry in metadata:
         path = _contained(root, entry)
         if path.is_symlink() or (path.exists() and not path.is_file()):
@@ -194,23 +213,75 @@ def publish_clean(
             raise ValueError("Metadata must not overlap publication paths")
         if not path.parent.is_dir():
             raise ValueError("Metadata parent must already exist")
-        snapshots.append({"path": str(path), "content": None})
+        paths.append(path)
+    return paths
+
+
+def publish_clean(
+    *,
+    root: Path,
+    alias: Path,
+    target: Path | CleanMigrationTarget,
+    metadata: Iterable[Path],
+    commit: Callable[[], object],
+) -> dict[str, Any]:
+    """Explicit opt-in API. Callback writes declared JSON and checks health.
+
+    Only this clean alias and declared metadata are recovered. The callback must
+    not modify raw aliases, universe files, providers or any undeclared resource.
+    Journals remain for inspection; acknowledge them before another publication.
+    """
+    if os.name != "posix":
+        raise ValueError("Clean linked publication is currently POSIX-only")
+    migration_sha256 = target.source_sha256 if isinstance(target, CleanMigrationTarget) else None
+    target = target.path if isinstance(target, CleanMigrationTarget) else target
+    root, alias, target = _paths(root, alias, target)
+    plan = plan_clean_migration(root=root, alias=alias, target=target)
+    physical = plan["requires_explicit_migration"]
+    if migration_sha256 is not None and not physical:
+        raise ValueError("Migration confirmation requires a physical alias")
+    if physical and migration_sha256 is None:
+        raise ValueError("Physical latest requires explicit coordinated migration")
+    if physical and (not plan["equivalent"] or migration_sha256 != plan["source_sha256"]):
+        raise ValueError("Physical migration equivalence or saved identity changed")
+    backup = alias.with_name(f".{alias.name}.physical-rollback.{uuid4().hex}") if physical else None
+    if backup is not None and (backup.exists() or backup.is_symlink()):
+        raise ValueError("Physical rollback backup already exists")
+    snapshots: list[dict[str, Any]] = [
+        {"path": str(path), "content": None}
+        for path in _metadata_paths(root, alias, target, metadata)
+    ]
     lock = _lock(alias)
     lock.mkdir()  # Exclusive; stale locks require explicit recovery, never deletion.
     journal = lock / "journal.json"
     for item in snapshots:
         path = Path(item["path"])
         item["content"] = base64.b64encode(path.read_bytes()).decode() if path.exists() else None
-    state = {
+    state: dict[str, Any] = {
+        "schema_version": "clean_publication.v1",
         "root": str(root),
         "alias": str(alias),
         "status": "prepared",
         "old_link": str(alias.readlink()) if alias.is_symlink() else None,
         "new_link": os.path.relpath(target, alias.parent),
         "metadata": snapshots,
+        "archive_directory": str(lock.with_name(f"{lock.name}.archive.{uuid4().hex}")),
+        "old_kind": "directory" if physical else "link",
+        **(
+            {
+                "physical_backup": str(backup),
+                "source_sha256": plan["source_sha256"],
+                "target_sha256": plan["target_sha256"],
+                "inventory_algorithm": "sha256-json-relative-tree-v1",
+            }
+            if physical
+            else {}
+        ),
     }
     _save(journal, state)
     try:
+        if physical:
+            alias.rename(Path(state["physical_backup"]))
         _link(alias, state["new_link"])
         commit()
         state["status"] = "committed"
@@ -218,7 +289,12 @@ def publish_clean(
     except Exception:
         recover_clean(root=root, alias=alias)
         raise
-    return {**plan, "journal": str(journal), "status": "committed"}
+    return {
+        **plan,
+        "journal": str(journal),
+        "status": "committed",
+        **({"physical_backup": state["physical_backup"]} if physical else {}),
+    }
 
 
 def acknowledge_clean(*, root: Path, alias: Path) -> Path:
@@ -228,34 +304,77 @@ def acknowledge_clean(*, root: Path, alias: Path) -> Path:
     lock = _lock(alias)
     if lock.is_symlink():
         raise ValueError("Publication lock must be physical")
-    state = json.loads((lock / "journal.json").read_text(encoding="utf-8"))
+    state = _read_journal(lock / "journal.json")
     if state["root"] != str(root) or state["alias"] != str(alias):
         raise ValueError("Journal identity does not match publication")
     if state["status"] not in {"committed", "rolled_back"}:
         raise ValueError("Interrupted publication must recover before acknowledgement")
-    archive = lock.with_name(f"{lock.name}.archive.{uuid4().hex}")
+    archive = _contained(
+        root,
+        Path(
+            state.get("archive_directory") or lock.with_name(f"{lock.name}.archive.{uuid4().hex}")
+        ),
+    )
+    if archive.parent != lock.parent or not archive.name.startswith(f"{lock.name}.archive."):
+        raise ValueError("Invalid publication archive destination")
+    if archive.exists() or archive.is_symlink():
+        raise FileExistsError("Publication archive destination already exists")
     lock.rename(archive)
     return archive
 
 
+def rollback_clean(*, root: Path, alias: Path, journal: Path | None = None) -> dict[str, Any]:
+    """Explicitly rollback a committed publication after stopping all writers."""
+    root = root.expanduser().resolve(strict=True)
+    alias = _contained(root, alias)
+    lock = _lock(alias)
+    source = lock / "journal.json" if journal is None else _contained(root, journal)
+    if source.is_symlink() or source.parent.is_symlink():
+        raise ValueError("Rollback journal must be physical")
+    state = _read_journal(source)
+    if state["root"] != str(root) or state["alias"] != str(alias):
+        raise ValueError("Rollback journal identity mismatch")
+    if journal is not None:
+        if source.parent.parent != alias.parent or not source.parent.name.startswith(
+            f"{lock.name}.archive."
+        ):
+            raise ValueError("Rollback must reference this alias archive")
+        lock.mkdir()
+        state["rollback_of"] = str(source)
+        state["archive_directory"] = str(lock.with_name(f"{lock.name}.archive.{uuid4().hex}"))
+    state["status"] = "rollback_requested"
+    _save(lock / "journal.json", state)
+    return recover_clean(root=root, alias=alias)
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Print a migration plan without modifying aliases, metadata or journals."""
+    """Plan clean migration or explicitly recover, rollback or acknowledge a journal."""
     parser = argparse.ArgumentParser(description=main.__doc__)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--alias", type=Path, required=True)
-    parser.add_argument("--target", type=Path, required=True)
+    parser.add_argument("--target", type=Path)
+    actions = parser.add_mutually_exclusive_group()
+    actions.add_argument("--recover", action="store_true")
+    actions.add_argument("--rollback", action="store_true")
+    actions.add_argument("--acknowledge", action="store_true")
+    parser.add_argument("--journal", type=Path)
     args = parser.parse_args(argv)
-    print(
-        json.dumps(
-            plan_clean_migration(
-                root=args.root,
-                alias=args.alias,
-                target=args.target,
-            ),
-            indent=2,
-            sort_keys=True,
+    if args.journal is not None and not args.rollback:
+        parser.error("--journal requires --rollback")
+    if args.recover or args.rollback:
+        state = (
+            rollback_clean(root=args.root, alias=args.alias, journal=args.journal)
+            if args.rollback
+            else recover_clean(root=args.root, alias=args.alias)
         )
-    )
+        payload = {"status": state["status"], "alias_path": str(args.alias)}
+    elif args.acknowledge:
+        payload = {"archive_directory": str(acknowledge_clean(root=args.root, alias=args.alias))}
+    else:
+        if args.target is None:
+            parser.error("--target is required for planning")
+        payload = plan_clean_migration(root=args.root, alias=args.alias, target=args.target)
+    print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
 
 

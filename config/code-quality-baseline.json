@@ -6,10 +6,10 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 531,
-    "python_lines": 125803,
+    "python_files": 534,
+    "python_lines": 126707,
     "long_lines_over_100": 16,
-    "functions_over_100": 38,
+    "functions_over_100": 37,
     "functions_over_250": 0,
     "functions_over_500": 0,
     "c901_file_ignores": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "2e801a6c90bde23ea12bffff9af741d9727c431a",
-    "reason": "Add explicit POSIX clean-only linked publisher, durable metadata rollback journal, read-only migration planner and fail-closed fixtures: two files and 573 Python lines. No complexity or oversized-file budgets increased.",
-    "exit_condition": "Remove this two-file/573-line allowance when a shared recoverable publication controller replaces this opt-in clean publisher with equivalent interruption, retention and path-safety coverage; preserve earlier retirement conditions."
+    "source_revision": "dd0bc15fec940d16893d36118c5245c166e8eec2",
+    "reason": "Add full-inventory SHA-confirmed retained-directory clean migration, explicit archived rollback, clean-only and recurring linked promotion modes, and fault-injection fixtures: three files and 904 net Python lines. Extracting the metadata phase reduces functions_over_100 from 38 to 37; all other complexity/oversized budgets remain unchanged.",
+    "exit_condition": "Remove this three-file/904-line allowance when a shared asset release controller subsumes physical rollback, source-independent journal recovery and linked promotion with equivalent metadata boundary and interruption tests; preserve earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "2e801a6c90bde23ea12bffff9af741d9727c431a",
+      "reason": "Add explicit POSIX clean-only linked publisher, durable metadata rollback journal, read-only migration planner and fail-closed fixtures: two files and 573 Python lines. No complexity or oversized-file budgets increased.",
+      "exit_condition": "Remove this two-file/573-line allowance when a shared recoverable publication controller replaces this opt-in clean publisher with equivalent interruption, retention and path-safety coverage; preserve earlier retirement conditions."
+    },
     {
       "source_revision": "e0b278d985ec939709ef533545a3b2d1c7b44934",
       "reason": "Add unique per-plan daily-clean output paths and fail-closed output guards with payload-preservation regressions: 135 Python lines, no new files. All complexity and oversized-file budgets remain unchanged.",

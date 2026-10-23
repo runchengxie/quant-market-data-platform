@@ -365,9 +365,9 @@ python -m quant_market_data_platform.clean_publication \
   --root "$DATA_PLATFORM_ROOT" --alias "$CLEAN_LATEST" --target "$CLEAN_VERSION"
 ```
 
-实体 latest 返回 `requires_explicit_migration=true`、`apply_supported=false`。计划本身不会
-移动或删除实体。首次转换必须另行协调停写、消费者固定版本、原实体保留位置及 rollback，
-再执行经过审查的迁移步骤。本入口没有实体迁移 apply 开关，不能用它自动清除旧副本。
+实体 latest 的计划包含 `requires_explicit_migration=true`、完整 inventory、源和目标摘要及
+`equivalent`。仅字节等价时 `apply_supported=true`。计划本身不会移动或删除实体。
+首次转换须另行协调停写、消费者固定版本、原实体保留及 rollback，再执行显式迁移命令。
 
 显式 Python API `publish_clean(root=..., alias=..., target=..., metadata=[...], commit=...)`
 只支持 POSIX。路径的父目录须为真实目录，不能经目录链接寻址。metadata 的父目录必须存在，callback 须重建真实路径 contract/registry 并完成
@@ -381,3 +381,41 @@ health 检查。发生普通异常会还原声明文件与旧 alias。链接权�
 把整个终态 journal 目录重命名为唯一 archive，保留备份并允许下一次发布。没有自动过期删除。
 如果准备阶段写 journal 之前失败，alias 尚未改动，保留的空锁需人工核对后处理。
 这里验证了合成 POSIX fixture 的异常和中断恢复，未验证 Windows、断电恢复或跨文件系统目录交换。
+
+受控迁移先用同一份参数生成完整计划：
+
+```bash
+marketdata tushare promote-a-share-current \
+  --artifacts-root "$DATA_PLATFORM_ROOT" --start-date "$START_DATE" --end-date "$END_DATE" \
+  --daily-clean-dir "$CLEAN_VERSION" \
+  --daily-clean-baseline-report "$BASELINE_REPORT" \
+  --daily-clean-research-report "$RESEARCH_REPORT" --clean-only-linked
+```
+
+检查计划中的 `source_sha256`、`target_sha256`、`equivalent` 与 inventory。原实体和目标必须是
+同一版本的完整字节副本。确认后重复相同命令并添加
+`--clean-migration-sha256 "$TREE_SHA256" --apply`。apply 会重新计算摘要，再把原实体 rename
+到唯一 `.<alias>.physical-rollback.<id>`，切换链接并重建四份 metadata。原实体 inode 保留。
+CLI 成功后自动归档本次 journal，release evidence 记录唯一稳定的 journal 路径。
+失败或中断的 journal 保持 active，后续发布停止，须显式恢复并检查后 acknowledge。
+
+恢复中断或回滚已成功迁移：
+
+```bash
+python -m quant_market_data_platform.clean_publication \
+  --root "$DATA_PLATFORM_ROOT" --alias "$CLEAN_LATEST" --recover
+python -m quant_market_data_platform.clean_publication \
+  --root "$DATA_PLATFORM_ROOT" --alias "$CLEAN_LATEST" --rollback --journal "$JOURNAL"
+```
+
+rollback 先验证当前链接仍为该次发布的目标，再验证保留原实体的完整摘要。归档 journal
+不会被修改，rollback 使用新的 active journal。恢复后可用同入口 `--acknowledge` 保留并归档
+恢复记录。raw/universe 不在 clean 恢复边界内。
+
+正常夜间发布必须在完整 promotion 命令中显式添加 `--clean-linked`，保持 raw/universe 原有
+发布逻辑并将 clean 切为相对链接。仅用 `--clean-only-linked` 会跳过当晚 universe staging
+发布，不能替代夜间完整 promotion。停写期间须协调生产 bridge 使用新 owner 版本和此开关，
+再进行实体迁移。默认物化模式保留，未修改 bridge 时禁止切换真实 latest。
+
+上述命令与回滚只在合成 fixture 验证，包括子进程直接退出后的源目录恢复。实际部署、
+真实迁移和 retained physical rollback 目录的退役均须分别执行，没有自动删除。

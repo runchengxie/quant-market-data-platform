@@ -75,6 +75,9 @@ class AShareCurrentPromotionOptions:
     apply: bool = False
     fail_on_severity: str = "warning"
     required_assets: Iterable[str] | None = None
+    clean_linked: bool = False
+    clean_only_linked: bool = False
+    clean_migration_sha256: str | None = None
 
 
 def _command(*parts: object) -> list[str]:
