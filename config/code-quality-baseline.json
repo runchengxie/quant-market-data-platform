@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 543,
-    "python_lines": 128448,
+    "python_files": 545,
+    "python_lines": 128979,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,9 +18,9 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "aab9afc6eb19b87c5938b5e4b9e772e0bb52fb83",
-    "reason": "Add read-only hash-bound statement projection consensus and precision/null/source-race regressions: two files and 355 Python lines. All complexity and oversized-file limits remain unchanged.",
-    "exit_condition": "Remove this two-file/355-line allowance if the diagnostic is retired or consolidated with equivalent all-category retention, lossless values, source binding and reconstructed-time coverage; preserve earlier retirement conditions."
+    "source_revision": "b8c5e459eaa98d242ff05bc3d5392697b10a79cf",
+    "reason": "Add a bounded offline historical-minute coverage diagnostic and fail-closed evidence tests: two Python files, no complexity or size-threshold allowances. Validated together with the merged statement-consensus provider.",
+    "exit_condition": "Remove the file and line allowances when this diagnostic pilot and its regression tests are retired or consolidated into an independently reviewed revalidation receipt implementation; preserve all previous retirement conditions."
   },
   "previous_change_records": [
     {
@@ -102,6 +102,11 @@
       "source_revision": "be28de757055e581c4e1c3db7a1342fea1ce28d5",
       "reason": "Add the approved standalone read-only statement selector validator (361 lines), 28 contract/race/error-path tests (351 lines), and CLI wiring/help (27 lines): exactly two files and 739 Python lines. No build/publication integration. All structural debt, complexity, long-line, oversized-file and test-size limits remain unchanged.",
       "exit_condition": "Remove or reduce the two-file/739-line selector allowance when the validator and its regression suite are retired or consolidated with equivalent source-integrity, coverage, identity and temporal safeguards. Preserve all earlier retirement conditions in previous_change_records."
+    },
+    {
+      "source_revision": "aab9afc6eb19b87c5938b5e4b9e772e0bb52fb83",
+      "reason": "Add read-only hash-bound statement projection consensus and precision/null/source-race regressions: two files and 355 Python lines. All complexity and oversized-file limits remain unchanged.",
+      "exit_condition": "Remove this two-file/355-line allowance if the diagnostic is retired or consolidated with equivalent all-category retention, lossless values, source binding and reconstructed-time coverage; preserve earlier retirement conditions."
     }
   ]
 }
