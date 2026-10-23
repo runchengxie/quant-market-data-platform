@@ -496,6 +496,30 @@ receipt hash。pending 状态阻止新事务。只读操作要求已有完整 ca
 融券偿还量，尚无明确的 signed 调整策略。源观测中保留的负值会阻断此 profile 的 publication。
 该策略不判断 vendor 对错或 legacy 采集的合法性，后续符号语义须单独核实并版本化。
 
+## 基本面独立部分研究资产
+
+`statement-partial-research.v1` 由 `statement_research_asset.build_research_asset`
+从逐个 SHA256 固定的 normalized source 重新校验生成，只包含声明字段集的多类别披露事件。
+它保留全部候选原行、行 hash、来源文件 hash、字段集、缺失值、冲突以及构建代码 commit。
+`version_sha256` 标识去掉该字段后的规范 JSON 内容。消费时还必须提供整个文件的 SHA256。
+构建返回对象，调用方负责将它写入新的任务版本目录。没有 current 指针或生产发布接口。
+
+消费者调用 `read_research_event`，必须传入 `accept_partial_reconstructed=True`，并指定
+准确的 dataset、symbol、report_period、disclosure_date 和带时区的 as_of。该接口没有
+最新报告查询，也不会用旧报告填补未覆盖事件。返回状态为 `out_of_scope`、
+`not_yet_available`、`conflict` 或 `available`。只有最后一种状态提供 values。
+共同空值保持 null，并列在 missing_fields 中。任一投影字段冲突时整个投影停止提供值。
+
+可用时间取披露日期加声明延迟（UTC 日界）与所有候选最晚观测时间的较晚者。每个不可变
+披露事件的区间为 `[usable_at, infinity)`，冲突在该区间始终阻断取值。区间未描述后续
+披露的替代关系，也不表示报告在整个区间仍是最新报告。提前查询仅返回未到可用时间状态。
+到达可用时间后，完整事件和来源作为审计证据返回。提前查询不返回候选值。调用方应依据
+status 消费，不能从候选中自行补值。
+
+该资产显式标记 partial/reconstructed，仅覆盖部分 normalized 事件，不证明历史 PIT，
+不能成为 complete current。单类别事件及未声明字段不在范围内。四项原文金额佐证也不构成
+类别裁决。资产不选择 comp_type，不修改生产 PIT 或 legacy 重试身份。
+
 ## 历史分钟回溯覆盖凭证
 
 `historical_minute_retrospective_coverage.v1` 仅证明明确分区的独立历史覆盖与原生 241 行
