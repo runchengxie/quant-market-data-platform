@@ -239,7 +239,7 @@ def test_governance_plan_refuses_to_overwrite_reports_or_regular_latest_paths(
 
 
 def test_retention_repeated_external_reference_roots(tmp_path: Path) -> None:
-    candidate = tmp_path / "assets" / "version_20260101"
+    candidate = tmp_path / "data" / "assets" / "version_20260101"
     candidate.mkdir(parents=True)
     external = tmp_path / "research"
     external.mkdir()
@@ -268,7 +268,7 @@ def test_retention_repeated_external_reference_roots(tmp_path: Path) -> None:
                 "governance",
                 "plan-retention",
                 "--artifacts-root",
-                str(tmp_path),
+                str(tmp_path / "data"),
                 "--inventory",
                 str(inventory),
                 "--reference-root",
