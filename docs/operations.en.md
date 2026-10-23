@@ -243,3 +243,16 @@ See the [historical coverage pilot](operations/historical-minute-coverage-pilot.
 ### Data operations status
 
 The [read-only overview](operations/data-status.en.md) summarizes asset dates, gaps and service incidents.
+
+## Read-only minute partition validation
+
+```bash
+marketdata tushare validate-minute-partition \
+  --data-root /path/to/minute-overlay --trade-date 20260706 --exchange SZ
+```
+
+The installed owner CLI validates the `trade_date=YYYYMMDD` partition, its
+completeness sidecar, file hashes, minute grid and exact exchange universe. It
+neither fetches data nor modifies inputs. Success writes one JSON receipt to
+stdout; invalid evidence exits nonzero without a success receipt. Consumers use
+a pinned installed CLI rather than importing provider internals.

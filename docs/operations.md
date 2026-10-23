@@ -553,3 +553,17 @@ JSON 和 CSV 分别通过临时文件、fsync 和原子替换写出。两个文�
 Clean rollback 和 recovery 会在持锁状态比较 journal 中的 metadata hashes。
 后续发布已经修改这些文件，或旧 journal 无法证明写入归属时，恢复操作会停止并保留现场。
 此时应核对当前别名和 journal，再重建目录，不能直接恢复旧 metadata 快照。
+
+## 只读分钟分区校验
+
+已安装的 owner CLI 可在不访问供应商、不修改输入的情况下校验 SH/SZ 交易所分钟 overlay：
+
+```bash
+marketdata tushare validate-minute-partition \
+  --data-root /path/to/minute-overlay --trade-date 20260706 --exchange SZ
+```
+
+`--data-root` 下应存在 `trade_date=YYYYMMDD` 分区。命令复用完整分区校验，检查
+completeness sidecar、文件哈希、分钟网格和交易所 universe。成功时仅向标准输出写入
+版本化 JSON。证据缺失、篡改、日期或交易所不匹配时非零退出，不输出成功回执。
+此命令不会生成 marker、刷新凭据或发起数据采集。消费者应使用已安装且固定版本的 CLI。

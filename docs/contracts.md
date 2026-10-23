@@ -558,3 +558,15 @@ pending 状态。消费者需要一致快照时应固定 current contract 和不
 分钟目录同步只更新 `minute_1m_tushare`、生成时间和生成者，原有契约 `target_date`
 继续表示整体发布目标日期。分钟最新日期从该资产的 `as_of` 和 receipt summary 读取。
 该同步不改变数据质量门禁、来源语义或资产业务 schema。
+
+## 分钟交易所校验 CLI 回执
+
+`marketdata tushare validate-minute-partition` 返回
+`validation_schema_version=marketdata.minute_exchange_overlay.v1` 和 `exchange=SH|SZ`。
+分区本身沿用 `schema_version=tushare.a_share.minute_partition.promotion.v1`。
+回执包括 `trade_date`、`partition_path`、`sidecar_path`、`partition_sha256`、
+`sidecar_sha256`、`rows`、`symbols`、`market_symbol_counts`、`expected_bars_per_symbol`、
+`universe_hash`、`universe_rule`、`universe_source` 和 `mirror_generated_at`。
+
+owner 验证所有分区内容及精确交易所 universe rule，消费者仍须拒绝不支持的 schema、
+其他日期或交易所、缺失字段及命令失败，不能以 freshness 声明替代本回执。
