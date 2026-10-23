@@ -239,3 +239,7 @@ For a same-day daily-clean rebuild, generate a new plan and use its new clean ou
 ## Independent historical minute coverage
 
 See the [historical coverage pilot](operations/historical-minute-coverage-pilot.en.md) for an offline scan of at most ten dates. Its diagnostic output cannot authorize acceptance or publication.
+
+### Data operations status
+
+The [read-only overview](operations/data-status.en.md) summarizes asset dates, gaps and service incidents.

@@ -517,3 +517,7 @@ legacy `*_latest` 仍由现有 mirror 写分区和 manifest。不得把这些目
 ## 历史分钟覆盖独立复核
 
 最多 10 日的离线证据扫描与失败关闭规则见[历史分钟覆盖试点](operations/historical-minute-coverage-pilot.md)。输出仅用于审核，不构成验收或发布授权。
+
+### 数据运行状态
+
+[统一只读检查入口](operations/data-status.md) 汇总发布日期、质量缺口和服务历史状态。
