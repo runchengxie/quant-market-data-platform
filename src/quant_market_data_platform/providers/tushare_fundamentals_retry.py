@@ -8,11 +8,12 @@ import ipaddress
 import json
 import platform
 import re
-import subprocess
 from importlib import metadata
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
+
+from .tushare_retry_source import source_identity
 
 
 def endpoint_identity(value: str | None) -> str:
@@ -74,21 +75,11 @@ def runtime_identity() -> dict[str, object]:
     }
 
 
-def resolved_retry_parameters(args: argparse.Namespace) -> dict[str, object]:
-    """Record code revision and resolved parameters; operational knobs are separate."""
-    source = Path(__file__).resolve().parents[3]
-    revision = subprocess.run(
-        ["git", "-C", str(source), "rev-parse", "HEAD"],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
-    dirty = subprocess.run(
-        ["git", "-C", str(source), "status", "--porcelain", "--untracked-files=no"],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
+def resolved_retry_parameters(
+    args: argparse.Namespace, *, source_root: Path | None = None
+) -> dict[str, object]:
+    """Record proven code revision and parameters; operational knobs are separate."""
+    source, revision, dirty = source_identity(source_root)
     # Source bytes distinguish uncommitted implementations without recording paths/diffs.
     digest = hashlib.sha256()
     for path in sorted((source / "src" / "quant_market_data_platform").rglob("*.py")):

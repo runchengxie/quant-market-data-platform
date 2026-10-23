@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 536,
-    "python_lines": 126873,
+    "python_files": 538,
+    "python_lines": 127158,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "5b213c6c5ade5301ba64c7c5c171e36b0e77ba05",
-    "reason": "Add explicit POSIX clean-only linked publisher, durable metadata rollback journal, read-only migration planner and fail-closed fixtures: two files and 573 Python lines. No complexity or oversized-file budgets increased.",
-    "exit_condition": "Remove this two-file/573-line allowance when a shared recoverable publication controller replaces this opt-in clean publisher with equivalent interruption, retention and path-safety coverage; preserve earlier retirement conditions."
+    "source_revision": "933bbb93d17a2a7a2d38ade4bcc7f470cbc34436",
+    "reason": "Add strict installed git-archive source provenance and a real noneditable install regression: two Python files and 285 lines. Existing complexity and oversized-file limits remain unchanged.",
+    "exit_condition": "Remove this two-file/285-line allowance when archive and Git source discovery are consolidated with equivalent installed-package, malformed-provenance and legacy-read-only coverage; preserve earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "5b213c6c5ade5301ba64c7c5c171e36b0e77ba05",
+      "reason": "Add explicit POSIX clean-only linked publisher, durable metadata rollback journal, read-only migration planner and fail-closed fixtures: two files and 573 Python lines. No complexity or oversized-file budgets increased.",
+      "exit_condition": "Remove this two-file/573-line allowance when a shared recoverable publication controller replaces this opt-in clean publisher with equivalent interruption, retention and path-safety coverage; preserve earlier retirement conditions."
+    },
     {
       "source_revision": "207f3d1a937b50ce7d4a055818d36757c7a0c11a",
       "reason": "Add standalone source-independent minute snapshot archive/verify/restore (332 lines) and 29 fixture regressions (300 lines): exactly two files and 632 Python lines. All complexity and oversized-file limits remain unchanged.",
