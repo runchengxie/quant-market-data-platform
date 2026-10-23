@@ -365,3 +365,45 @@ marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python -m quant_market
 本次 vintage 重试保护新增一个独立身份/attempt 模块和 fixture 负面路径覆盖，shared ratchet 只将 Python 文件库存增加 1、行数库存增加 499。复杂度和大文件预算不变。退出条件：若以后将重试身份、attempt 事件和 derived 语义校验整合进统一的资产事务接口，并保留 legacy 拒绝、参数变化拒绝及历史 receipt 保全覆盖，则移除本次增量预算。
 
 日线 clean 同日重跑应生成新计划并使用新的 clean 输出目录，不要将已完成版本或 latest 作为构建输出。保留失败现场的证据，必要时选择新目录。版本边界见[共享数据契约](contracts.md#日线-clean-构建版本)。
+
+### 分钟快照的独立归档与恢复
+
+`scripts/operations/archive_minute_snapshot.py` 将显式选定的分钟目录和树外旁证
+复制到新归档，逐文件记录相对恢复路径、`role`、`version`、字节数及 SHA256。
+计划文件由操作者在仓库外创建，例如：
+
+```json
+{
+  "version": "minute-v1",
+  "entries": [
+    {"source": "/data/minute-v1", "path": "dataset", "role": "minute"},
+    {"source": "/data/coverage.json", "path": "evidence/coverage.json", "role": "coverage"},
+    {"source": "/data/current.json", "path": "evidence/contract.json", "role": "contract"}
+  ]
+}
+```
+
+```bash
+python scripts/operations/archive_minute_snapshot.py archive --plan /data/snapshot-plan.json --archive /backup/minute-snapshot
+python scripts/operations/archive_minute_snapshot.py verify --archive /backup/minute-snapshot
+python scripts/operations/archive_minute_snapshot.py restore --archive /backup/minute-snapshot --destination /restore/new-minute-snapshot
+```
+
+归档和恢复目的地必须不存在，父目录须预先建立。输入只支持普通文件与非空目录。
+路径链中的软链接、特殊文件、重复或越界的恢复路径会被拒绝。恢复控制文件名
+`LOCK`、`STATE.json`、`RESTORED.json` 不可用作顶层 payload 路径。
+复制不使用 hardlink，文件同步落盘后检查源 stat、完整文件集合和内容 hash。最后原子写入
+`SEALED.json`。封存只证明所选文件集合的字节一致性。它不提供数字签名，也不证明计划包含
+全部所需旁证、供应商数据正确、coverage 合格或旧合同可以发布回滚。
+
+`verify` 只读归档，逐文件核对完整集合与 hash，不读取计划或原源，也不更新 receipt。
+`restore` 从已封存归档复制到独占新目录，完成后写入 `RESTORED.json`。恢复文件与归档
+inode 独立。`STATE.json` 的 `failed` 表示捕获到失败，进程被强制终止时可能仍为
+`copying` 或 `restoring`。缺少最终标志的目录不能视为完成。工具保留失败目录供排查，
+不自动续传或覆盖，应使用另一个新目录重试。
+
+归档 writer 使用目标独占锁，校验与恢复持有归档共享锁。它们只约束协作工具，不冻结
+生产 writer，也不能防止外部进程原位修改文件。操作者须事先选定不会再写的版本或协调
+生产锁。跨文件稳定 stat/hash 检查不构成生产事务快照。必须由独立步骤核验介质故障域、
+完整版本范围、Parquet/coverage 和实际 reader/rollback 合同。该工具不改写原始数据、
+current、latest 或 provider，不授权退役任何副本。
