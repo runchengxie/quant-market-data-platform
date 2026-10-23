@@ -11,6 +11,7 @@ from quant_market_data_platform.cli_context import add_context_parser
 from quant_market_data_platform.cli_contract import add_contract_parser, add_registry_parser
 from quant_market_data_platform.cli_data import add_data_parser
 from quant_market_data_platform.cli_governance import add_governance_parser
+from quant_market_data_platform.cli_margin import add_margin_parser
 from quant_market_data_platform.cli_paths import add_paths_parser
 from quant_market_data_platform.cli_quality import add_quality_parser
 from quant_market_data_platform.cli_quantzone import add_quantzone_parser
@@ -43,6 +44,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_governance_parser(subparsers)
     add_backup_parser(subparsers)
     add_tushare_parser(subparsers)
+    add_margin_parser(subparsers)
     return parser
 
 
@@ -54,6 +56,7 @@ def _is_optional_dependency_error(error: RuntimeError) -> bool:
 def _extra_for_missing_dependency(args: argparse.Namespace, missing_name: str | None) -> str:
     command_extras = {
         "tushare": "tushare",
+        "margin": "tushare",
         "quantzone": "quantzone",
         "research-features": "research-features",
         "quality": "quality",

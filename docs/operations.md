@@ -472,6 +472,48 @@ inode 独立。`STATE.json` 的 `failed` 表示捕获到失败，进程被强制
 完整版本范围、Parquet/coverage 和实际 reader/rollback 合同。该工具不改写原始数据、
 current、latest 或 provider，不授权退役任何副本。
 
+## 独立融资版本 catalog（显式采用）
+
+`marketdata margin prepare --candidate "$CANDIDATE" --lineage "$LINEAGE" --catalog "$CATALOG"`
+只扫描和复制离线完整候选，在仓库外的独立 catalog 创建不可覆盖版本与真实 prepared receipt。
+候选必须保留原生 `tushare.margin.v1` 或 `tushare.margin_detail.v1` manifest、完整分区、
+准确 totals/query 日期范围。source lineage 的每个文件 SHA256 会重新验证。
+`LINEAGE` 是 `tushare.margin.sources.v1` JSON，含 `historical_pit_certified: false` 和
+非空 `inputs` 列表：每项提供 `path`、`sha256`、`observed_at`（未知必须显式 null）。
+每个候选 data 文件都须有匹配 hash 的源输入。prepare 不重新调用 provider，也不更改原观察时间。
+
+返回的 `version` 和 `receipt_sha256` 用于显式采用：
+
+```bash
+marketdata margin adopt --catalog "$CATALOG" --dataset margin \
+  --target "$VERSION" --target-sha256 "$RECEIPT_SHA256"
+# 默认 dry-run。仅在审核后额外传 --apply。
+# 已存在 current 时，还必须给出精确旧链接及其 prepared receipt SHA256：
+marketdata margin adopt --catalog "$CATALOG" --dataset margin \
+  --target "$VERSION" --target-sha256 "$RECEIPT_SHA256" \
+  --expected-current "$OLD_VERSION" --expected-current-sha256 "$OLD_RECEIPT_SHA256"
+marketdata margin contract --catalog "$CATALOG" > "$CATALOG/explicit-contract.json"
+```
+
+`marketdata margin rollback` 使用与 `adopt` 相同的参数和 CAS，只把 target 明确指定为保留的旧版本。
+采用只更改独立 catalog 内 `current/{dataset}`，并发使用该 catalog 的非阻塞锁。
+失败仅恢复本次仍持有的指针，不覆盖其他执行者已更改的链接。旧版本不删除。
+`contract` 导出已有 `PublishedAssetContract.load` 可读取的显式合同。合同文件必须位于
+catalog 内。默认 legacy reader 不会自动切换到它。
+
+legacy `*_latest` 仍由现有 mirror 写分区和 manifest。不得把这些目录或旧 writer 输出路径
+指向不可变版本。本入口不执行实体目录 bootstrap，也不修改默认 current contract/registry。
+锁只协调使用本 catalog 的操作，不声称与 legacy writer 共享锁。
+
+切换前先持久化 intent，随后原子替换指针并 fsync 目录，再记录最终 receipt。
+进程中断留下 pending intent 时，prepare/adopt/rollback/contract 都会拒绝继续。先检查
+`marketdata margin recover --catalog "$CATALOG"` 的只读恢复计划，再明确加 `--apply`
+回滚到 intent 中的旧指针。未知当前指针、被篡改 intent 或版本 inventory 不允许恢复。
+恢复只处理 catalog 指针和事务，保留 legacy 目录。版本数据在 prepared receipt 封存前完成文件/目录 fsync。
+
+本CLI只创建并接受 catalog 内的 absolute current 链接，拒绝相对链接。source observed_at
+若已知必须有时区且不得超过当前时间5分钟，未知时仍显式保留 null。
+
 ## 历史分钟覆盖独立复核
 
 最多 10 日的离线证据扫描与失败关闭规则见[历史分钟覆盖试点](operations/historical-minute-coverage-pilot.md)。输出仅用于审核，不构成验收或发布授权。
