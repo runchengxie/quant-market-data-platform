@@ -284,6 +284,18 @@ def build_current_contract(
 
 
 def write_current_contract(path: str | Path, payload: Mapping[str, Any]) -> None:
+    """Atomically write a contract; shared callers build payloads under publication_lock.
+
+    This low-level function does not update the derived registry. Publishers use
+    commit_current for pending evidence and pair reconciliation.
+    """
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(dict(payload), ensure_ascii=False, indent=2), encoding="utf-8")
+    from .publication_lock import atomic_write, publication_lock
+
+    content = json.dumps(dict(payload), ensure_ascii=False, indent=2).encode("utf-8")
+    if output.parent.name == "current_assets" and output.parent.parent.name == "metadata":
+        with publication_lock(output.parent.parent.parent):
+            atomic_write(output, content)
+    else:
+        atomic_write(output, content)

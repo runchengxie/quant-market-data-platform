@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 563,
-    "python_lines": 132825,
+    "python_files": 567,
+    "python_lines": 133607,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "f241094f8648b093ea4e43b2c6d00a0df4d72af7",
-    "reason": "Expose existing exchange minute-partition validation through a read-only public CLI and real Parquet subprocess regressions: exactly two Python files and 166 net lines. Preserve merged identical-minute-candidate validation and all structural budgets; no complexity, ignore, coverage or reserved-headroom allowance.",
-    "exit_condition": "Remove this two-file/166-line allowance if the CLI is retired or consolidated with equivalent hash/sidecar/date/exchange validation, read-only behavior and failure regressions. Preserve all earlier retirement conditions."
+    "source_revision": "8544f57fef2908b869d962cddb3e07345268ebd4",
+    "reason": "Coordinate all current publication writers with root locking, atomic metadata writes, recoverable registry pending state and clean rollback ownership checks, with concurrency and failure regressions: exactly 4 Python files and 782 net Python lines. Structural budgets unchanged.",
+    "exit_condition": "Remove this allowance when publication coordination is retired or consolidated with equivalent lock, stale-base rejection, no-download retry, metadata integrity and delayed rollback ownership regressions. Preserve all prior retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "f241094f8648b093ea4e43b2c6d00a0df4d72af7",
+      "reason": "Expose existing exchange minute-partition validation through a read-only public CLI and real Parquet subprocess regressions: exactly two Python files and 166 net lines. Preserve merged identical-minute-candidate validation and all structural budgets; no complexity, ignore, coverage or reserved-headroom allowance.",
+      "exit_condition": "Remove this two-file/166-line allowance if the CLI is retired or consolidated with equivalent hash/sidecar/date/exchange validation, read-only behavior and failure regressions. Preserve all earlier retirement conditions."
+    },
     {
       "source_revision": "71e40a0da03530fe88d70d4b212701d3af6a8cfa",
       "reason": "Allow explicitly audited byte-identical triples without dropping candidates, with real consumer replay and malformed third-candidate regressions: 79 Python lines, no new files or structural budget changes.",

@@ -8,8 +8,9 @@ from typing import Any
 import pandas as pd
 import yaml
 
-from quant_market_data_platform.contract import build_current_contract, write_current_contract
+from quant_market_data_platform.contract import build_current_contract
 from quant_market_data_platform.paths import current_contract_path, resolve_artifacts_root
+from quant_market_data_platform.publication_lock import publication_lock
 
 from .models import normalize_context_catalog, validate_context_observations
 
@@ -144,47 +145,50 @@ def publish_context_assets(  # noqa: PLR0913
     normalized_observations = validate_context_observations(observations)
     normalized_pit = validate_context_observations(pit)
 
-    base = root / "assets" / "context" / "cn"
-    _write_single_file_asset(
-        base / "catalog",
-        stem="cn_context_catalog",
-        frame=normalized_catalog,
-        as_of=as_of,
-        schema_version="cn_context.catalog.v1",
-        lineage=lineage,
-    )
-    _write_directory_asset(
-        base / "normalized",
-        stem="cn_context_observations",
-        frame=normalized_observations,
-        as_of=as_of,
-        schema_version="cn_context.observations.v1",
-        lineage=lineage,
-    )
-    _write_directory_asset(
-        base / "pit",
-        stem="cn_context_pit",
-        frame=normalized_pit,
-        as_of=as_of,
-        schema_version="cn_context.pit.v1",
-        lineage=lineage,
-    )
-    _write_single_file_asset(
-        base / "release_calendar",
-        stem="cn_context_release_calendar",
-        frame=release_calendar.copy(),
-        as_of=as_of,
-        schema_version="cn_context.release_calendar.v1",
-        lineage=lineage,
-    )
+    with publication_lock(root):
+        base = root / "assets" / "context" / "cn"
+        _write_single_file_asset(
+            base / "catalog",
+            stem="cn_context_catalog",
+            frame=normalized_catalog,
+            as_of=as_of,
+            schema_version="cn_context.catalog.v1",
+            lineage=lineage,
+        )
+        _write_directory_asset(
+            base / "normalized",
+            stem="cn_context_observations",
+            frame=normalized_observations,
+            as_of=as_of,
+            schema_version="cn_context.observations.v1",
+            lineage=lineage,
+        )
+        _write_directory_asset(
+            base / "pit",
+            stem="cn_context_pit",
+            frame=normalized_pit,
+            as_of=as_of,
+            schema_version="cn_context.pit.v1",
+            lineage=lineage,
+        )
+        _write_single_file_asset(
+            base / "release_calendar",
+            stem="cn_context_release_calendar",
+            frame=release_calendar.copy(),
+            as_of=as_of,
+            schema_version="cn_context.release_calendar.v1",
+            lineage=lineage,
+        )
 
-    contract = build_current_contract(
-        root,
-        market="cn_context",
-        provider="composite",
-        generated_by="marketdata context publish",
-        target_date=as_of,
-    )
-    output = current_contract_path(root, market="cn_context")
-    write_current_contract(output, contract)
-    return output
+        contract = build_current_contract(
+            root,
+            market="cn_context",
+            provider="composite",
+            generated_by="marketdata context publish",
+            target_date=as_of,
+        )
+        output = current_contract_path(root, market="cn_context")
+        from quant_market_data_platform.current_publication import commit_current
+
+        commit_current(root, output, contract)
+        return output

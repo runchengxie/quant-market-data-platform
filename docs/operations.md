@@ -528,6 +528,32 @@ legacy `*_latest` 仍由现有 mirror 写分区和 manifest。不得把这些目
 
 [统一只读检查入口](operations/data-status.md) 汇总发布日期、质量缺口和服务历史状态。
 
+### Current 目录发布与重试
+
+Current 发布、分钟别名切换、基本面发布、context 发布和 registry 重建共用
+`metadata/current_assets/.publication.lock`。锁忙时命令报错，调用方应稍后重试。
+数据写入锁先于目录发布锁获取，clean journal 在目录发布锁内操作。
+Full 和 context 发布的现有别名复制仍持有该锁，大目录复制期间可能更频繁出现锁忙。
+
+分钟发布完成后同步 `a_share_current.json` 中的 `minute_1m_tushare` 摘要，保留其他资产
+和原有 `target_date`。registry 从当前各市场契约重建，保留 `cn_context`。
+同版本重试只同步目录，日更发现数据已齐时也会修复目录和该日待完成的 promotion receipt，
+不重新下载数据。旧版本或 base receipt 已过期的候选会被拒绝。
+
+JSON 和 CSV 分别通过临时文件、fsync 和原子替换写出。两个文件之间存在短暂的版本差异窗口，
+读取方以 current contract 为权威。发布中断会报错并保留
+`metadata/current_assets/.registry-pending.json`，分钟 promotion receipt 标记为
+`metadata_pending`。重试同一发布或执行默认的 `registry build` 可修复派生 CSV。
+独立执行 registry 重建只修复目录，分钟 receipt 由同版本发布或日更重试完成。
+
+`contract build --out` 的默认 registry 输出位于自定义契约旁，不写共享 registry。
+`registry build --contract` 或 `--market` 选择单个市场时，必须用 `--out` 指定独立输出。
+共享 registry 始终包含当前全部市场，dry-run 遵循相同的参数限制。
+
+Clean rollback 和 recovery 会在持锁状态比较 journal 中的 metadata hashes。
+后续发布已经修改这些文件，或旧 journal 无法证明写入归属时，恢复操作会停止并保留现场。
+此时应核对当前别名和 journal，再重建目录，不能直接恢复旧 metadata 快照。
+
 ## 只读分钟分区校验
 
 已安装的 owner CLI 可在不访问供应商、不修改输入的情况下校验 SH/SZ 交易所分钟 overlay：

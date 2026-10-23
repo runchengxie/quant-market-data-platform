@@ -327,13 +327,11 @@ def _replace_operational_alias(alias: Path, target: Path) -> None:
         raise MinuteCandidateError("Operational alias and version must share a parent")
     if alias.exists() and not alias.is_symlink() and not alias.is_dir():
         raise MinuteCandidateError(f"Refusing to replace non-directory alias: {alias}")
-    temporary = alias.parent / f".{alias.name}.tmp-{uuid.uuid4().hex}"
-    shutil.copytree(target, temporary, symlinks=False)
     if alias.is_symlink() or alias.is_file():
         alias.unlink()
     elif alias.is_dir():
         shutil.rmtree(alias)
-    os.replace(temporary, alias)
+    os.replace(target, alias)
 
 
 def promote_operational_alias(
@@ -348,6 +346,10 @@ def promote_operational_alias(
     alias = Path(alias_path).expanduser().absolute()
     legacy_alias = Path(legacy_alias_path).expanduser().absolute()
     promotion_path = Path(promotion_receipt_json).expanduser().resolve()
+    from .minute_publication import alias_identity, commit_operational, publication_root
+
+    publication_root(alias)
+    expected_identity = alias_identity(alias)
     receipt = _read_json(version_receipt_path)
     output_dir = Path(receipt.get("output_dir", "")).expanduser().resolve()
     if (
@@ -365,12 +367,15 @@ def promote_operational_alias(
     dates = [str(record["trade_date"]) for record in receipt["daily"]]
     reject_quarantined_dates(alias, dates)
     reject_quarantined_dates(output_dir, dates)
+    if (
+        alias.name != OPERATIONAL_ALIAS_NAME
+        or alias.parent != output_dir.parent
+        or legacy_alias.parent != alias.parent
+        or alias == output_dir
+        or (alias.exists() and not alias.is_dir())
+    ):
+        raise MinuteCandidateError("Invalid operational alias or version location")
     legacy_before = legacy_alias.resolve(strict=True)
-    _replace_operational_alias(alias, output_dir)
-    if alias.is_symlink() or alias.resolve(strict=True) == output_dir:
-        raise MinuteCandidateError("Operational promotion must leave an entity alias")
-    if legacy_alias.resolve(strict=True) != legacy_before:
-        raise MinuteCandidateError("Operational promotion alias verification failed")
     payload = {
         "schema_version": OPERATIONAL_PROMOTION_SCHEMA,
         "status": "operational_canonical",
@@ -390,8 +395,18 @@ def promote_operational_alias(
         "policy": receipt["policy"],
         "summary": receipt["summary"],
     }
-    _atomic_write_json(promotion_path, payload)
-    return payload
+
+    def replace_alias(staging: Path) -> None:
+        if legacy_alias.resolve(strict=True) != legacy_before:
+            raise MinuteCandidateError("Legacy alias changed during publication planning")
+        _replace_operational_alias(alias, staging)
+        if alias.is_symlink() or alias.resolve(strict=True) == output_dir:
+            raise MinuteCandidateError("Operational promotion must leave an entity alias")
+        if legacy_alias.resolve(strict=True) != legacy_before:
+            raise MinuteCandidateError("Operational promotion alias verification failed")
+
+    payload["promotion_receipt_path"] = str(promotion_path)
+    return commit_operational(alias, receipt, payload, expected_identity, replace_alias)
 
 
 __all__ = [

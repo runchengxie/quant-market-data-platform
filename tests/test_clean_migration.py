@@ -217,13 +217,19 @@ def test_clean_only_failure_restores_all_declared_metadata(tmp_path, monkeypatch
     }
     plan = run_a_share_current_promotion(**options)
     expected = plan["planned_publication"]["alias_updates"]["daily_clean"]["source_sha256"]
-    original = getattr(promotion, failure)
+    from quant_market_data_platform import contract, registry
+
+    writer = {
+        "write_current_contract": contract,
+        "write_combined_dataset_registry": registry,
+    }.get(failure, promotion)
+    original = getattr(writer, failure)
 
     def fail(*args, **kwargs):
         original(*args, **kwargs)
         raise RuntimeError("injected after metadata write")
 
-    monkeypatch.setattr(promotion, failure, fail)
+    monkeypatch.setattr(writer, failure, fail)
     with pytest.raises(RuntimeError, match="injected"):
         run_a_share_current_promotion(**options, apply=True, clean_migration_sha256=expected)
     assert not alias.is_symlink()

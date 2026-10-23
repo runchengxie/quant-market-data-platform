@@ -348,15 +348,28 @@ def render_dataset_registry_csv(
 
 
 def write_dataset_registry(path: str | Path, contract: Mapping[str, Any]) -> None:
-    output = Path(path)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render_dataset_registry_csv(contract), encoding="utf-8")
+    write_combined_dataset_registry(path, [contract])
 
 
 def write_combined_dataset_registry(
     path: str | Path,
     contracts: Iterable[Mapping[str, Any]],
 ) -> None:
+    """Shared output always rebuilds authoritative markets under the root lock.
+
+    Explicit snapshots belong at a custom output path. Shared callers cannot use
+    an older in-memory payload to overwrite a more recent current contract.
+    """
+    from .current_publication import current_contracts
+    from .publication_lock import atomic_write, publication_lock
+
     output = Path(path)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render_combined_dataset_registry_csv(contracts), encoding="utf-8")
+    if output.name == "dataset_registry.csv" and output.parent.name == "metadata":
+        root = output.parent.parent
+        with publication_lock(root):
+            authoritative = current_contracts(root)
+            content = render_combined_dataset_registry_csv(authoritative or contracts)
+            atomic_write(output, content.encode("utf-8"))
+            (root / "metadata/current_assets/.registry-pending.json").unlink(missing_ok=True)
+    else:
+        atomic_write(output, render_combined_dataset_registry_csv(contracts).encode("utf-8"))

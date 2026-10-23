@@ -501,3 +501,15 @@ def test_daily_operational_update_uses_fallback_token_after_incomplete_backfill(
 
     assert payload["status"] == "operational_canonical_updated"
     assert observed_tokens == ["TUSHARE_TOKEN_2", "TUSHARE_TOKEN"]
+
+
+def test_daily_noop_repairs_current_catalog(tmp_path):
+    _installed_operational_alias(tmp_path, date_max="20260710")
+    calendar = tmp_path / "assets/tushare/a_share/trade_cal/a_share_trade_cal_latest.parquet"
+    calendar.parent.mkdir(parents=True)
+    _trade_calendar(calendar, ["20260710"])
+    run_operational_daily(OperationalDailyOptions(artifacts_root=tmp_path, target_date="20260710"))
+    contract = tmp_path / "metadata/current_assets/a_share_current.json"
+    assert contract.is_file()
+    assert json.loads(contract.read_text())["assets"]["minute_1m_tushare"]["as_of"] == "20260710"
+    assert "minute_1m_tushare" in (tmp_path / "metadata/dataset_registry.csv").read_text()
