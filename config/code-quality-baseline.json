@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 534,
-    "python_lines": 126707,
+    "python_files": 537,
+    "python_lines": 127145,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,15 +18,25 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "dd0bc15fec940d16893d36118c5245c166e8eec2",
+    "source_revision": "ce07f7de98882054db823ef578ba156cec927635",
     "reason": "Add full-inventory SHA-confirmed retained-directory clean migration, explicit archived rollback, clean-only and recurring linked promotion modes, and fault-injection fixtures: three files and 904 net Python lines. Extracting the metadata phase reduces functions_over_100 from 38 to 37; all other complexity/oversized budgets remain unchanged.",
     "exit_condition": "Remove this three-file/904-line allowance when a shared asset release controller subsumes physical rollback, source-independent journal recovery and linked promotion with equivalent metadata boundary and interruption tests; preserve earlier retirement conditions."
   },
   "previous_change_records": [
     {
-      "source_revision": "2e801a6c90bde23ea12bffff9af741d9727c431a",
+      "source_revision": "207f3d1a937b50ce7d4a055818d36757c7a0c11a",
       "reason": "Add explicit POSIX clean-only linked publisher, durable metadata rollback journal, read-only migration planner and fail-closed fixtures: two files and 573 Python lines. No complexity or oversized-file budgets increased.",
       "exit_condition": "Remove this two-file/573-line allowance when a shared recoverable publication controller replaces this opt-in clean publisher with equivalent interruption, retention and path-safety coverage; preserve earlier retirement conditions."
+    },
+    {
+      "source_revision": "a394ecd0db68a406b5e833a0b2ded1910d48d4fc",
+      "reason": "Add completion-integrity validation and a separate negative-path test module while preserving the existing terminal-acquisition regressions: two Python files and 308 lines. Require readable quota evidence, nonfuture clocks, canonical queue binding and low-storage protection. Complexity and oversized-file budgets remain unchanged.",
+      "exit_condition": "Remove this two-file/308-line inventory allowance when equivalent terminal-evidence integrity validation and negative-path coverage are consolidated into the existing monitoring modules; retain all earlier retirement conditions."
+    },
+    {
+      "source_revision": "2e801a6c90bde23ea12bffff9af741d9727c431a",
+      "reason": "Add inventory-validated terminal minute acquisition monitoring and nine failure-boundary regressions: one test file and 130 Python lines. Complexity and oversized-file budgets remain unchanged.",
+      "exit_condition": "Remove this one-file/130-line allowance when completion validation and alert regressions are consolidated with equivalent acquisition-state coverage; preserve previous retirement conditions."
     },
     {
       "source_revision": "e0b278d985ec939709ef533545a3b2d1c7b44934",
