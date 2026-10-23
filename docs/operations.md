@@ -471,3 +471,7 @@ inode 独立。`STATE.json` 的 `failed` 表示捕获到失败，进程被强制
 生产锁。跨文件稳定 stat/hash 检查不构成生产事务快照。必须由独立步骤核验介质故障域、
 完整版本范围、Parquet/coverage 和实际 reader/rollback 合同。该工具不改写原始数据、
 current、latest 或 provider，不授权退役任何副本。
+
+## 历史分钟覆盖独立复核
+
+最多 10 日的离线证据扫描与失败关闭规则见[历史分钟覆盖试点](operations/historical-minute-coverage-pilot.md)。输出仅用于审核，不构成验收或发布授权。
