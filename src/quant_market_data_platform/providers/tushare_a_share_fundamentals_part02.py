@@ -363,12 +363,23 @@ def _completed_immutable_snapshot(
 ) -> dict[str, Any] | None:
     output = Path(options.out_dir).expanduser().resolve()
     manifest = _asset_manifest_payload(output)
+    if (output / "manifest.seal.json").exists():
+        _require_asset_integrity(output, manifest)
     if manifest.get("status") != "completed" or manifest.get("immutable_snapshot") is not True:
         return None
     raw_query = manifest.get("query")
     query = raw_query if isinstance(raw_query, Mapping) else {}
+    from .tushare_fundamentals_retry import endpoint_identity
+
+    try:
+        same_endpoint = endpoint_identity(manifest.get("api_url")) == endpoint_identity(
+            options.api_url or resolve_tushare_api_url(None, token_env=options.token_env)
+        )
+    except ValueError:
+        same_endpoint = False
     identity_matches = (
-        manifest.get("dataset") == options.dataset
+        same_endpoint
+        and manifest.get("dataset") == options.dataset
         and query.get("start_date") == _date_token(options.start_date)
         and query.get("end_date") == _date_token(options.end_date)
         and query.get("requested_report_types", ["provider_default"])

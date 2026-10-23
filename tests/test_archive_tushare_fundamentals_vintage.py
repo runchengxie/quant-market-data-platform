@@ -205,6 +205,7 @@ def test_completed_raw_reused_without_provider_context_on_unsealed_retry(tmp_pat
 
     args = _archive_args(tmp_path)
     root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    archive.begin_attempt(root, archive.resolved_retry_parameters(args))
     for name in args.datasets:
         raw = _child(root, f"raw/{name}")
         manifest = asset_manifest_payload(raw)
@@ -215,6 +216,7 @@ def test_completed_raw_reused_without_provider_context_on_unsealed_retry(tmp_pat
                 "end_date": args.end_date,
                 "requested_report_types": ["provider_default"],
             },
+            api_url=args.api_url,
             entitlement_mode="vip_batch",
             source_run_id=f"{name}-{args.snapshot_date}",
         )
@@ -311,7 +313,7 @@ def test_archive_state_replace_failure_preserves_previous_receipt(tmp_path, monk
 def test_archive_retry_replaces_failed_state_with_completed_receipt(tmp_path, monkeypatch):
     args = _archive_args(tmp_path)
     root = archive.snapshot_root(tmp_path, args.snapshot_date)
-    root.mkdir(parents=True)
+    archive.begin_attempt(root, archive.resolved_retry_parameters(args))
     (root / "archive_state.json").write_text('{"status":"failed","error":{"type":"Old"}}')
     monkeypatch.setattr(
         archive, "_archive_raw_dataset", lambda _a, _r, name: _child(root, f"raw/{name}")
@@ -329,3 +331,278 @@ def test_archive_retry_replaces_failed_state_with_completed_receipt(tmp_path, mo
     assert "error" not in state
     assert len(state["completed_children"]) == 2 * len(args.datasets) + 1
     archive.verify_sealed_snapshot(root)
+
+
+def test_legacy_unsealed_retry_is_read_only_and_unproven(tmp_path, monkeypatch):
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    root.mkdir(parents=True)
+    receipt = root / "archive_state.json"
+    receipt.write_text('{"status":"failed","error":{"type":"Old"}}')
+    original = receipt.read_bytes()
+    monkeypatch.setattr(archive, "_archive_raw_dataset", lambda *_: pytest.fail("provider blocked"))
+    with pytest.raises(RuntimeError, match="identity.*unproven"):
+        archive.archive_vintage(args)
+    assert receipt.read_bytes() == original
+    assert sorted(p.name for p in root.iterdir()) == ["archive_state.json"]
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("api_url", "https://other.example"),
+        ("field_mappings", ("roe=changed",)),
+        ("available_delay_days", 2),
+        ("max_observation_age_days", 4),
+    ],
+)
+def test_retry_rejects_changed_semantics_before_writes(tmp_path, monkeypatch, field, value):
+    args = _archive_args(tmp_path)
+
+    def fail(*_):
+        raise RuntimeError("fixture failure")
+
+    monkeypatch.setattr(archive, "_archive_raw_dataset", fail)
+    with pytest.raises(RuntimeError, match="fixture failure"):
+        archive.archive_vintage(args)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    before = {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    setattr(args, field, value)
+    with pytest.raises(RuntimeError, match="identity.*changed"):
+        archive.archive_vintage(args)
+    assert before == {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+
+
+def test_retry_preserves_each_attempt_and_sanitized_parameters(tmp_path, monkeypatch):
+    args = _archive_args(tmp_path)
+
+    def fail(*_):
+        raise RuntimeError("token=secret-example")
+
+    monkeypatch.setattr(archive, "_archive_raw_dataset", fail)
+    for _ in range(2):
+        with pytest.raises(RuntimeError):
+            archive.archive_vintage(args)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    attempts = sorted((root / "attempts").iterdir())
+    assert len(attempts) == 2
+    for attempt in attempts:
+        state = json.loads((attempt / "archive_state.json").read_text())
+        assert state["status"] == "failed"
+        identity = json.loads((attempt / "parameters.json").read_text())
+        assert identity["source_revision"]
+        assert identity["semantic"]["max_observation_age_days"] == 3
+        assert identity["execution"]["batch_rows"] == 65536
+    evidence = "\n".join(p.read_text() for p in root.rglob("*.json"))
+    assert "secret-example" not in evidence
+    assert args.api_url not in evidence
+
+
+def test_completed_raw_endpoint_mismatch_blocks_before_provider(tmp_path, monkeypatch):
+    from quant_market_data_platform.providers import tushare_a_share_fundamentals_part02 as raw_api
+    from quant_market_data_platform.providers.tushare_a_share_fundamentals import (
+        RawFundamentalsDownloadOptions,
+    )
+    from quant_market_data_platform.providers.tushare_a_share_fundamentals_support import (
+        asset_manifest_payload,
+    )
+
+    raw = _child(tmp_path, "raw")
+    manifest = asset_manifest_payload(raw)
+    manifest.update(
+        dataset="income",
+        query={
+            "start_date": "20200101",
+            "end_date": "20200102",
+            "requested_report_types": ["provider_default"],
+        },
+        entitlement_mode="vip_batch",
+        source_run_id="fixture",
+        api_url="https://api.tushare.pro",
+    )
+    write_manifest(raw / "manifest.yml", manifest)
+    seal_manifest(raw / "manifest.yml")
+    options = RawFundamentalsDownloadOptions(
+        dataset="income",
+        out_dir=raw,
+        start_date="20200101",
+        end_date="20200102",
+        entitlement_mode="vip_batch",
+        run_id="fixture",
+        api_url="https://other.example",
+    )
+    with pytest.raises(Exception, match="different identity"):
+        raw_api._completed_immutable_snapshot(options)
+    from dataclasses import replace
+
+    options = replace(options, api_url="HTTPS://API.TUSHARE.PRO:443/")
+    reused = raw_api._completed_immutable_snapshot(options)
+    assert reused is not None
+    assert reused["status"] == "completed"
+
+
+def test_derived_reuse_requires_explicit_matching_semantics(tmp_path):
+    derived = _child(tmp_path, "normalized")
+    with pytest.raises(RuntimeError, match="identity.*unproven"):
+        archive._reuse_derived_snapshot(
+            derived, expected_source_hashes=set(), expected_identity={"delay": 1}
+        )
+
+
+@pytest.mark.parametrize("change", ["semantics", "source", "payload"])
+def test_derived_retry_rejects_changed_inputs(tmp_path, change):
+    from quant_market_data_platform.providers.tushare_a_share_fundamentals_support import (
+        asset_manifest_payload,
+    )
+
+    derived = _child(tmp_path, "normalized")
+    manifest = asset_manifest_payload(derived)
+    manifest["source_integrity"] = {"manifest_sha256": "source-a"}
+    write_manifest(derived / "manifest.yml", manifest)
+    seal_manifest(derived / "manifest.yml")
+    archive.record_derived_identity(
+        derived, {"mapping": ["roe=roe"], "delay": 1, "age": 3, "revision": "a"}
+    )
+    identity = {"mapping": ["roe=roe"], "delay": 1, "age": 3, "revision": "a"}
+    assert archive._reuse_derived_snapshot(
+        derived, expected_source_hashes={"source-a"}, expected_identity=identity
+    )
+    sources = {"source-a"}
+    if change == "semantics":
+        identity["delay"] = 2
+    elif change == "source":
+        sources = {"source-b"}
+    else:
+        (derived / "data/part.bin").write_bytes(b"corrupt")
+    with pytest.raises((RuntimeError, PitProvenanceError)):
+        archive._reuse_derived_snapshot(
+            derived, expected_source_hashes=sources, expected_identity=identity
+        )
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "https://user:secret@example.com",
+        "https://example.com?token=secret",
+        "https://example.com#secret",
+    ],
+)
+def test_archive_rejects_credential_bearing_endpoint_without_echo(endpoint):
+    with pytest.raises(ValueError) as error:
+        archive._validate_api_url(endpoint)
+    assert "secret" not in str(error.value)
+
+
+def test_retry_rejects_changed_code_revision(tmp_path, monkeypatch):
+    args = _archive_args(tmp_path)
+    parameters = archive.resolved_retry_parameters(args)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    archive.begin_attempt(root, parameters)
+    parameters["semantic"]["source_revision"] = "different"
+    with pytest.raises(RuntimeError, match="identity.*changed"):
+        archive.begin_attempt(root, parameters)
+
+
+def test_invalid_endpoint_port_does_not_echo_input():
+    with pytest.raises(ValueError) as error:
+        archive._validate_api_url("https://example.com:secret-port")
+    assert "secret-port" not in str(error.value)
+
+
+@pytest.mark.parametrize("kind", ["raw", "derived"])
+def test_sealed_child_with_lost_completion_metadata_cannot_be_rebuilt(tmp_path, kind):
+    child = _child(tmp_path, kind)
+    (child / "manifest.yml").unlink()
+    with pytest.raises(RuntimeError, match="[Ss]ealed|seal"):
+        if kind == "derived":
+            archive._reuse_derived_snapshot(
+                child, expected_source_hashes=set(), expected_identity={}
+            )
+        else:
+            from quant_market_data_platform.providers import (
+                tushare_a_share_fundamentals_part02 as raw_api,
+            )
+            from quant_market_data_platform.providers.tushare_a_share_fundamentals import (
+                RawFundamentalsDownloadOptions,
+            )
+
+            raw_api._completed_immutable_snapshot(
+                RawFundamentalsDownloadOptions(
+                    dataset="income",
+                    out_dir=child,
+                    entitlement_mode="vip_batch",
+                    start_date="20200101",
+                    end_date="20200102",
+                )
+            )
+
+
+def test_retry_mapping_order_preserves_effective_duplicate_source_semantics(tmp_path):
+    args = _archive_args(tmp_path)
+    args.field_mappings = ("roe=a", "roe=b")
+    parameters = archive.resolved_retry_parameters(args)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    archive.begin_attempt(root, parameters)
+    args.field_mappings = ("roe=b", "roe=a")
+    with pytest.raises(RuntimeError, match="identity.*changed"):
+        archive.begin_attempt(root, archive.resolved_retry_parameters(args))
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "https://exa mple.com",
+        "https://example.com/a b",
+        "https://bad_host.example",
+        "https://-bad.example",
+        "https://example.com\n/token",
+    ],
+)
+def test_endpoint_rejects_whitespace_and_invalid_hostname_without_echo(endpoint):
+    with pytest.raises(ValueError) as error:
+        archive._validate_api_url(endpoint)
+    assert endpoint not in str(error.value)
+
+
+@pytest.mark.parametrize("dependency", ["pandas", "pyarrow", "tushare"])
+def test_retry_identity_rejects_actual_runtime_dependency_change(tmp_path, monkeypatch, dependency):
+    from importlib import metadata
+
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    archive.begin_attempt(root, archive.resolved_retry_parameters(args))
+    original = metadata.version
+    monkeypatch.setattr(
+        metadata,
+        "version",
+        lambda name: "changed-version" if name == dependency else original(name),
+    )
+    with pytest.raises(RuntimeError, match="identity.*changed"):
+        archive.begin_attempt(root, archive.resolved_retry_parameters(args))
+
+
+def test_retry_identity_requires_runtime_versions_for_required_dependencies(tmp_path, monkeypatch):
+    from importlib import metadata
+
+    original = metadata.version
+
+    def version(name):
+        if name == "pandas":
+            raise metadata.PackageNotFoundError(name)
+        return original(name)
+
+    monkeypatch.setattr(metadata, "version", version)
+    with pytest.raises(RuntimeError, match="runtime.*unproven"):
+        archive.resolved_retry_parameters(_archive_args(tmp_path))
+
+
+def test_retry_identity_rejects_python_runtime_change(tmp_path, monkeypatch):
+    from quant_market_data_platform.providers import tushare_fundamentals_retry as retry
+
+    args = _archive_args(tmp_path)
+    root = archive.snapshot_root(tmp_path, args.snapshot_date)
+    archive.begin_attempt(root, archive.resolved_retry_parameters(args))
+    monkeypatch.setattr(retry.platform, "python_version", lambda: "different")
+    with pytest.raises(RuntimeError, match="identity.*changed"):
+        archive.begin_attempt(root, archive.resolved_retry_parameters(args))

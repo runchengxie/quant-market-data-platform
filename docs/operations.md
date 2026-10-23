@@ -296,7 +296,11 @@ vintage 的不完整状态保持不变。
 覆盖两阶段编排和失败、重入回归。复杂度阈值保持原值。
 当编排入口整合或回归夹具简化时，收回相应行数预算。
 
-归档目录中的 `archive_state.json` 原子记录当前阶段、数据集、已完成子清单哈希及失败类型。基本面同日修订冲突还会记录业务键。其他异常文本不写入，避免泄露请求信息。此文件仅供进度诊断，`running` 也可能表示进程被中断。完成证明仍以通过校验的 `manifest.yml` 和 `SEALED.json` 为准。重试继续复用已完成子资产，已封存成功的归档不改写状态文件。
+归档目录中的 `archive_state.json` 原子记录当前阶段、数据集、已完成子清单哈希及失败类型。基本面同日修订冲突还会记录业务键。其他异常文本不写入，避免泄露请求信息。此文件仅供进度诊断，`running` 也可能表示进程被中断。完成证明仍以通过校验的 `manifest.yml` 和 `SEALED.json` 为准。重试只在完整身份一致时复用已完成子资产，已封存成功的归档只做完整性校验，不改写状态文件，也不据此认证新请求参数。
+
+新归档在调用供应商前写入 `retry_identity.json`，记录日期、数据集、run ID、report types、端点规范化后的 SHA-256、字段映射、可用延迟、观察年龄、观察频率、生成代码 Git revision、实现文件哈希、实际 Python 版本及 numpy/pandas/pyarrow/PyYAML/TuShare 安装版本。重试逐项比较这些语义参数。变化必须使用新的输出 vintage。缺少必需库或版本时返回 runtime identity unproven。TuShare SDK 为可选网络依赖，离线复用时明确记录 `not_installed`，与未知版本区分。有无 SDK 或任一版本变化均拒绝重试，缺 SDK 时无法发起真实供应商请求。执行参数（重试次数、分页、桶数、批量大小等）另记于每次 attempt。`page_size` 和 `max_pages` 控制请求分页上限，单元截断仍由 raw 完整性检查拒绝。改变这些参数不会把不完整 raw 认证为完成，复用的完成输入仍须有相同查询身份与已校验的 manifest/source 哈希。字段映射保留原始顺序，以匹配重复 source 时后项覆盖前项的 PIT 解析行为。端点必须使用合法主机名，且不含空白、控制字符、用户名、密码、查询串或 fragment。重试证据不保存端点原文或 token。normalized/PIT 复用还要求匹配显式语义身份回执及对应 manifest 哈希，然后校验源 lineage 与 sealed payload。
+
+每次执行创建独立 `attempts/<id>/`，保存 `parameters.json`、前一次状态原文（若有）、当前 attempt 状态和追加式阶段事件。根 `archive_state.json` 仅为最新进度索引。后续执行不会覆盖历史 attempt。缺少完整身份的非空旧目录返回 `identity is unproven`，在修改旧 receipt 或请求供应商前停止。不得用当前默认参数补写旧身份。已有失败 vintage 的原参数未知时保持只读，需另外保全证据并重新制定隔离输出方案。此命令要求从包含 Git 元数据及 `src/`、`scripts/` 的源码 release 检出执行。缺少生成 revision 时拒绝执行。此命令按单写者运行，同一 vintage 不支持并发写入。
 
 ### 公司类别 selector 只读预检
 
@@ -347,3 +351,5 @@ marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python -m quant_market
 部署调用方必须另行施加 45 秒进程组期限，模块自身不保证总运行时限。
 所有输出放在源码仓库外，中断运行保留 `started.json` 供排查。
 该入口只采集指数收盘数据，不恢复港股股票生产能力。
+
+本次 vintage 重试保护新增一个独立身份/attempt 模块和 fixture 负面路径覆盖，shared ratchet 只将 Python 文件库存增加 1、行数库存增加 499。复杂度和大文件预算不变。退出条件：若以后将重试身份、attempt 事件和 derived 语义校验整合进统一的资产事务接口，并保留 legacy 拒绝、参数变化拒绝及历史 receipt 保全覆盖，则移除本次增量预算。
