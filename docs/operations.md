@@ -513,3 +513,7 @@ legacy `*_latest` 仍由现有 mirror 写分区和 manifest。不得把这些目
 
 本CLI只创建并接受 catalog 内的 absolute current 链接，拒绝相对链接。source observed_at
 若已知必须有时区且不得超过当前时间5分钟，未知时仍显式保留 null。
+
+## 历史分钟覆盖独立复核
+
+最多 10 日的离线证据扫描与失败关闭规则见[历史分钟覆盖试点](operations/historical-minute-coverage-pilot.md)。输出仅用于审核，不构成验收或发布授权。

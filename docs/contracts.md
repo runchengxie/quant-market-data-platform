@@ -43,6 +43,12 @@ export DATA_PLATFORM_ROOT=/data/market-data-platform
 历史港股运行记录仍可通过 `current_contract_path(..., market="hk")` 定位
 `metadata/current_assets/hk_current.json`。这项支持只保留路径兼容，平台暂未恢复港股数据生产。
 
+## 基本面投影共识诊断证据
+
+[`statement-projection-consensus.v1`](statement-projection-consensus.md) 绑定源文件散列及显式字段集合，
+保留全部候选和冲突事件。这份只读证据仅供诊断，不能作为发布契约或完整 current 的替代品，
+也不能证明重建数据的历史 PIT 可用性。
+
 ## 当前数据契约
 
 ```text
