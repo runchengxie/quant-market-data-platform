@@ -239,7 +239,6 @@ marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest
 
 使用 `scripts/operations/tushare_minute_history.py status --artifacts-root <data-root> --runtime-root <runtime-root>` 只读检查进度、额度、存储和审计阻断。统计分别列出元数据完成日期、独立审计日期和北京市场省略日期。历史审计绑定失效会单独记录，下载完成仍须经过发布验收。
 
-首轮下载结束后，只有完成回执与当前日期清单、deferred 队列和隔离记录一致，且额度账本仍可只读验证时，监控才报告 `download_pass_complete_with_gaps`。此状态允许已停止的下载任务保留旧的 preflight 快照。不会把缺失、损坏或未来时间的证据判为完成。审计阻断、低磁盘保护和语义隔离告警继续有效，`full_market_ready` 不会因此变为 true。
 
 `status` 和 `watch` 的 `pipeline` 将进度分为下载、语义审计、覆盖认证和正式发布四个阶段。
 `acquisition.deferred_dates` 读取当前补缺队列，当前数量以该队列为准。
@@ -249,6 +248,15 @@ marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest
 前三个阶段的范围是历史 staging，`publication` 则是当前已发布资产的独立日期窗口，
 其日期数和行数只读取经过路径及版本校验的 operational receipt。缺少有效回执时为 `null`。
 这些窗口不能直接相加或用来计算统一完成率，队列清零也不表示历史数据已正式发布。
+
+下载进程退出后，若 `download-complete.json` 明确记录首轮下载结束且质量验收待完成，
+监控会重新核对当前库存：已有完成日期，剩余交易日和补缺队列均为零、隔离日期与回执一致，
+且没有活跃写入、审计阻断或证据读取异常时，报告 `download_complete_with_gaps`。
+额度账本仍须可只读验证，未来时间或未来额度日期仍会拒绝完成分类。低磁盘保护继续生效。
+回执提供补缺队列路径时须匹配当前权威队列，旧回执无路径字段时仍核对当前队列。
+此时下载预检过期或跨日不会单独触发故障。其时间戳和新鲜度仍保留在输出中。
+缺少完成回执、库存未知或不一致、写入重新启动时，仍执行原有的新鲜度检查。
+该状态仅表示首轮采集结束，隔离告警、语义审计缺口和完整市场发布门禁继续独立生效。
 
 `watch` 使用相同参数并增加 `--state-root <monitor-root>`，写入 `status.json` 和去重的本地 `alerts.jsonl`。连续活跃且可运行的采样超过 15 分钟、至少三次没有进展时报告停滞。等待额度、空闲和审计阻断有独立状态。监控无需数据源凭证。
 

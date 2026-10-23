@@ -27,7 +27,9 @@ def completed_pass(evidence: dict, progress: dict, root: Path, now: datetime) ->
         ):
             raise ValueError("completion inventory mismatch")
         queue = root / "metadata/minute_backfill/reverse_scheduler/deferred_missing.json"
-        if Path(result["deferred_queue"]).resolve(strict=True) != queue.resolve(strict=True):
+        if "deferred_queue" in result and (
+            Path(result["deferred_queue"]).resolve(strict=True) != queue.resolve(strict=True)
+        ):
             raise ValueError("completion queue mismatch")
         if result.get("semantic_quarantine_dates", []) != progress["semantic_quarantine_dates"]:
             raise ValueError("completion quarantine mismatch")

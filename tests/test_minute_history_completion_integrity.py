@@ -56,6 +56,7 @@ def completed(tmp_path, monkeypatch):
             "status": "first_pass_complete_with_gaps",
             "result": {
                 "status": "download_pass_complete_with_gaps",
+                "reason": "reverse_history_is_complete_or_exhausted",
                 "deferred_dates": 0,
                 "deferred_queue": str(queue),
                 "semantic_quarantine_dates": [],
@@ -88,7 +89,7 @@ def test_completed_pass_does_not_need_live_preflight_or_writer(completed, tmp_pa
     root, runtime, db = completed
     before = db.read_bytes()
     result = watch_history(root, runtime, tmp_path / "monitor", now=NOW)
-    assert result["state"] == "download_pass_complete_with_gaps"
+    assert result["state"] == "download_complete_with_gaps"
     assert result["progress"]["remaining_open_dates"] == 0
     assert result["pipeline"]["coverage"]["full_market_ready"] is False
     assert result["writer_active"] is False
@@ -188,7 +189,7 @@ def test_completed_pass_keeps_semantic_quarantine_alert(completed, tmp_path, mon
     put(path, marker)
     os.utime(path, (NOW.timestamp() - 3600, NOW.timestamp() - 3600))
     result = watch_history(root, runtime, tmp_path / "monitor", now=NOW)
-    assert result["state"] == "download_pass_complete_with_gaps"
+    assert result["state"] == "download_complete_with_gaps"
     assert result["active_alert"] == "semantic_quarantine:20190509"
     assert result["pipeline"]["coverage"]["full_market_ready"] is False
 
@@ -203,3 +204,25 @@ def test_completed_pass_keeps_storage_protection(completed, monkeypatch):
         minute_history_status.shutil, "disk_usage", lambda _: SimpleNamespace(free=0)
     )
     assert history_status(root, runtime, now=NOW)["state"] == "storage_wait"
+
+
+def test_legacy_completion_without_queue_locator_uses_current_canonical_queue(completed):
+    root, runtime, _ = completed
+    path = runtime / "download-complete.json"
+    marker = json.loads(path.read_text())
+    del marker["result"]["deferred_queue"]
+    put(path, marker)
+    os.utime(path, (NOW.timestamp() - 3600, NOW.timestamp() - 3600))
+    assert history_status(root, runtime, now=NOW)["state"] == "download_complete_with_gaps"
+
+
+def test_explicit_redirected_completion_queue_is_rejected(completed, tmp_path):
+    root, runtime, _ = completed
+    foreign = tmp_path / "foreign-queue.json"
+    put(foreign, {"dates": {}})
+    path = runtime / "download-complete.json"
+    marker = json.loads(path.read_text())
+    marker["result"]["deferred_queue"] = str(foreign)
+    put(path, marker)
+    os.utime(path, (NOW.timestamp() - 3600, NOW.timestamp() - 3600))
+    assert history_status(root, runtime, now=NOW)["state"] == "unknown_stale_evidence"
