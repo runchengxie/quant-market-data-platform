@@ -486,7 +486,8 @@ def test_directory_metadata_rejected_before_asset_mutation(tmp_path, mode, apply
             end_date="20260529",
             current_health_report=destination,
             apply=apply,
-            **{mode: True},
+            clean_only_linked=mode == "clean_only_linked",
+            clean_linked=mode == "clean_linked",
         )
     assert destination.is_dir()
     assert [(path.stat().st_ino, path.read_bytes()) for path in (raw, universe)] == before
