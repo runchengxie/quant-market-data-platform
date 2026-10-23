@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 537,
-    "python_lines": 127145,
+    "python_files": 539,
+    "python_lines": 127777,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,15 +18,20 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "ce07f7de98882054db823ef578ba156cec927635",
+    "source_revision": "3c90ce03c713038afde650af84aa108698708d31",
     "reason": "Add full-inventory SHA-confirmed retained-directory clean migration, explicit archived rollback, clean-only and recurring linked promotion modes, and fault-injection fixtures: three files and 904 net Python lines. Extracting the metadata phase reduces functions_over_100 from 38 to 37; all other complexity/oversized budgets remain unchanged.",
     "exit_condition": "Remove this three-file/904-line allowance when a shared asset release controller subsumes physical rollback, source-independent journal recovery and linked promotion with equivalent metadata boundary and interruption tests; preserve earlier retirement conditions."
   },
   "previous_change_records": [
     {
-      "source_revision": "207f3d1a937b50ce7d4a055818d36757c7a0c11a",
+      "source_revision": "5b213c6c5ade5301ba64c7c5c171e36b0e77ba05",
       "reason": "Add explicit POSIX clean-only linked publisher, durable metadata rollback journal, read-only migration planner and fail-closed fixtures: two files and 573 Python lines. No complexity or oversized-file budgets increased.",
       "exit_condition": "Remove this two-file/573-line allowance when a shared recoverable publication controller replaces this opt-in clean publisher with equivalent interruption, retention and path-safety coverage; preserve earlier retirement conditions."
+    },
+    {
+      "source_revision": "207f3d1a937b50ce7d4a055818d36757c7a0c11a",
+      "reason": "Add standalone source-independent minute snapshot archive/verify/restore (332 lines) and 29 fixture regressions (300 lines): exactly two files and 632 Python lines. All complexity and oversized-file limits remain unchanged.",
+      "exit_condition": "Remove this two-file/632-line allowance if minute snapshot recovery is retired or consolidated with equivalent source-independent integrity, isolation and failure coverage; preserve earlier retirement conditions."
     },
     {
       "source_revision": "a394ecd0db68a406b5e833a0b2ded1910d48d4fc",

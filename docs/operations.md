@@ -429,3 +429,45 @@ rollback 先验证当前链接仍为该次发布的目标，再验证保留原�
 
 上述命令与回滚只在合成 fixture 验证，包括子进程直接退出后的源目录恢复。实际部署、
 真实迁移和 retained physical rollback 目录的退役均须分别执行，没有自动删除。
+
+### 分钟快照的独立归档与恢复
+
+`scripts/operations/archive_minute_snapshot.py` 将显式选定的分钟目录和树外旁证
+复制到新归档，逐文件记录相对恢复路径、`role`、`version`、字节数及 SHA256。
+计划文件由操作者在仓库外创建，例如：
+
+```json
+{
+  "version": "minute-v1",
+  "entries": [
+    {"source": "/data/minute-v1", "path": "dataset", "role": "minute"},
+    {"source": "/data/coverage.json", "path": "evidence/coverage.json", "role": "coverage"},
+    {"source": "/data/current.json", "path": "evidence/contract.json", "role": "contract"}
+  ]
+}
+```
+
+```bash
+python scripts/operations/archive_minute_snapshot.py archive --plan /data/snapshot-plan.json --archive /backup/minute-snapshot
+python scripts/operations/archive_minute_snapshot.py verify --archive /backup/minute-snapshot
+python scripts/operations/archive_minute_snapshot.py restore --archive /backup/minute-snapshot --destination /restore/new-minute-snapshot
+```
+
+归档和恢复目的地必须不存在，父目录须预先建立。输入只支持普通文件与非空目录。
+路径链中的软链接、特殊文件、重复或越界的恢复路径会被拒绝。恢复控制文件名
+`LOCK`、`STATE.json`、`RESTORED.json` 不可用作顶层 payload 路径。
+复制不使用 hardlink，文件同步落盘后检查源 stat、完整文件集合和内容 hash。最后原子写入
+`SEALED.json`。封存只证明所选文件集合的字节一致性。它不提供数字签名，也不证明计划包含
+全部所需旁证、供应商数据正确、coverage 合格或旧合同可以发布回滚。
+
+`verify` 只读归档，逐文件核对完整集合与 hash，不读取计划或原源，也不更新 receipt。
+`restore` 从已封存归档复制到独占新目录，完成后写入 `RESTORED.json`。恢复文件与归档
+inode 独立。`STATE.json` 的 `failed` 表示捕获到失败，进程被强制终止时可能仍为
+`copying` 或 `restoring`。缺少最终标志的目录不能视为完成。工具保留失败目录供排查，
+不自动续传或覆盖，应使用另一个新目录重试。
+
+归档 writer 使用目标独占锁，校验与恢复持有归档共享锁。它们只约束协作工具，不冻结
+生产 writer，也不能防止外部进程原位修改文件。操作者须事先选定不会再写的版本或协调
+生产锁。跨文件稳定 stat/hash 检查不构成生产事务快照。必须由独立步骤核验介质故障域、
+完整版本范围、Parquet/coverage 和实际 reader/rollback 合同。该工具不改写原始数据、
+current、latest 或 provider，不授权退役任何副本。
