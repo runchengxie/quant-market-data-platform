@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 532,
-    "python_lines": 125668,
+    "python_files": 534,
+    "python_lines": 125953,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "a394ecd0db68a406b5e833a0b2ded1910d48d4fc",
-    "reason": "Add completion-integrity validation and a separate negative-path test module while preserving the existing terminal-acquisition regressions: two Python files and 308 lines. Require readable quota evidence, nonfuture clocks, canonical queue binding and low-storage protection. Complexity and oversized-file budgets remain unchanged.",
-    "exit_condition": "Remove this two-file/308-line inventory allowance when equivalent terminal-evidence integrity validation and negative-path coverage are consolidated into the existing monitoring modules; retain all earlier retirement conditions."
+    "source_revision": "207f3d1a937b50ce7d4a055818d36757c7a0c11a",
+    "reason": "Add strict installed git-archive source provenance and a real noneditable install regression: two Python files and 285 lines. Existing complexity and oversized-file limits remain unchanged.",
+    "exit_condition": "Remove this two-file/285-line allowance when archive and Git source discovery are consolidated with equivalent installed-package, malformed-provenance and legacy-read-only coverage; preserve earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "a394ecd0db68a406b5e833a0b2ded1910d48d4fc",
+      "reason": "Add completion-integrity validation and a separate negative-path test module while preserving the existing terminal-acquisition regressions: two Python files and 308 lines. Require readable quota evidence, nonfuture clocks, canonical queue binding and low-storage protection. Complexity and oversized-file budgets remain unchanged.",
+      "exit_condition": "Remove this two-file/308-line inventory allowance when equivalent terminal-evidence integrity validation and negative-path coverage are consolidated into the existing monitoring modules; retain all earlier retirement conditions."
+    },
     {
       "source_revision": "2e801a6c90bde23ea12bffff9af741d9727c431a",
       "reason": "Add inventory-validated terminal minute acquisition monitoring and nine failure-boundary regressions: one test file and 130 Python lines. Complexity and oversized-file budgets remain unchanged.",
