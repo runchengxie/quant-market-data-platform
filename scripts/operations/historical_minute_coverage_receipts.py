@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
+import re
 import subprocess
+import tarfile
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +17,7 @@ import pyarrow.parquet as pq
 from scripts.operations import historical_minute_candidate_resolution as candidates
 from scripts.operations import historical_minute_coverage_pilot as pilot
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
 MAX_PARTITION_ROWS = 2_000_000
 SCHEMA = "historical_minute_retrospective_coverage.v1"
 PASSED = "passed_retrospective_independent_coverage"
@@ -57,7 +61,7 @@ def evaluate(manifest: dict[str, Any], paths: dict[str, Path]) -> list[dict[str,
 
 
 def source_identity() -> dict[str, Any]:
-    root = Path(__file__).resolve().parents[2]
+    root = REPO_ROOT
     relevant = ["src", "scripts/operations"]
     dirty = subprocess.check_output(
         ["git", "status", "--porcelain", "--", *relevant], cwd=root, text=True
@@ -71,6 +75,39 @@ def source_identity() -> dict[str, Any]:
     ).splitlines()
     hashes = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in files}
     return {"revision": revision, "files": hashes}
+
+
+def verify_auditor(auditor: dict[str, Any]) -> None:
+    if set(auditor) != {"revision", "files"} or not re.fullmatch(
+        r"[0-9a-f]{40}", str(auditor.get("revision", ""))
+    ):
+        raise ValueError("Invalid auditor provenance fields or revision")
+    try:
+        kind = subprocess.check_output(
+            ["git", "cat-file", "-t", auditor["revision"]],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+        if kind != b"commit":
+            raise ValueError("Auditor revision must identify a commit")
+        archive = subprocess.check_output(
+            ["git", "archive", auditor["revision"], "--", "src", "scripts/operations"],
+            cwd=REPO_ROOT,
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise ValueError("Auditor commit is unavailable") from exc
+    with tarfile.open(fileobj=io.BytesIO(archive)) as source:
+        hashes = {}
+        for member in source.getmembers():
+            if member.isdir():
+                continue
+            stream = source.extractfile(member)
+            if not member.isfile() or stream is None:
+                raise ValueError("Unsupported auditor source tree entry")
+            hashes[member.name] = hashlib.sha256(stream.read()).hexdigest()
+    if hashes != auditor["files"]:
+        raise ValueError("Auditor revision does not match claimed source tree")
 
 
 def load_inputs(manifest_path: Path) -> tuple[dict[str, Any], dict[str, Path]]:
@@ -117,6 +154,7 @@ def validate_receipt(receipt: Path, sha256: str, date: str, partition: Path) -> 
     report = json.loads(receipt.read_text())
     if report.get("schema_version") != SCHEMA:
         raise ValueError("Unsupported receipt schema")
+    verify_auditor(report["auditor"])
     manifest_path = pilot.verify(report["manifest"])
     fresh = build(manifest_path)
     # A later merge commit may execute identical source. Content, not checkout name, is decisive.

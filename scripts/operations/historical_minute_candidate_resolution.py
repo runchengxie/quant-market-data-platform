@@ -114,6 +114,18 @@ def additive_patch(
         or set(old.ts_code) & set(patch.ts_code)
     ):
         raise ValueError("Require one disjoint native 241-row patch")
+    exact_union(selected, old, patch)
+    return {
+        "added_rows": len(patch),
+        "added_symbols": sorted(set(patch.ts_code)),
+        "patch": pilot.bind(patch_path),
+        "original_rows_unchanged": True,
+    }
+
+
+def exact_union(selected: pd.DataFrame, old: pd.DataFrame, patch: pd.DataFrame) -> None:
+    if set(selected.columns) != set(old.columns) or set(selected.columns) != set(patch.columns):
+        raise ValueError("Candidate union column sets differ")
     expected = pd.concat([old, patch], ignore_index=True)
     keys = ["ts_code", "trade_time"]
     try:
@@ -121,13 +133,7 @@ def additive_patch(
             selected.sort_values(keys).reset_index(drop=True),
             expected[selected.columns].sort_values(keys).reset_index(drop=True),
             check_exact=True,
-            check_dtype=False,
+            check_dtype=True,
         )
     except (AssertionError, KeyError) as exc:
         raise ValueError("Selected partition is not the exact old-plus-patch union") from exc
-    return {
-        "added_rows": len(patch),
-        "added_symbols": sorted(set(patch.ts_code)),
-        "patch": pilot.bind(patch_path),
-        "original_rows_unchanged": True,
-    }

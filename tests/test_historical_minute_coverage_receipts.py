@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import subprocess
 from pathlib import Path
 
 import pandas as pd
@@ -126,11 +127,21 @@ def test_consumer_rejects_wrong_receipt_hash_before_reading(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "mutation", ["none", "record", "input", "partition", "missing_date", "promotion"]
+    "mutation",
+    [
+        "none",
+        "record",
+        "input",
+        "partition",
+        "missing_date",
+        "promotion",
+        "revision",
+        "auditor_field",
+    ],
 )
 def test_consumer_replays_real_inputs_and_enforces_scope(evidence, tmp_path, monkeypatch, mutation):
     tool = module()
-    monkeypatch.setattr(tool, "source_identity", lambda: {"revision": "a" * 40, "files": {}})
+    monkeypatch.setattr(tool, "REPO_ROOT", auditor_repo(tmp_path))
     manifest, paths = evidence
     manifest["inputs"] = {key: tool.pilot.bind(path) for key, path in paths.items()}
     manifest_path = tmp_path / "manifest.json"
@@ -139,7 +150,11 @@ def test_consumer_replays_real_inputs_and_enforces_scope(evidence, tmp_path, mon
     tool.issue(manifest_path, receipt_path)
     date, part = "20200102", paths["part"]
     report = json.loads(receipt_path.read_text())
-    if mutation == "record":
+    if mutation == "revision":
+        report["auditor"]["revision"] = "not-a-commit"
+    elif mutation == "auditor_field":
+        report["auditor"]["unexpected_claim"] = True
+    elif mutation == "record":
         report["records"][0]["symbols"] += 1
     elif mutation == "promotion":
         report["full_market_promotion_allowed"] = True
@@ -332,3 +347,57 @@ def test_partition_row_bound_fails_before_materialization(evidence, monkeypatch)
     manifest, paths = evidence
     with pytest.raises(ValueError, match="bounded row limit"):
         tool.evaluate(manifest, paths)
+
+
+def auditor_repo(tmp_path):
+    repo = tmp_path / "auditor-repo"
+    (repo / "src").mkdir(parents=True)
+    (repo / "src/fixture.py").write_text("VALUE = 1\n")
+    (repo / "scripts/operations").mkdir(parents=True)
+    (repo / "scripts/operations/fixture.py").write_text("VALUE = 2\n")
+    commands = [
+        ["git", "init", "-q"],
+        ["git", "add", "src", "scripts"],
+        [
+            "git",
+            "-c",
+            "user.name=Fixture",
+            "-c",
+            "user.email=fixture@example.invalid",
+            "commit",
+            "-qm",
+            "fixture",
+        ],
+    ]
+    for command in commands:
+        subprocess.run(command, cwd=repo, check=True, capture_output=True)
+    return repo
+
+
+def test_auditor_revision_must_bind_the_claimed_source_tree(tmp_path, monkeypatch):
+    tool = module()
+    repo = auditor_repo(tmp_path)
+    monkeypatch.setattr(tool, "REPO_ROOT", repo)
+    identity = tool.source_identity()
+    tool.verify_auditor(identity)
+    identity["files"]["src/fixture.py"] = "0" * 64
+    with pytest.raises(ValueError, match="source tree"):
+        tool.verify_auditor(identity)
+
+
+def test_patch_union_cannot_drop_original_columns():
+    tool = module()
+    old = pd.DataFrame({"ts_code": ["000001.SZ"], "trade_time": ["2020-01-02"], "extra": [1]})
+    patch = old.assign(ts_code="000002.SZ")
+    selected = pd.concat([old, patch]).drop(columns="extra")
+    with pytest.raises(ValueError, match="column"):
+        tool.candidates.exact_union(selected, old, patch)
+
+
+def test_patch_union_cannot_change_original_column_types():
+    tool = module()
+    old = pd.DataFrame({"ts_code": ["000001.SZ"], "trade_time": ["2020-01-02"], "value": [1.0]})
+    patch = old.assign(ts_code="000002.SZ")
+    selected = pd.concat([old, patch]).astype({"value": "int64"})
+    with pytest.raises(ValueError, match="exact old-plus-patch"):
+        tool.candidates.exact_union(selected, old, patch)

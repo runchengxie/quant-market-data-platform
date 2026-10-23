@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 553,
-    "python_lines": 130902,
+    "python_lines": 131015,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -19,7 +19,7 @@
   },
   "change_record": {
     "source_revision": "1a12b6132b8fce291c228964b732494866683abf",
-    "reason": "Add bounded retrospective independent-coverage receipt issuance, exact candidate repair lineage adjudication and fail-closed consumer replay tests: exactly 3 Python files and 625 lines. No complexity or oversized-file allowance increases.",
+    "reason": "Add bounded retrospective independent-coverage receipt issuance, exact candidate repair lineage adjudication and fail-closed consumer replay tests: exactly 3 Python files and 738 lines. Includes commit-tree provenance and complete column/type union validation. No complexity or oversized-file allowance increases.",
     "exit_condition": "Remove this exact file/line allowance when a shared coverage receipt framework subsumes bounded independent universe replay, immutable input identity, explicit candidate repair lineage and consumer partition/hash checks with equivalent tests; preserve previous retirement conditions."
   },
   "previous_change_records": [
