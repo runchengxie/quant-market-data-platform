@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 530,
-    "python_lines": 125360,
+    "python_files": 532,
+    "python_lines": 125992,
     "long_lines_over_100": 16,
     "functions_over_100": 38,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "2e801a6c90bde23ea12bffff9af741d9727c431a",
-    "reason": "Add inventory-validated terminal minute acquisition monitoring and nine failure-boundary regressions: one test file and 130 Python lines. Complexity and oversized-file budgets remain unchanged.",
-    "exit_condition": "Remove this one-file/130-line allowance when completion validation and alert regressions are consolidated with equivalent acquisition-state coverage; preserve previous retirement conditions."
+    "source_revision": "a394ecd0db68a406b5e833a0b2ded1910d48d4fc",
+    "reason": "Add standalone source-independent minute snapshot archive/verify/restore (332 lines) and 29 fixture regressions (300 lines): exactly two files and 632 Python lines. All complexity and oversized-file limits remain unchanged.",
+    "exit_condition": "Remove this two-file/632-line allowance if minute snapshot recovery is retired or consolidated with equivalent source-independent integrity, isolation and failure coverage; preserve earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "2e801a6c90bde23ea12bffff9af741d9727c431a",
+      "reason": "Add inventory-validated terminal minute acquisition monitoring and nine failure-boundary regressions: one test file and 130 Python lines. Complexity and oversized-file budgets remain unchanged.",
+      "exit_condition": "Remove this one-file/130-line allowance when completion validation and alert regressions are consolidated with equivalent acquisition-state coverage; preserve previous retirement conditions."
+    },
     {
       "source_revision": "e0b278d985ec939709ef533545a3b2d1c7b44934",
       "reason": "Add unique per-plan daily-clean output paths and fail-closed output guards with payload-preservation regressions: 135 Python lines, no new files. All complexity and oversized-file budgets remain unchanged.",
