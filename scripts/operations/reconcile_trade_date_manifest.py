@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import stat
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +18,40 @@ from quant_market_data_platform.stored_coverage import trade_date_inventory
 
 class ManifestReconciliationError(RuntimeError):
     """Raised when an asset cannot be reconciled safely."""
+
+
+def _atomic_manifest_write(
+    path: Path, text: str, original_text: str, inventory: dict[str, Any]
+) -> None:
+    original_mode = stat.S_IMODE(path.stat().st_mode)
+    descriptor, pending_name = tempfile.mkstemp(prefix=".manifest-", suffix=".tmp", dir=path.parent)
+    pending = Path(pending_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            stream.write(text)
+            stream.flush()
+            os.fchmod(stream.fileno(), original_mode)
+            os.fsync(stream.fileno())
+        directory_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            if inventory != trade_date_inventory(
+                path.parent / "data"
+            ) or original_text != path.read_text(encoding="utf-8"):
+                raise ManifestReconciliationError(
+                    "asset changed before atomic manifest publication"
+                )
+            os.replace(pending, path)
+            try:
+                os.fsync(directory_fd)
+            except OSError as exc:
+                raise ManifestReconciliationError(
+                    "manifest replaced but directory fsync failed; "
+                    "publication durability is unconfirmed"
+                ) from exc
+        finally:
+            os.close(directory_fd)
+    finally:
+        pending.unlink(missing_ok=True)
 
 
 def reconcile_manifest(asset_dir: Path, *, apply: bool = False) -> dict[str, Any]:
@@ -54,8 +91,11 @@ def reconcile_manifest(asset_dir: Path, *, apply: bool = False) -> dict[str, Any
             "asset changed during reconciliation; stop writers and retry"
         )
     if apply:
-        manifest_path.write_text(
-            yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False), encoding="utf-8"
+        _atomic_manifest_write(
+            manifest_path,
+            yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False),
+            original_text,
+            inventory,
         )
     return result
 
