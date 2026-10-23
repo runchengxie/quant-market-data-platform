@@ -1,5 +1,7 @@
 """Completed acquisition has durable evidence, without certifying data quality."""
 
+import os
+import sqlite3
 from datetime import timedelta
 
 import pytest
@@ -34,6 +36,16 @@ def completed(tmp_path, monkeypatch):
             },
         },
     )
+    # Terminal classification still requires a readable ledger and a real canonical queue.
+    db = root / "metadata/tushare/minute_quota/minute_quota.sqlite3"
+    db.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(db) as connection:
+        connection.execute(
+            "CREATE TABLE request_attempts (quota_date TEXT, consumer TEXT, state TEXT, "
+            "committed_rows INTEGER, updated_at TEXT)"
+        )
+    put(root / "metadata/minute_backfill/reverse_scheduler/deferred_missing.json", {"dates": {}})
+    os.utime(runtime / "download-complete.json", (NOW.timestamp(), NOW.timestamp()))
     return root, runtime
 
 
@@ -85,6 +97,7 @@ def test_watch_keeps_quarantine_warning_after_resolving_staleness(tmp_path, monk
     marker = json.loads(marker_path.read_text())
     marker["result"]["semantic_quarantine_dates"] = ["20190509"]
     put(marker_path, marker)
+    os.utime(marker_path, (NOW.timestamp(), NOW.timestamp()))
     monkeypatch.setattr(
         minute_semantic_quarantine,
         "quarantine_status",

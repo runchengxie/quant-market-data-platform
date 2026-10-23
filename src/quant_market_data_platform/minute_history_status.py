@@ -11,6 +11,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from quant_market_data_platform._minute_history_activity import observe_rows
+from quant_market_data_platform._minute_history_completion import completed_pass
 from quant_market_data_platform._minute_history_inventory import inventory, read_json
 from quant_market_data_platform._minute_history_pipeline import pipeline
 
@@ -102,8 +103,12 @@ def _state(evidence: dict, now: datetime, stall_seconds: int) -> tuple[str, str]
         return "audit_blocked", f"persistent semantic audit block: {marker.get('acceptance', '')}"
     if evidence["download_complete"] and not evidence["warnings"]:
         return (
-            "download_complete_with_gaps",
-            "acquisition pass complete; quality acceptance pending",
+            ("storage_wait", "free storage below configured minimum")
+            if evidence["free"] < evidence["min_free"]
+            else (
+                "download_complete_with_gaps",
+                "acquisition pass complete; quality acceptance pending",
+            )
         )
     if (
         not (
@@ -263,7 +268,13 @@ def history_status(  # noqa: PLR0913 - public monitoring interface
         "active": active,
     }
     marker_complete = read_json(runtime_root / "download-complete.json", warnings)
-    evidence["download_complete"] = _download_complete(marker_complete, progress, active)
+    evidence.update(
+        completion=marker_complete, completion_path=runtime_root / "download-complete.json"
+    )
+    evidence["download_complete"] = _download_complete(
+        marker_complete, progress, active
+    ) and completed_pass(evidence, progress, root, now)
+
     state, reason = _state(evidence, now, stall_seconds)
     return {
         "state": state,
