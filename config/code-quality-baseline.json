@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 559,
-    "python_lines": 132107,
+    "python_files": 561,
+    "python_lines": 132580,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "1d96c3901684d97064a4aab22d7b71dbf30fad42",
-    "reason": "Add bounded read-only operational overview, CLI and malformed/freshness regressions: 3 files and 703 lines; structural budgets unchanged.",
-    "exit_condition": "Remove this allowance if the unified overview is retired or consolidated with equivalent bounded reads, incident/date separation and invalid-evidence regressions."
+    "source_revision": "40e9048c23a6a934a0064bc541f4742aad47a22b",
+    "reason": "Separate raw stored partition extent from incremental request provenance, revalidate inventory and freshness, and publish reconciled manifests atomically with failure regressions: exactly two Python files and 473 net lines over main with merged external-retention evidence, historical-minute receipts, partial research assets and operational overview. No complexity, oversized-file or reserved-headroom allowances.",
+    "exit_condition": "Remove this two-file/473-line allowance when a shared manifest inventory and atomic publication implementation subsumes extent, stale/concurrent/symlink evidence checks, provenance preservation and publication failure regressions. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "1d96c3901684d97064a4aab22d7b71dbf30fad42",
+      "reason": "Add bounded read-only operational overview, CLI and malformed/freshness regressions: 3 files and 703 lines; structural budgets unchanged.",
+      "exit_condition": "Remove this allowance if the unified overview is retired or consolidated with equivalent bounded reads, incident/date separation and invalid-evidence regressions."
+    },
     {
       "source_revision": "110e397f54ccb57c86fc7f862b7931472cc45974",
       "reason": "Add independent partial reconstructed statement research asset and exact-disclosure opt-in reader with lineage, conflict, missingness and temporal boundary regressions: two files and 248 Python lines. No complexity or oversized-file budgets increased.",

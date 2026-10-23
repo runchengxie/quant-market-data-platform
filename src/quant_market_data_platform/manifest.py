@@ -6,6 +6,8 @@ from typing import Any
 
 import yaml
 
+from quant_market_data_platform.stored_coverage import verified_stored_coverage
+
 
 def _mapping(value: object) -> dict[str, Any]:
     if not isinstance(value, Mapping):
@@ -133,6 +135,7 @@ def load_manifest_summary(path: str | Path) -> dict[str, Any]:
         "status": str(payload.get("status") or "").strip() or None,
         "output_dir": output_dir,
         "snapshot_name": Path(output_dir).name if output_dir else manifest_path.parent.name,
+        "stored_coverage": verified_stored_coverage(payload, manifest_path),
         "query_start_date": query_start_date,
         "query_end_date": query_end_date,
         "as_of_date": as_of_date,

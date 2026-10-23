@@ -13,6 +13,7 @@ from quant_market_data_platform.paths import (
     normalize_market,
     resolve_artifacts_root,
 )
+from quant_market_data_platform.stored_coverage import verified_stored_coverage
 
 _SEVERITY_RANK = {"info": 0, "warning": 1, "error": 2}
 
@@ -254,6 +255,9 @@ def _asset_as_of_lags(*, as_of: str | None, target_date: str | None) -> bool:
 
 
 def _manifest_date(manifest: Mapping[str, Any], key: str) -> str | None:
+    coverage = _mapping(manifest.get("stored_coverage"))
+    if coverage.get("status") == "verified":
+        return str(coverage[f"{key}_date"])
     query = _mapping(manifest.get("query"))
     date_range = _mapping(manifest.get("date_range"))
     candidates = (
@@ -271,7 +275,16 @@ def _manifest_date(manifest: Mapping[str, Any], key: str) -> str | None:
 
 def _asset_record(asset_key: str, entry: Mapping[str, Any]) -> dict[str, Any]:
     manifest = _mapping(entry.get("manifest"))
+    coverage = _mapping(manifest.get("stored_coverage"))
+    if coverage and coverage.get("status") != "unknown":
+        evidence = {key: value for key, value in coverage.items() if key != "status"}
+        manifest["stored_coverage"] = verified_stored_coverage(
+            {"stored_coverage": evidence},
+            Path(str(entry.get("manifest_path") or manifest.get("manifest_path") or "")),
+        )
     manifest_status = str(manifest.get("status") or "").strip() or None
+    coverage = _mapping(manifest.get("stored_coverage"))
+    as_of = coverage.get("end_date") if coverage.get("status") == "verified" else entry.get("as_of")
     return {
         "asset_key": asset_key,
         "alias_path": entry.get("alias_path"),
@@ -283,8 +296,9 @@ def _asset_record(asset_key: str, entry: Mapping[str, Any]) -> dict[str, Any]:
         "manifest_status": manifest_status,
         "manifest_start_date": _manifest_date(manifest, "start"),
         "manifest_end_date": _manifest_date(manifest, "end"),
+        "stored_coverage_status": _mapping(manifest.get("stored_coverage")).get("status"),
         "manifest_totals": _mapping(manifest.get("totals")),
-        "as_of": str(entry.get("as_of") or "").strip() or None,
+        "as_of": str(as_of or "").strip() or None,
     }
 
 
@@ -351,6 +365,15 @@ def _build_quality_checks(
                     "severity": "warning",
                     "actual_as_of": as_of,
                     "expected_target_date": target_date,
+                }
+            )
+        if record.get("stored_coverage_status") == "invalid":
+            checks.append(
+                {
+                    "check": "asset_stored_coverage_invalid",
+                    "field": asset_key,
+                    "asset_key": asset_key,
+                    "severity": "warning",
                 }
             )
         manifest_start_date = str(record.get("manifest_start_date") or "").strip() or None

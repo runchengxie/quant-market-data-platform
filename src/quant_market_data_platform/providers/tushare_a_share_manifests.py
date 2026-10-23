@@ -7,6 +7,8 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
+from quant_market_data_platform.stored_coverage import trade_date_inventory
+
 
 def _stored_partition_totals(data_dir: Path) -> dict[str, int]:
     rows = 0
@@ -68,6 +70,8 @@ def trade_date_manifest(
         "empty_trade_dates": empty_dates,
     }
     manifest["run_totals"] = dict(manifest["totals"])
+    if any(context["data_dir"].rglob("*.parquet")):
+        manifest["stored_coverage"] = trade_date_inventory(context["data_dir"])
     if context["skip_existing"] or context["dataset"] == "dc_concept_cons":
         manifest["totals"].update(_stored_partition_totals(context["data_dir"]))
     if context["dataset"] == "dc_concept_cons":
