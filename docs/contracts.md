@@ -548,3 +548,15 @@ status 消费，不能从候选中自行补值。
 `historical_minute_retrospective_coverage.v1` 仅证明明确分区的独立历史覆盖与原生 241 行
 语义一致。当前主表不提供历史 PIT 认证，跨源 0.99 验收和全市场发布仍为独立门禁。
 清单、候选裁决和消费者重放要求见[历史分钟独立覆盖凭证](operations/historical-minute-coverage-receipts.md)。
+
+## 分钟交易所校验 CLI 回执
+
+`marketdata tushare validate-minute-partition` 返回
+`validation_schema_version=marketdata.minute_exchange_overlay.v1` 和 `exchange=SH|SZ`。
+分区本身沿用 `schema_version=tushare.a_share.minute_partition.promotion.v1`。
+回执包括 `trade_date`、`partition_path`、`sidecar_path`、`partition_sha256`、
+`sidecar_sha256`、`rows`、`symbols`、`market_symbol_counts`、`expected_bars_per_symbol`、
+`universe_hash`、`universe_rule`、`universe_source` 和 `mirror_generated_at`。
+
+owner 验证所有分区内容及精确交易所 universe rule，消费者仍须拒绝不支持的 schema、
+其他日期或交易所、缺失字段及命令失败，不能以 freshness 声明替代本回执。

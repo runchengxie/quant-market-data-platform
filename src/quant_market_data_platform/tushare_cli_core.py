@@ -10,6 +10,9 @@ from .tushare_cli_common import (
 
 
 def add_tushare_core_mirror_parsers(tushare_subparsers: argparse._SubParsersAction) -> None:
+    from .cli_minute_validation import add_minute_validation_parser
+
+    add_minute_validation_parser(tushare_subparsers)
     _add_tushare_token_verification_parser(tushare_subparsers)
     _add_tushare_instruments_parser(tushare_subparsers)
     _add_tushare_trade_calendar_parser(tushare_subparsers)
