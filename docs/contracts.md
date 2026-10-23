@@ -442,3 +442,16 @@ SHA256 是完整文件实际校验，必须为 64 位小写十六进制。源文
 每份 `plan-a-share-current-refresh` 计划为 clean 输出生成独立 ID，并在构建、验证、股票池和发布步骤中固定同一路径。同日重新生成计划会使用新目录，应保存并执行同一份计划中的命令。单独调用 promotion 而不指定 `--daily-clean-dir` 时，保留旧日期目录回退规则。
 
 clean 构建器拒绝输出链接、已完成 manifest，以及不能证明为未完成状态的 manifest，拒绝发生在清除旧 data 或 staging 之前。没有 manifest 的失败现场，或明确标记为 failed、running、building、pending 的现场仍可重建。这是构建入口的防覆写约束，不提供文件系统不可变性或并发写入锁。latest 仍采用既有实体副本发布方式，raw 发布契约保持原状。
+
+### Clean 相对链接发布（显式 API）
+
+`quant_market_data_platform.clean_publication.publish_clean` 提供仅限 POSIX 的显式链接发布入口，
+现有 promotion 和 raw/backfill 的物化行为保持原状。调用者须先使用独立 completed clean 版本，
+manifest 的 `output_dir` 必须等于真实版本目录。不接受链接 manifest、链接 data 或 data 内链接。
+返回的 `resolved_path`、`manifest_path` 固定真实版本，`materialized` 沿用字符串 `"false"`。
+版本内容不会被 publisher 改写，旧版本与 journal 备份保留。文件系统防篡改仍需独立机制。
+
+该 API 只恢复 clean alias 与调用者明确声明的 metadata 文件。metadata callback 可写入
+current contract、registry 并执行 health 检查，但不能改写 raw、universe 或未声明资源。
+alias 与 JSON 有分别写入的窗口，reader 仍须固定真实版本并在契约失配时停止或重新加载。
+独占锁只协调使用此 API 的 writer，不替代部署层停写。禁止并行手工改 alias 或 metadata。

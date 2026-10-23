@@ -366,6 +366,32 @@ marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python -m quant_market
 
 日线 clean 同日重跑应生成新计划并使用新的 clean 输出目录，不要将已完成版本或 latest 作为构建输出。保留失败现场的证据，必要时选择新目录。版本边界见[共享数据契约](contracts.md#日线-clean-构建版本)。
 
+### Clean 链接发布的计划与恢复
+
+默认生产 promotion 仍物化 clean latest。以下只读入口验证目标并打印链接发布/迁移计划：
+
+```bash
+python -m quant_market_data_platform.clean_publication \
+  --root "$DATA_PLATFORM_ROOT" --alias "$CLEAN_LATEST" --target "$CLEAN_VERSION"
+```
+
+实体 latest 返回 `requires_explicit_migration=true`、`apply_supported=false`。计划本身不会
+移动或删除实体。首次转换必须另行协调停写、消费者固定版本、原实体保留位置及 rollback，
+再执行经过审查的迁移步骤。本入口没有实体迁移 apply 开关，不能用它自动清除旧副本。
+
+显式 Python API `publish_clean(root=..., alias=..., target=..., metadata=[...], commit=...)`
+只支持 POSIX。路径的父目录须为真实目录，不能经目录链接寻址。metadata 的父目录必须存在，callback 须重建真实路径 contract/registry 并完成
+health 检查。发生普通异常会还原声明文件与旧 alias。链接权限错误会明确失败，不回退复制。
+准备阶段将原文件字节及旧相对链接写入 alias 同目录的
+`.<alias>.clean-publication-lock/journal.json`，持锁时拒绝第二次发布。
+中断后使用 `recover_clean(root=..., alias=...)` 显式回滚，函数可重复调用。恢复遇到非本次
+目标或实体 alias 会停止。alias 和 metadata 的恢复也有窗口，应在停止 writer 后执行。
+
+成功或完成回滚后，检查 journal 状态，再用 `acknowledge_clean(root=..., alias=...)`
+把整个终态 journal 目录重命名为唯一 archive，保留备份并允许下一次发布。没有自动过期删除。
+如果准备阶段写 journal 之前失败，alias 尚未改动，保留的空锁需人工核对后处理。
+这里验证了合成 POSIX fixture 的异常和中断恢复，未验证 Windows、断电恢复或跨文件系统目录交换。
+
 ### 分钟快照的独立归档与恢复
 
 `scripts/operations/archive_minute_snapshot.py` 将显式选定的分钟目录和树外旁证
