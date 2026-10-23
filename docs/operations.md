@@ -239,6 +239,8 @@ marketdata tushare review-etf-snapshot --manifest /path/to/new-snapshot/manifest
 
 使用 `scripts/operations/tushare_minute_history.py status --artifacts-root <data-root> --runtime-root <runtime-root>` 只读检查进度、额度、存储和审计阻断。统计分别列出元数据完成日期、独立审计日期和北京市场省略日期。历史审计绑定失效会单独记录，下载完成仍须经过发布验收。
 
+首轮下载结束后，只有完成回执与当前日期清单、deferred 队列和隔离记录一致，且额度账本仍可只读验证时，监控才报告 `download_pass_complete_with_gaps`。此状态允许已停止的下载任务保留旧的 preflight 快照。不会把缺失、损坏或未来时间的证据判为完成。审计阻断、低磁盘保护和语义隔离告警继续有效，`full_market_ready` 不会因此变为 true。
+
 `status` 和 `watch` 的 `pipeline` 将进度分为下载、语义审计、覆盖认证和正式发布四个阶段。
 `acquisition.deferred_dates` 读取当前补缺队列，当前数量以该队列为准。
 队列缺失或格式无效时数量为 `null`，不能视为零。语义审计按验收范围分别计数，

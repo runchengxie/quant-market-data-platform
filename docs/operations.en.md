@@ -158,6 +158,8 @@ The quality budget adds 110 counted Python lines for explicit burst settings, co
 
 Run `scripts/operations/tushare_minute_history.py status --artifacts-root <data-root> --runtime-root <runtime-root>` for read-only progress, quota, storage and audit-block status. Counts distinguish metadata completion, independently audited dates and Beijing omissions. Expired audit bindings are reported separately. Download completion still requires publication acceptance.
 
+After the first download pass ends, monitoring reports `download_pass_complete_with_gaps` only when the completion receipt agrees with the current date inventory, deferred queue and quarantine records, and the quota ledger remains readable. The stopped acquisition may retain an old preflight snapshot; missing, corrupt or future-dated evidence still fails closed. Audit blocks, low-storage protection and semantic-quarantine alerts remain active. Completion does not set `full_market_ready` to true.
+
 `watch` adds `--state-root <monitor-root>` and writes `status.json` plus deduplicated local `alerts.jsonl`. Stalling requires at least three consecutive active, runnable samples without progress across 15 minutes. Quota waits, idle writers and audit blocks have separate states. Monitoring needs no provider credentials.
 
 `repair` handles only source-bound stock-day gaps in `deferred_missing.json`, requesting at most one stock-day per invocation. Defaults cap daily requests at 500 and attempts per item at three, with exponential backoff starting at 30 minutes. It shares the main writer lock and quota ledger. An empty queue creates no provider client. Use `--dry-run` to inspect candidates.

@@ -11,6 +11,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from quant_market_data_platform._minute_history_activity import observe_rows
+from quant_market_data_platform._minute_history_completion import completed_pass
 from quant_market_data_platform._minute_history_inventory import inventory, read_json
 from quant_market_data_platform._minute_history_pipeline import pipeline
 
@@ -81,6 +82,15 @@ def _state(evidence: dict, now: datetime, stall_seconds: int) -> tuple[str, str]
     marker, quota = evidence["marker"], evidence["quota"]
     if evidence["marker_exists"] or evidence["blocked_by_audit"]:
         return "audit_blocked", f"persistent semantic audit block: {marker.get('acceptance', '')}"
+    if evidence["completed_pass"] and not evidence["warnings"]:
+        return (
+            ("storage_wait", "free storage below configured minimum")
+            if evidence["free"] < evidence["min_free"]
+            else (
+                "download_pass_complete_with_gaps",
+                "download first pass ended; audit and publication readiness remain incomplete",
+            )
+        )
     if (
         not (
             evidence["provenance"]["fresh"] or evidence["active"] and evidence["activity"]["fresh"]
@@ -239,6 +249,10 @@ def history_status(  # noqa: PLR0913 - public monitoring interface
         "active": active,
     }
     marker_complete = read_json(runtime_root / "download-complete.json", warnings)
+    evidence.update(
+        completion=marker_complete, completion_path=runtime_root / "download-complete.json"
+    )
+    evidence["completed_pass"] = completed_pass(evidence, progress, root, now)
     state, reason = _state(evidence, now, stall_seconds)
     return {
         "state": state,
