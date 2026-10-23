@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 565,
-    "python_lines": 133362,
+    "python_lines": 133441,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "71e40a0",
+    "source_revision": "f241094f8648b093ea4e43b2c6d00a0df4d72af7",
     "reason": "Coordinate all current publication writers with root locking, atomic metadata writes, recoverable registry pending state and clean rollback ownership checks, with concurrency and failure regressions: exactly 4 Python files and 782 net Python lines. Structural budgets unchanged.",
     "exit_condition": "Remove this allowance when publication coordination is retired or consolidated with equivalent lock, stale-base rejection, no-download retry, metadata integrity and delayed rollback ownership regressions. Preserve all prior retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "71e40a0da03530fe88d70d4b212701d3af6a8cfa",
+      "reason": "Allow explicitly audited byte-identical triples without dropping candidates, with real consumer replay and malformed third-candidate regressions: 79 Python lines, no new files or structural budget changes.",
+      "exit_condition": "Remove this allowance if triple-candidate adjudication is retired or consolidated with equivalent complete input binding, all-candidate preservation and rejection coverage. Preserve prior retirement conditions."
+    },
     {
       "source_revision": "40e9048c23a6a934a0064bc541f4742aad47a22b",
       "reason": "Separate raw stored partition extent from incremental request provenance, revalidate inventory and freshness, and publish reconciled manifests atomically with failure regressions: exactly two Python files and 473 net lines over main with merged external-retention evidence, historical-minute receipts, partial research assets and operational overview. No complexity, oversized-file or reserved-headroom allowances.",

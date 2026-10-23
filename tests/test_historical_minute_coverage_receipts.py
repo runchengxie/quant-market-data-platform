@@ -221,6 +221,82 @@ def test_explicit_identical_resolution_retains_both_paths(evidence, tmp_path):
     assert paths["other"].exists()
 
 
+def three_candidates(evidence, tmp_path):
+    import shutil
+
+    manifest, paths = duplicate_evidence(evidence, tmp_path)
+    third = tmp_path / "third"
+    third.mkdir()
+    paths["third"] = third / "part-00000.parquet"
+    paths["third_sidecar"] = third / "_minute_mirror.json"
+    shutil.copy2(paths["part"], paths["third"])
+    shutil.copy2(paths["sidecar"], paths["third_sidecar"])
+    manifest["dates"][0]["partitions"].append("third")
+    manifest["dates"][0]["candidate_sidecars"].append("third_sidecar")
+    return manifest, paths
+
+
+def test_three_identical_candidates_are_all_retained_and_consumer_replayed(
+    evidence, tmp_path, monkeypatch
+):
+    tool = module()
+    monkeypatch.setattr(tool, "REPO_ROOT", auditor_repo(tmp_path))
+    manifest, paths = three_candidates(evidence, tmp_path)
+    manifest["inputs"] = {key: tool.pilot.bind(path) for key, path in paths.items()}
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest))
+    receipt = tmp_path / "receipt.json"
+    tool.issue(manifest_path, receipt)
+    row = tool.validate_receipt(
+        receipt, tool.pilot.bind(receipt)["sha256"], "20200102", paths["part"]
+    )
+    retained = row["candidate_resolution"]["retained_candidates"]
+    assert [r["path"] for r in retained] == [str(paths[key]) for key in ("part", "other", "third")]
+    assert row["status"] == "passed_retrospective_independent_coverage"
+    assert row["full_market_promotion_allowed"] is False
+    paths["third_sidecar"].write_text("{}")
+    with pytest.raises(ValueError, match="Input changed"):
+        tool.validate_receipt(
+            receipt, tool.pilot.bind(receipt)["sha256"], "20200102", paths["part"]
+        )
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    ["different_content", "binding", "same_path", "missing_sidecar", "four_candidates", "patch"],
+)
+def test_three_candidates_cannot_hide_unverified_inputs(evidence, tmp_path, corruption):
+    from quant_market_data_platform.providers._a_share_mins_partition import _partition_state
+
+    manifest, paths = three_candidates(evidence, tmp_path)
+    row = manifest["dates"][0]
+    if corruption == "different_content":
+        frame = pd.read_parquet(paths["third"])
+        frame.loc[0, "vol"] = 99.0
+        frame.to_parquet(paths["third"])
+        paths["third_sidecar"].write_text(
+            json.dumps(
+                {
+                    "trade_date": row["date"],
+                    "partition": _partition_state(paths["third"].parent, trade_date=row["date"]),
+                }
+            )
+        )
+    elif corruption == "binding":
+        paths["third_sidecar"].write_text(json.dumps({"trade_date": row["date"], "partition": {}}))
+    elif corruption == "same_path":
+        paths["third"] = paths["other"]
+    elif corruption == "missing_sidecar":
+        row["candidate_sidecars"].pop()
+    elif corruption == "four_candidates":
+        row["partitions"].append("part")
+        row["candidate_sidecars"].append("sidecar")
+    else:
+        manifest["resolutions"][row["date"]]["kind"] = "audited_additive_patch"
+    with pytest.raises(ValueError):
+        module().evaluate(manifest, paths)
+
+
 @pytest.mark.parametrize("corruption", ["hash", "content", "missing_audit", "false_audit"])
 def test_resolution_never_hides_unverified_candidate(evidence, tmp_path, corruption):
     manifest, paths = duplicate_evidence(evidence, tmp_path)

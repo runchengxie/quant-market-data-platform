@@ -43,11 +43,12 @@ def resolve(
     row: dict[str, Any], resolution: dict[str, Any], paths: dict[str, Path]
 ) -> dict[str, Any]:
     audit_selection(row, resolution, paths)
-    if len(row["partitions"]) != 2 or len(row["candidate_sidecars"]) != 2:
-        raise ValueError("Adjudication supports exactly two explicit candidates")
+    count = len(row["partitions"])
+    if count not in (2, 3) or len(row["candidate_sidecars"]) != count:
+        raise ValueError("Adjudication requires two or three paired explicit candidates")
     parts = [paths[k] for k in row["partitions"]]
     sides = [paths[k] for k in row["candidate_sidecars"]]
-    if len({p.resolve() for p in parts}) != 2:
+    if len({p.resolve() for p in parts}) != count:
         raise ValueError("Candidate paths must be distinct")
     for part, side in zip(parts, sides, strict=True):
         payload = json.loads(side.read_text())
@@ -57,10 +58,12 @@ def resolve(
             raise ValueError("Candidate sidecar binding failed")
     kind = resolution["kind"]
     if kind == "identical_content":
-        if pilot.bind(parts[0])["sha256"] != pilot.bind(parts[1])["sha256"]:
+        if len({pilot.bind(part)["sha256"] for part in parts}) != 1:
             raise ValueError("Candidates are not byte identical")
         details = {"added_rows": 0, "added_symbols": []}
     elif kind == "audited_additive_patch":
+        if count != 2:
+            raise ValueError("Additive patch adjudication requires exactly two candidates")
         details = additive_patch(row, resolution, paths)
     else:
         raise ValueError("Unsupported candidate resolution")
