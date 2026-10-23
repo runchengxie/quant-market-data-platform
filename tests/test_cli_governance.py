@@ -236,3 +236,51 @@ def test_governance_plan_refuses_to_overwrite_reports_or_regular_latest_paths(
                 str(latest),
             ]
         )
+
+
+def test_retention_repeated_external_reference_roots(tmp_path: Path) -> None:
+    candidate = tmp_path / "data" / "assets" / "version_20260101"
+    candidate.mkdir(parents=True)
+    external = tmp_path / "research"
+    external.mkdir()
+    (external / "published.json").write_text('{"source": "version_20260101"}')
+    second = tmp_path / "rollback"
+    second.mkdir()
+    inventory = tmp_path / "inventory.json"
+    _write_json(
+        inventory,
+        {
+            "schema_version": "market_data_platform.lifecycle_inventory.v1",
+            "retention_rules": [
+                {
+                    "name": "old",
+                    "kind": "explicit_path",
+                    "path": "assets/version_20260101",
+                    "disposition": "retire_candidate",
+                }
+            ],
+        },
+    )
+    report = tmp_path / "plan.tsv"
+    assert (
+        cli.main(
+            [
+                "governance",
+                "plan-retention",
+                "--artifacts-root",
+                str(tmp_path / "data"),
+                "--inventory",
+                str(inventory),
+                "--reference-root",
+                str(external),
+                "--reference-root",
+                str(second),
+                "--out",
+                str(report),
+            ]
+        )
+        == 0
+    )
+    rows = list(csv.DictReader(io.StringIO(report.read_text()), delimiter="\t"))
+    assert rows[0]["action"] == "keep"
+    assert candidate.is_dir()

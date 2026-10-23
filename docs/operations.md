@@ -517,3 +517,9 @@ legacy `*_latest` 仍由现有 mirror 写分区和 manifest。不得把这些目
 ## 历史分钟覆盖独立复核
 
 最多 10 日的离线证据扫描与失败关闭规则见[历史分钟覆盖试点](operations/historical-minute-coverage-pilot.md)。输出仅用于审核，不构成验收或发布授权。
+
+正式签发与消费者重放见[历史分钟独立覆盖凭证](operations/historical-minute-coverage-receipts.md)。
+该凭证限定回溯覆盖结论，不授权全市场发布，也不替代跨源 0.99 验收。
+
+`marketdata governance plan-retention --reference-root <directory>` 可重复指定研究和回滚证据目录。
+详见[保留引用与独立输入](data-governance.md#保留引用与独立输入)。该入口仅生成计划。

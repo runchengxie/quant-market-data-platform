@@ -519,3 +519,9 @@ status 消费，不能从候选中自行补值。
 该资产显式标记 partial/reconstructed，仅覆盖部分 normalized 事件，不证明历史 PIT，
 不能成为 complete current。单类别事件及未声明字段不在范围内。四项原文金额佐证也不构成
 类别裁决。资产不选择 comp_type，不修改生产 PIT 或 legacy 重试身份。
+
+## 历史分钟回溯覆盖凭证
+
+`historical_minute_retrospective_coverage.v1` 仅证明明确分区的独立历史覆盖与原生 241 行
+语义一致。当前主表不提供历史 PIT 认证，跨源 0.99 验收和全市场发布仍为独立门禁。
+清单、候选裁决和消费者重放要求见[历史分钟独立覆盖凭证](operations/historical-minute-coverage-receipts.md)。

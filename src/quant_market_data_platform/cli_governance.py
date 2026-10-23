@@ -51,6 +51,12 @@ def add_governance_parser(subparsers: argparse._SubParsersAction) -> None:
         "--inventory",
         help="Default: <artifacts-root>/metadata/lifecycle/inventory.json",
     )
+    retention.add_argument(
+        "--reference-root",
+        action="append",
+        default=[],
+        help="Additional retained evidence directory; repeat for research and rollback records.",
+    )
     retention.add_argument("--out", help="Write TSV to this path instead of stdout.")
     retention.add_argument(
         "--latest-link",
@@ -173,6 +179,7 @@ def handle_plan_retention(args: argparse.Namespace) -> int:
     items = plan_data_governance(
         root,
         rules,
+        reference_roots=args.reference_root,
         protected_paths=[
             *_current_contract_protected_paths(root),
             *protected_paths_from_inventory(payload),
