@@ -570,3 +570,7 @@ pending 状态。消费者需要一致快照时应固定 current contract 和不
 
 owner 验证所有分区内容及精确交易所 universe rule，消费者仍须拒绝不支持的 schema、
 其他日期或交易所、缺失字段及命令失败，不能以 freshness 声明替代本回执。
+
+## 基本面原始观测契约
+
+原始归档使用 `tushare.a_share.fundamentals.raw_observation.v1`，记录 `archive_mode: raw`、绑定请求身份，以及四个经过内容校验的原始子资产凭证。路径为 `assets/tushare/a_share/fundamentals_observations/observation=YYYYMMDD`，由 `OBSERVATION_SEALED.json` 绑定清单哈希。这与 `fundamentals_vintages` 完整归档及其 `SEALED.json` 分开，PIT 就绪和修订安全需通过独立派生流程验证，原始观测不声明已有标准化或 PIT 子资产。完成前校验所有子清单封印及内容哈希。重入先验证请求身份，再接受子资产凭证。部分产物不能视为完成。每周频率只描述实际采集节奏，不放宽新鲜度限制，也不补齐观测空档。原有完整归档 schema 和重试身份不变。

@@ -1,8 +1,8 @@
 [Unit]
-Description=Schedule daily immutable TuShare fundamentals vintage archive
+Description=Schedule weekly raw TuShare fundamentals observation
 
 [Timer]
-OnCalendar=*-*-* 02:30:00 Asia/Shanghai
+OnCalendar=Sat *-*-* 02:30:00 Asia/Shanghai
 AccuracySec=5min
 RandomizedDelaySec=10min
 Persistent=true

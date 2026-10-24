@@ -31,6 +31,13 @@ from quant_market_data_platform.providers.tushare_a_share_fundamentals_support i
     require_asset_integrity,
 )
 from quant_market_data_platform.providers.tushare_common import write_manifest
+from quant_market_data_platform.providers.tushare_fundamentals_observation import (
+    MARKER,
+    observation_root,
+    require_observation_paths,
+    seal_observation,
+    verify_observation,
+)
 from quant_market_data_platform.providers.tushare_fundamentals_retry import (
     begin_attempt,
     endpoint_identity,
@@ -369,6 +376,8 @@ def _archive_step(
 
 def archive_vintage(args: argparse.Namespace) -> dict[str, object]:
     _validate_api_url(args.api_url)
+    if getattr(args, "archive_mode", "full") == "raw":
+        return _archive_observation(args)
     root = snapshot_root(args.artifacts_root, args.snapshot_date)
     if (root / "SEALED.json").is_file():
         return verify_sealed_snapshot(root)
@@ -425,6 +434,36 @@ def archive_vintage(args: argparse.Namespace) -> dict[str, object]:
     return manifest
 
 
+def _archive_observation(args: argparse.Namespace) -> dict[str, object]:
+    if set(args.datasets) != set(DEFAULT_DATASETS):
+        raise ValueError("Raw observations require all four datasets")
+    parameters = resolved_retry_parameters(args)
+    semantic = parameters["semantic"]
+    if not isinstance(semantic, Mapping):
+        raise RuntimeError("Raw observation retry identity is missing")
+    identity = {**semantic, "archive_mode": "raw"}
+    parameters["semantic"] = identity
+    root = observation_root(args.artifacts_root, args.snapshot_date)
+    require_observation_paths(root, args.datasets)
+    if (root / MARKER).is_file() or args.verify_only:
+        return verify_observation(root, identity, args.datasets)
+    attempt_id = begin_attempt(root, parameters)
+    state: dict[str, object] = {"attempt_id": attempt_id, "snapshot_date": args.snapshot_date}
+    for dataset in args.datasets:
+        _archive_step(
+            root, state, "raw", dataset, partial(_archive_raw_dataset, args, root, dataset)
+        )
+    manifest = _archive_step(
+        root, state, "seal", None, lambda: seal_observation(root, identity, args.datasets)
+    )
+    _archive_step(
+        root, state, "verify", None, lambda: verify_observation(root, identity, args.datasets)
+    )
+    state.update(status="completed", phase="completed", dataset=None)
+    _write_archive_state(root, state)
+    return manifest
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifacts-root", type=Path, required=True)
@@ -460,6 +499,7 @@ def build_parser() -> argparse.ArgumentParser:
         default="daily",
         help="Declared cadence for this immutable observation lane.",
     )
+    parser.add_argument("--archive-mode", choices=("raw", "full"), default="full")
     parser.add_argument("--verify-only", action="store_true")
     return parser
 
@@ -478,7 +518,11 @@ def _prepare_args(args: argparse.Namespace) -> argparse.Namespace:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _prepare_args(build_parser().parse_args(argv))
     root = snapshot_root(args.artifacts_root, args.snapshot_date)
-    result = verify_sealed_snapshot(root) if args.verify_only else archive_vintage(args)
+    result = (
+        verify_sealed_snapshot(root)
+        if args.verify_only and args.archive_mode == "full"
+        else archive_vintage(args)
+    )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 
