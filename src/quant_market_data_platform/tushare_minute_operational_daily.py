@@ -12,6 +12,11 @@ from zoneinfo import ZoneInfo
 
 import pyarrow.parquet as pq
 
+from quant_market_data_platform._minute_operational_history import (
+    read_run_history,
+    record_operational_run,
+    set_operational_target,
+)
 from quant_market_data_platform._minute_operational_receipt import read_operational_receipt
 from quant_market_data_platform.minute_candidate import MinuteCandidateError
 from quant_market_data_platform.providers._env import resolve_tushare_api_url
@@ -196,6 +201,44 @@ def _sync_current_catalog(root: Path, paths: _OperationalPaths, base_max: str) -
     reconcile_operational_catalog(root, paths.alias, promotion)
 
 
+def inspect_operational_daily(options: OperationalDailyOptions) -> dict[str, Any]:
+    """Read current asset and retained invocations without repair or provider calls."""
+    paths = _paths(options.artifacts_root.expanduser().resolve())
+    _, receipt = _base_receipt(paths)
+    date_max = str(receipt["summary"]["date_max"])
+    target = _latest_open_date(paths.trade_calendar, _target_date(options))
+    history = read_run_history(options.artifacts_root)
+    latest = history[-1] if history else None
+    failures = [
+        r for r in history if r.get("status") in {"failed", "download_incomplete", "interrupted"}
+    ]
+    failed = max(failures, key=lambda r: r.get("finished_at") or r["started_at"], default=None)
+    status = "behind" if date_max < target else "current"
+    if status == "current" and failed:
+        failed_target = failed.get("target_date")
+        recovered = (
+            latest is not None
+            and latest.get("status") in {"noop", "operational_canonical_updated"}
+            and isinstance(latest.get("finished_at"), str)
+            and isinstance(failed.get("finished_at"), str)
+            and latest["started_at"] > failed["finished_at"]
+            and latest["finished_at"] >= latest["started_at"]
+            and isinstance(failed_target, str)
+            and failed_target <= date_max
+        )
+        status = "recovered_after_failure" if recovered else "current_with_failed_run"
+    summary_fields = ("run_id", "status", "target_date", "started_at", "finished_at")
+    return {
+        "schema_version": "a_share.minute_operational_status.v1",
+        "status": status,
+        "target_date": target,
+        "date_max": date_max,
+        "last_run": {k: latest.get(k) for k in summary_fields} if latest else None,
+        "last_failed_run": {k: failed.get(k) for k in summary_fields} if failed else None,
+    }
+
+
+@record_operational_run
 def run_operational_daily(options: OperationalDailyOptions) -> dict[str, Any]:
     """Catch up every missing open date, publish a successor, and move only TuShare."""
 
@@ -203,6 +246,7 @@ def run_operational_daily(options: OperationalDailyOptions) -> dict[str, Any]:
     paths = _paths(root)
     base_receipt_path, base_receipt = _base_receipt(paths)
     target = _latest_open_date(paths.trade_calendar, _target_date(options))
+    set_operational_target(target)
     base_max = str(base_receipt["summary"]["date_max"])
     if target <= base_max:
         _sync_current_catalog(root, paths, base_max)
@@ -295,4 +339,4 @@ def run_operational_daily(options: OperationalDailyOptions) -> dict[str, Any]:
     }
 
 
-__all__ = ["OperationalDailyOptions", "run_operational_daily"]
+__all__ = ["OperationalDailyOptions", "inspect_operational_daily", "run_operational_daily"]

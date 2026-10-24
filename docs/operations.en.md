@@ -285,3 +285,26 @@ marketdata tushare build-a-share-fundamentals-pit \
   --field-map n_cashflow_act=n_cashflow_act --field-map roe=roe \
   --out-dir "$DERIVED/pit"
 ```
+
+## Minute daily run evidence and fallback policy
+
+The daily operational entry preserves resumable plan/backfill paths and creates a unique
+invocation journal under `metadata/minute_operational/history/` in the external data root.
+It retains attempt statuses, safe failure categories, receipt hashes and explicit rate-limit
+numbers before a later resume can replace mutable checkpoints. Raw responses, endpoint URLs
+and credentials are not retained. A force-killed process can leave an unfinished `running`
+record; that is not success.
+
+Run the installed operational script with `--artifacts-root "$DATA_PLATFORM_ROOT" --status-only`
+to read the formal asset, calendar and retained invocations. It makes no provider calls,
+catalog repairs or history writes. States distinguish `current`, `behind`,
+`current_with_failed_run` and `recovered_after_failure`. Recovery requires a later successful
+invocation and coverage of the failed date. Missing historical evidence is not fabricated.
+
+`--no-fallback` is mutually exclusive with `--fallback-token-env`. With no configuration the
+existing `TUSHARE_TOKEN` fallback remains the default. The non-secret project environment
+selector `TUSHARE_OPERATIONAL_FALLBACK_TOKEN_ENV` chooses another existing credential variable;
+an explicit empty value disables fallback. Explicit CLI options take precedence. This changes
+neither credentials nor provider entitlements. A local request budget does not establish
+supplier permission; an account limited to one request per hour cannot provide rapid
+full-market failover. Shared transient retry, quota accounting and publication checks remain.

@@ -526,8 +526,13 @@ def _execute_backfill_plan(
     plan: dict[str, Any],
     plan_path: Path,
 ) -> dict[str, Any]:
+    from quant_market_data_platform._minute_operational_history import capture_backfill_attempt
+
     identity = plan["identity"]
-    with _run_lock(execution.run_root / ".minute-backfill.lock"):
+    with (
+        _run_lock(execution.run_root / ".minute-backfill.lock"),
+        capture_backfill_attempt(execution.token_env, execution.receipt_path),
+    ):
         receipt = _load_or_create_receipt(
             plan=plan,
             plan_path=plan_path,

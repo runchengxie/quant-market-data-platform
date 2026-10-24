@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 569,
-    "python_lines": 133955,
+    "python_files": 573,
+    "python_lines": 135077,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,9 +18,9 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "5312f1044edd90bcba671cb55ecda4ce69d92b54",
-    "reason": "Add raw-only fundamentals observations with a separate sealed namespace, four-child integrity, fail-closed scope and path checks, weekly scheduling and offline derivative parser regressions: exactly two Python files and 348 net Python lines. Structural budgets unchanged.",
-    "exit_condition": "Remove this allowance when raw observations are retired or consolidated with equivalent mode separation, scope binding, child tamper rejection, interruption and pre-write symlink regressions. Preserve all prior retirement conditions."
+    "source_revision": "dd68ff0254ecfd147170458e6ab3c6466b161610",
+    "reason": "Preserve unique operational minute run evidence and safe checkpoint snapshots under the existing backfill lock, add read-only recovery status and explicit fallback opt-out with overwrite/concurrency/CLI regressions: exactly four Python files and 1122 net Python lines. All complexity, structural, exclusion and oversized-function/file budgets remain unchanged.",
+    "exit_condition": "Remove this exact four-file/1122-line allowance when equivalent locked first-failure retention, resume overwrite protection, conservative recovery ordering, read-only status and fallback compatibility tests are consolidated or the operational job is retired. Preserve previous retirement conditions."
   },
   "previous_change_records": [
     {
@@ -157,6 +157,11 @@
       "source_revision": "1a12b6132b8fce291c228964b732494866683abf",
       "reason": "Add bounded retrospective independent-coverage receipt issuance, exact candidate repair lineage adjudication and fail-closed consumer replay tests: exactly 3 Python files and 738 lines. Includes commit-tree provenance and complete column/type union validation. No complexity or oversized-file allowance increases.",
       "exit_condition": "Remove this exact file/line allowance when a shared coverage receipt framework subsumes bounded independent universe replay, immutable input identity, explicit candidate repair lineage and consumer partition/hash checks with equivalent tests; preserve previous retirement conditions."
+    },
+    {
+      "source_revision": "5312f1044edd90bcba671cb55ecda4ce69d92b54",
+      "reason": "Add raw-only fundamentals observations with a separate sealed namespace, four-child integrity, fail-closed scope and path checks, weekly scheduling and offline derivative parser regressions: exactly two Python files and 348 net Python lines. Structural budgets unchanged.",
+      "exit_condition": "Remove this allowance when raw observations are retired or consolidated with equivalent mode separation, scope binding, child tamper rejection, interruption and pre-write symlink regressions. Preserve all prior retirement conditions."
     }
   ]
 }

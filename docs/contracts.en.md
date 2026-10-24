@@ -279,3 +279,17 @@ this validation.
 ## Raw fundamentals observation contract
 
 Raw-only archives have schema `tushare.a_share.fundamentals.raw_observation.v1`, `archive_mode: raw`, a sealed request identity and exactly four content-verified raw child receipts. The namespace is `assets/tushare/a_share/fundamentals_observations/observation=YYYYMMDD`; `OBSERVATION_SEALED.json` binds the manifest hash. It is distinct from a `fundamentals_vintages` full vintage and its `SEALED.json` and cannot certify PIT readiness or revision safety. No normalized or PIT child is required or claimed. Completion verifies child manifest seals and content hashes; reentry verifies identity before accepting receipts. Partial output is never complete. Weekly observations describe actual capture cadence, without widening freshness limits or filling gaps. The original full archive schema and retry identity remain unchanged.
+
+## Minute daily invocation evidence
+
+`metadata/minute_operational/history/<timestamp>-<uuid>.json` uses
+`a_share.minute_operational_run.v1`: unique `run_id`, start/finish times, target date,
+run status, fallback policy, safe attempt snapshots and result summary. Subsequent invocations
+do not replace completed records. Resumable checkpoints and the daily function return value
+remain compatible. Snapshots bind the receipt bytes read at that time; only failure types,
+categories, message hashes and explicit rate-limit numbers are retained, not raw responses.
+
+The script's read-only `--status-only` returns `a_share.minute_operational_status.v1` with
+`status`, `target_date`, `date_max`, `last_run` and `last_failed_run`. `behind` exits 75.
+Current data does not certify a natural scheduler run or message delivery. Malformed history
+or paths escaping the owner root fail explicitly instead of hiding evidence.
