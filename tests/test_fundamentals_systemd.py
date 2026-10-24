@@ -10,14 +10,15 @@ def _unit(name: str) -> str:
     return (SYSTEMD_ROOT / name).read_text(encoding="utf-8")
 
 
-def test_fundamentals_archive_runs_daily_without_publishing() -> None:
+def test_fundamentals_archive_runs_weekly_raw_without_publishing() -> None:
     service = _unit("tushare-fundamentals-vintage-archive.service")
     timer = _unit("tushare-fundamentals-vintage-archive.timer")
 
-    assert "--observation-frequency daily" in service
+    assert "--observation-frequency weekly" in service
+    assert "--archive-mode raw" in service
     assert "archive_tushare_fundamentals_vintage.py" in service
     assert "publish" not in service.lower()
-    assert "OnCalendar=*-*-* 02:30:00 Asia/Shanghai" in timer
+    assert "OnCalendar=Sat *-*-* 02:30:00 Asia/Shanghai" in timer
     assert "Persistent=true" in timer
 
 

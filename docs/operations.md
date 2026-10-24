@@ -567,3 +567,32 @@ marketdata tushare validate-minute-partition \
 completeness sidecar、文件哈希、分钟网格和交易所 universe。成功时仅向标准输出写入
 版本化 JSON。证据缺失、篡改、日期或交易所不匹配时非零退出，不输出成功回执。
 此命令不会生成 marker、刷新凭据或发起数据采集。消费者应使用已安装且固定版本的 CLI。
+
+## 基本面每周原始观测
+
+计划任务在每周六上海时间 02:30 使用 `--archive-mode raw --observation-frequency weekly` 采集四类原始数据，校验并封存后结束，不运行标准化、PIT 构建或发布。CLI 默认仍为 `--archive-mode full`，保留原有完整流程。已有数据保持原样。本次减少未来采集和存储增长，尚未释放已有数据占用的磁盘空间。单次数据量不变时，每周采集次数约为每日采集的七分之一，实际增长仍取决于供应商返回的数据量。
+
+原始观测写入 `fundamentals_observations/observation=YYYYMMDD`，完成标记为 `OBSERVATION_SEALED.json`。重入和 `--verify-only` 需使用相同模式、查询范围、接口地址及观测频率。范围变化会在访问供应商前被拒绝。中断时只保留进度和尝试记录，不生成完成标记。每周观测之间的空档仍然可见，默认三天的最大观测年龄不变。
+
+需要派生数据时，显式执行下面的离线构建。示例只选取四个字段，可按研究要求增加映射。派生数据使用独立目录，不切换 latest，也不会追认历史修订已经获得 PIT 认证。
+
+```bash
+python scripts/operations/archive_tushare_fundamentals_vintage.py \
+  --artifacts-root "$DATA_PLATFORM_ROOT" --snapshot-date 20261024 \
+  --archive-mode raw --observation-frequency weekly --api-url https://api.tushare.pro
+
+OBS="$DATA_PLATFORM_ROOT/assets/tushare/a_share/fundamentals_observations/observation=20261024"
+DERIVED="$DATA_PLATFORM_ROOT/research/fundamentals-20261024"
+for dataset in income balancesheet cashflow fina_indicator; do
+  marketdata tushare normalize-a-share-fundamentals --dataset "$dataset" \
+    --raw-dir "$OBS/raw/$dataset" --out-dir "$DERIVED/normalized/$dataset"
+done
+marketdata tushare build-a-share-fundamentals-pit \
+  --normalized-dir "$DERIVED/normalized/income" \
+  --normalized-dir "$DERIVED/normalized/balancesheet" \
+  --normalized-dir "$DERIVED/normalized/cashflow" \
+  --normalized-dir "$DERIVED/normalized/fina_indicator" \
+  --field-map revenue=revenue --field-map total_assets=total_assets \
+  --field-map n_cashflow_act=n_cashflow_act --field-map roe=roe \
+  --out-dir "$DERIVED/pit"
+```

@@ -256,3 +256,32 @@ completeness sidecar, file hashes, minute grid and exact exchange universe. It
 neither fetches data nor modifies inputs. Success writes one JSON receipt to
 stdout; invalid evidence exits nonzero without a success receipt. Consumers use
 a pinned installed CLI rather than importing provider internals.
+
+## Weekly raw fundamentals observations
+
+The scheduled archive captures all four raw datasets each Saturday at 02:30 Asia/Shanghai with `--archive-mode raw --observation-frequency weekly`. It seals raw content only, without normalization, PIT construction or publication. The CLI default remains `--archive-mode full`, preserving the existing full pipeline. Existing data is retained; this reduces future acquisition and storage growth and reclaims no existing bytes. At unchanged per-capture size, weekly acquisition produces about one seventh as many captures as daily acquisition; actual growth depends on provider payloads.
+
+Raw observations use `fundamentals_observations/observation=YYYYMMDD` and `OBSERVATION_SEALED.json`. Reentry and `--verify-only` use the same mode, query, endpoint and cadence arguments. A changed scope fails before supplier access. Partial captures have progress/attempt evidence but no completion marker. Weekly gaps remain visible; the default three-day maximum observation age is unchanged.
+
+Use explicit offline builds when derivatives are needed. The example selects four fields; extend mappings for the research requirement. Derivatives go to separate directories and do not publish latest or retroactively certify historical revisions.
+
+```bash
+python scripts/operations/archive_tushare_fundamentals_vintage.py \
+  --artifacts-root "$DATA_PLATFORM_ROOT" --snapshot-date 20261024 \
+  --archive-mode raw --observation-frequency weekly --api-url https://api.tushare.pro
+
+OBS="$DATA_PLATFORM_ROOT/assets/tushare/a_share/fundamentals_observations/observation=20261024"
+DERIVED="$DATA_PLATFORM_ROOT/research/fundamentals-20261024"
+for dataset in income balancesheet cashflow fina_indicator; do
+  marketdata tushare normalize-a-share-fundamentals --dataset "$dataset" \
+    --raw-dir "$OBS/raw/$dataset" --out-dir "$DERIVED/normalized/$dataset"
+done
+marketdata tushare build-a-share-fundamentals-pit \
+  --normalized-dir "$DERIVED/normalized/income" \
+  --normalized-dir "$DERIVED/normalized/balancesheet" \
+  --normalized-dir "$DERIVED/normalized/cashflow" \
+  --normalized-dir "$DERIVED/normalized/fina_indicator" \
+  --field-map revenue=revenue --field-map total_assets=total_assets \
+  --field-map n_cashflow_act=n_cashflow_act --field-map roe=roe \
+  --out-dir "$DERIVED/pit"
+```

@@ -275,3 +275,7 @@ and `mirror_generated_at`. The owner validates the full partition and its exact
 exchange rule. Consumers reject unsupported schemas, mismatched dates or
 exchanges, missing fields and failed commands; freshness claims do not replace
 this validation.
+
+## Raw fundamentals observation contract
+
+Raw-only archives have schema `tushare.a_share.fundamentals.raw_observation.v1`, `archive_mode: raw`, a sealed request identity and exactly four content-verified raw child receipts. The namespace is `assets/tushare/a_share/fundamentals_observations/observation=YYYYMMDD`; `OBSERVATION_SEALED.json` binds the manifest hash. It is distinct from a `fundamentals_vintages` full vintage and its `SEALED.json` and cannot certify PIT readiness or revision safety. No normalized or PIT child is required or claimed. Completion verifies child manifest seals and content hashes; reentry verifies identity before accepting receipts. Partial output is never complete. Weekly observations describe actual capture cadence, without widening freshness limits or filling gaps. The original full archive schema and retry identity remain unchanged.
