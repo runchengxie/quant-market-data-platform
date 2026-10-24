@@ -4553,6 +4553,7 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "duckdb" },
+    { name = "filelock" },
     { name = "pandas" },
     { name = "pip-audit" },
     { name = "polars" },
@@ -4580,6 +4581,7 @@ minute-fusion = [
 ]
 offline-equities = [
     { name = "duckdb" },
+    { name = "filelock" },
     { name = "psutil" },
     { name = "pyarrow" },
 ]
@@ -4618,6 +4620,8 @@ requires-dist = [
     { name = "duckdb", marker = "extra == 'duckdb'", specifier = ">=1.5.5" },
     { name = "duckdb", marker = "extra == 'minute-fusion'", specifier = ">=1.5.5" },
     { name = "duckdb", marker = "extra == 'offline-equities'", specifier = ">=1.5.5" },
+    { name = "filelock", marker = "extra == 'dev'", specifier = ">=3.20" },
+    { name = "filelock", marker = "extra == 'offline-equities'", specifier = ">=3.20" },
     { name = "numpy", specifier = ">=1.23,<3" },
     { name = "pandas", marker = "extra == 'dev'", specifier = ">=2.2" },
     { name = "pandas", marker = "extra == 'etf-minute-public'", specifier = ">=2.2" },

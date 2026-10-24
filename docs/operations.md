@@ -628,3 +628,10 @@ marketdata tushare build-a-share-fundamentals-pit \
 ## 美股分钟离线转换
 
 已审计的按日 Parquet 可通过独立可选模块生成按代码的 ZSTD6 镜像。详见 [离线转换说明](offline-equities.md)。此入口不注册平台市场或切换 current asset。
+
+## 离线镜像重压缩
+
+完整的按证券保存的离线镜像可通过
+`python -m quant_market_data_platform.offline_equities.repack --source <mirror> --output <new-version>`
+生成独立的无损差分编码 ZSTD12 候选。逐文件校验与续跑规则见
+[离线美股说明](offline-equities.md#已完成镜像的无损重压缩)。

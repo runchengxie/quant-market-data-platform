@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 584,
-    "python_lines": 136369,
+    "python_files": 587,
+    "python_lines": 136878,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,9 +18,9 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "0f5f165",
-    "reason": "Port the existing external offline US equity lossless converter into nine focused implementation modules and two synthetic regression test modules: exactly eleven files and 1292 Python lines. Includes completed-summary/manifest reconciliation, explicit selection validation, failed-resume status and partial publication recovery tests. No complexity, oversized-function/file, exclusion or long-line budgets increased. No data, credentials or current-asset registration added.",
-    "exit_condition": "Remove this exact eleven-file/1292-line allowance when the optional offline converter is retired or consolidated with equivalent case-sensitive encoding, all-field readback, safe resume/publication, source-completeness and explicit-selection regression coverage. Preserve previous retirement conditions."
+    "source_revision": "686d062",
+    "reason": "Add the approved standalone direct lossless delta/ZSTD12 repacker and synthetic regression coverage: exactly three Python files and 509 lines. Includes atomic data/proof publication, source inventory/hash binding, OS locking, decoded-memory bounds, failed-status invalidation and interruption recovery. All complexity, oversized-file/function and exclusion budgets remain unchanged.",
+    "exit_condition": "Remove this exact three-file/509-line allowance when direct repacking is retired or consolidated with equivalent all-field preservation, bounded memory, safe resume, ownership and corruption coverage. Preserve earlier retirement conditions."
   },
   "previous_change_records": [
     {
@@ -167,6 +167,11 @@
       "source_revision": "5312f1044edd90bcba671cb55ecda4ce69d92b54",
       "reason": "Add raw-only fundamentals observations with a separate sealed namespace, four-child integrity, fail-closed scope and path checks, weekly scheduling and offline derivative parser regressions: exactly two Python files and 348 net Python lines. Structural budgets unchanged.",
       "exit_condition": "Remove this allowance when raw observations are retired or consolidated with equivalent mode separation, scope binding, child tamper rejection, interruption and pre-write symlink regressions. Preserve all prior retirement conditions."
+    },
+    {
+      "source_revision": "0f5f165",
+      "reason": "Port the existing external offline US equity lossless converter into nine focused implementation modules and two synthetic regression test modules: exactly eleven files and 1292 Python lines. Includes completed-summary/manifest reconciliation, explicit selection validation, failed-resume status and partial publication recovery tests. No complexity, oversized-function/file, exclusion or long-line budgets increased. No data, credentials or current-asset registration added.",
+      "exit_condition": "Remove this exact eleven-file/1292-line allowance when the optional offline converter is retired or consolidated with equivalent case-sensitive encoding, all-field readback, safe resume/publication, source-completeness and explicit-selection regression coverage. Preserve previous retirement conditions."
     }
   ]
 }

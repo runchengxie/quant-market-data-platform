@@ -53,3 +53,28 @@ resume, interrupted publication, ordering and input boundaries. They do not clai
 over the real full dataset; historical real-data results belong to frozen v1 and its receipts.
 
 See the [Chinese guide](offline-equities.md) for the same operational contract.
+
+## Recompress a completed mirror
+
+```bash
+python -m quant_market_data_platform.offline_equities.repack \
+  --source "$SOURCE_SECURITY_MIRROR" --output "$NEW_DELTA_CANDIDATE"
+```
+
+The source requires a completed `summary.json`, `file_index.csv`, and `parquet/`.
+The direct repacker uses delta encodings for strings/integers, byte-stream split for
+floats, 262144-row groups, and ZSTD12. It preserves every physical field, schema
+metadata, null, lexical value, and row order in standard Parquet. It processes one
+file at a time and rejects input partitions exceeding 2 GiB of uncompressed pages.
+Decoded batches of 8192 rows are checked cumulatively against the smaller of 1 GiB
+and one sixth of available memory. The source table is released before readback to
+leave room for encoding, decoding, and hash buffers.
+
+Each file receives complete all-column logical SHA256 readback before its data and
+proof directory are atomically published. An OS file lock prevents concurrent writes.
+Resume checks compressed input/output hashes and reuses verified partitions. Changed
+source manifests, implementation, or Arrow versions require a separate output.
+Unknown partitions are preserved and rejected. Progress is in `progress.json`.
+Completion produces an index, summary, and `bars_by_security` DuckDB catalog view.
+The source mirror remains intact and the candidate does not become a current alias.
+Larger row groups can increase decompression for date-filtered queries.

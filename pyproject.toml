@@ -21,12 +21,14 @@ quantzone = [
   "pyarrow>=25.0.0",
 ]
 offline-equities = [
+  "filelock>=3.20",
   "pyarrow>=25.0.0",
   "duckdb>=1.5.5",
   "psutil>=7.0",
 ]
 
 dev = [
+  "filelock>=3.20",
   "psutil>=7.0",
   "duckdb>=1.5.5",
   "pandas>=2.2",

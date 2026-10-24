@@ -313,3 +313,9 @@ full-market failover. Shared transient retry, quota accounting and publication c
 ## Offline US equity minute layouts
 
 An optional standalone module mirrors audited by-day Parquet into by-security ZSTD6 files. See [offline layouts](offline-equities.en.md). It does not register platform markets or switch current assets.
+
+## Offline mirror recompression
+
+Use `python -m quant_market_data_platform.offline_equities.repack --source <mirror> --output <new-version>`
+to create a separate lossless delta/ZSTD12 candidate from a completed security mirror.
+See the [offline guide](offline-equities.en.md#recompress-a-completed-mirror) for verification and resume.
