@@ -4556,6 +4556,7 @@ dev = [
     { name = "pandas" },
     { name = "pip-audit" },
     { name = "polars" },
+    { name = "psutil" },
     { name = "pyarrow" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -4575,6 +4576,11 @@ minute-fusion = [
     { name = "duckdb" },
     { name = "pandas" },
     { name = "polars" },
+    { name = "pyarrow" },
+]
+offline-equities = [
+    { name = "duckdb" },
+    { name = "psutil" },
     { name = "pyarrow" },
 ]
 qlib = [
@@ -4611,6 +4617,7 @@ requires-dist = [
     { name = "duckdb", marker = "extra == 'dev'", specifier = ">=1.5.5" },
     { name = "duckdb", marker = "extra == 'duckdb'", specifier = ">=1.5.5" },
     { name = "duckdb", marker = "extra == 'minute-fusion'", specifier = ">=1.5.5" },
+    { name = "duckdb", marker = "extra == 'offline-equities'", specifier = ">=1.5.5" },
     { name = "numpy", specifier = ">=1.23,<3" },
     { name = "pandas", marker = "extra == 'dev'", specifier = ">=2.2" },
     { name = "pandas", marker = "extra == 'etf-minute-public'", specifier = ">=2.2" },
@@ -4622,9 +4629,12 @@ requires-dist = [
     { name = "pip-audit", marker = "extra == 'dev'", specifier = ">=2.7" },
     { name = "polars", marker = "extra == 'dev'", specifier = ">=1.43.2,<3" },
     { name = "polars", marker = "extra == 'minute-fusion'", specifier = ">=1.43.2,<3" },
+    { name = "psutil", marker = "extra == 'dev'", specifier = ">=7.0" },
+    { name = "psutil", marker = "extra == 'offline-equities'", specifier = ">=7.0" },
     { name = "pyarrow", marker = "extra == 'dev'", specifier = ">=25.0.0" },
     { name = "pyarrow", marker = "extra == 'etf-minute-public'", specifier = ">=25.0.0" },
     { name = "pyarrow", marker = "extra == 'minute-fusion'", specifier = ">=25.0.0" },
+    { name = "pyarrow", marker = "extra == 'offline-equities'", specifier = ">=25.0.0" },
     { name = "pyarrow", marker = "extra == 'qlib'", specifier = ">=25.0.0" },
     { name = "pyarrow", marker = "extra == 'quality'", specifier = ">=25.0.0" },
     { name = "pyarrow", marker = "extra == 'quantzone'", specifier = ">=25.0.0" },
@@ -4641,7 +4651,7 @@ requires-dist = [
     { name = "tushare", marker = "extra == 'tushare'", specifier = ">=1.4" },
     { name = "ty", marker = "extra == 'dev'", specifier = ">=0.0.69" },
 ]
-provides-extras = ["quantzone", "dev", "research-features", "quality", "duckdb", "minute-fusion", "qlib", "tushare", "etf-minute-public"]
+provides-extras = ["quantzone", "offline-equities", "dev", "research-features", "quality", "duckdb", "minute-fusion", "qlib", "tushare", "etf-minute-public"]
 
 [package.metadata.requires-dev]
 docs = [{ name = "mkdocs-material", specifier = ">=9.6,<10" }]

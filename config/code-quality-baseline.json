@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 573,
-    "python_lines": 135077,
+    "python_files": 584,
+    "python_lines": 136369,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "dd68ff0254ecfd147170458e6ab3c6466b161610",
-    "reason": "Preserve unique operational minute run evidence and safe checkpoint snapshots under the existing backfill lock, add read-only recovery status and explicit fallback opt-out with overwrite/concurrency/CLI regressions: exactly four Python files and 1122 net Python lines. All complexity, structural, exclusion and oversized-function/file budgets remain unchanged.",
-    "exit_condition": "Remove this exact four-file/1122-line allowance when equivalent locked first-failure retention, resume overwrite protection, conservative recovery ordering, read-only status and fallback compatibility tests are consolidated or the operational job is retired. Preserve previous retirement conditions."
+    "source_revision": "0f5f165",
+    "reason": "Port the existing external offline US equity lossless converter into nine focused implementation modules and two synthetic regression test modules: exactly eleven files and 1292 Python lines. Includes completed-summary/manifest reconciliation, explicit selection validation, failed-resume status and partial publication recovery tests. No complexity, oversized-function/file, exclusion or long-line budgets increased. No data, credentials or current-asset registration added.",
+    "exit_condition": "Remove this exact eleven-file/1292-line allowance when the optional offline converter is retired or consolidated with equivalent case-sensitive encoding, all-field readback, safe resume/publication, source-completeness and explicit-selection regression coverage. Preserve previous retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "dd68ff0254ecfd147170458e6ab3c6466b161610",
+      "reason": "Preserve unique operational minute run evidence and safe checkpoint snapshots under the existing backfill lock, add read-only recovery status and explicit fallback opt-out with overwrite/concurrency/CLI regressions: exactly four Python files and 1122 net Python lines. All complexity, structural, exclusion and oversized-function/file budgets remain unchanged.",
+      "exit_condition": "Remove this exact four-file/1122-line allowance when equivalent locked first-failure retention, resume overwrite protection, conservative recovery ordering, read-only status and fallback compatibility tests are consolidated or the operational job is retired. Preserve previous retirement conditions."
+    },
     {
       "source_revision": "8544f57fef2908b869d962cddb3e07345268ebd4",
       "reason": "Coordinate all current publication writers with root locking, atomic metadata writes, recoverable registry pending state and clean rollback ownership checks, with concurrency and failure regressions: exactly 4 Python files and 782 net Python lines. Structural budgets unchanged.",

@@ -308,3 +308,8 @@ an explicit empty value disables fallback. Explicit CLI options take precedence.
 neither credentials nor provider entitlements. A local request budget does not establish
 supplier permission; an account limited to one request per hour cannot provide rapid
 full-market failover. Shared transient retry, quota accounting and publication checks remain.
+
+
+## Offline US equity minute layouts
+
+An optional standalone module mirrors audited by-day Parquet into by-security ZSTD6 files. See [offline layouts](offline-equities.en.md). It does not register platform markets or switch current assets.
