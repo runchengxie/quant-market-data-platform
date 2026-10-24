@@ -596,3 +596,30 @@ marketdata tushare build-a-share-fundamentals-pit \
   --field-map n_cashflow_act=n_cashflow_act --field-map roe=roe \
   --out-dir "$DERIVED/pit"
 ```
+
+## 分钟日常任务的运行证据与备用策略
+
+日常入口保留原有可续跑的 plan/backfill 路径，同时在外部数据根的
+`metadata/minute_operational/history/` 为每次调用建立独立运行记录。记录开始、结束、
+每次主/备用尝试、失败类别和当时回执哈希。后续成功续跑不会改写之前的运行记录。
+错误只保存脱敏类别、消息哈希及明确的限流数值，不保存原始响应、接口地址或凭据。
+进程被强制终止时可能留下未结束的 `running` 记录，不能将它视为成功。
+
+使用实际安装的 owner Python 查询状态：
+
+```bash
+"$MDP_DIR/.venv/bin/python" "$MDP_DIR/scripts/operations/tushare_minute_operational_daily.py" \
+  --artifacts-root "$DATA_PLATFORM_ROOT" --status-only
+```
+
+该模式只读当前正式资产、交易日历及历史，不联网、不修复 catalog、不建立运行记录。
+它区分 `current`、`behind`、`current_with_failed_run` 和 `recovered_after_failure`。
+后者要求覆盖失败日期并有之后成功完成的运行。`last_run` 与 `last_failed_run` 保留任务状态，
+不能用资产日期或 systemd 旧失败状态单独替代完整判断。旧运行没有独立记录时不会补造历史。
+
+`--no-fallback` 明确禁用备用凭据，与 `--fallback-token-env` 互斥。
+未配置时仍默认使用 `TUSHARE_TOKEN` 备用，保持已有调用兼容。项目配置的非秘密环境选择器
+`TUSHARE_OPERATIONAL_FALLBACK_TOKEN_ENV` 可指定其他凭据变量名。显式空值表示禁用。
+显式 CLI 选项优先于该环境选择器。这里只选择既有凭据，不复制或升级任何账户权限。
+本地请求预算与供应商权限需要分别核对。确认只有每小时一次额度的凭据不适合作为全市场快速接管源。
+共享的瞬时重试、配额数据库和生产发布校验不因此改变。
