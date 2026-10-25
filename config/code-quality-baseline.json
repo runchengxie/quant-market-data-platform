@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 593,
-    "python_lines": 138582,
+    "python_files": 594,
+    "python_lines": 138823,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "c3234f3b86eb1f356a92d4b0db1296b49140cf9e",
-    "reason": "Authenticate newly acquired multi-symbol minute deltas with independent immutable quota SQLite snapshots, explicit bounded retrospective prefix linkage, conservative uncertain accounting, raw-response hashes, exact typed union and negative formal-consumer regressions: exactly three Python files and 821 net Python lines against the actual merged source tree. Use exact combined totals after the shared fixture update. No structural, complexity, exclusion or reserved-headroom allowance increases.",
-    "exit_condition": "Remove this exact three-file/821-line allowance when acquired-delta adjudication is retired or consolidated with equivalent independent quota archive, truthful original-prefix linkage, per-response semantics, exact typed union and complete consumer rejection coverage. Preserve all prior retirement conditions."
+    "source_revision": "0327f23bbe17ca8b0fe6565157189f746aca6c12",
+    "reason": "Close real offline Parquet readers and all staging writers on integrity, progress, flush and cleanup failures; preserve the original error with cleanup diagnostics and leave failed month artifacts unpublished for recovery. Record exactly 1 new Python regression file and 241 net Python lines, including nine real-file lifecycle cases. No structural, complexity, exclusion, coverage, security or reserved-headroom allowance increases. The pre-existing isolated C901 budget remains 9 and still fails at 26.",
+    "exit_condition": "Remove this exact one-file/241-line scope allowance when offline staging is retired or consolidated with equivalent real-file lifecycle, all-writer cleanup, original-error preservation, failed-month non-publication and recovery regressions. Preserve earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "c3234f3b86eb1f356a92d4b0db1296b49140cf9e",
+      "reason": "Authenticate newly acquired multi-symbol minute deltas with independent immutable quota SQLite snapshots, explicit bounded retrospective prefix linkage, conservative uncertain accounting, raw-response hashes, exact typed union and negative formal-consumer regressions: exactly three Python files and 821 net Python lines against the actual merged source tree. Use exact combined totals after the shared fixture update. No structural, complexity, exclusion or reserved-headroom allowance increases.",
+      "exit_condition": "Remove this exact three-file/821-line allowance when acquired-delta adjudication is retired or consolidated with equivalent independent quota archive, truthful original-prefix linkage, per-response semantics, exact typed union and complete consumer rejection coverage. Preserve all prior retirement conditions."
+    },
     {
       "source_revision": "141ceeb811d160f00f131a27f588be4011042288",
       "reason": "Add independent opt-in manual conflict-field research builder and reader with exact source/ledger/PDF hashes, unchanged candidates, field-only permissions, conservative availability and negative regressions: exactly two Python files and 462 Python lines. No complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
