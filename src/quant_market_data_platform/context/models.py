@@ -122,8 +122,10 @@ def validate_context_observations(frame: pd.DataFrame) -> pd.DataFrame:
     normalized["revision_number"] = pd.to_numeric(
         normalized["revision_number"], errors="raise", downcast="integer"
     )
-    normalized["revision_covered"] = normalized["revision_covered"].astype(bool)
-    normalized["reconstructed"] = normalized["reconstructed"].astype(bool)
+    flags = ["revision_covered", "reconstructed"]
+    if not normalized[flags].isin([True, False]).all().all():
+        raise ValueError("context observations boolean flags must be bool or numeric 0/1")
+    normalized[flags] = normalized[flags].astype(bool)
 
     duplicate_key = ["series_id", "period_end", "vintage_id"]
     if normalized.duplicated(duplicate_key).any():
