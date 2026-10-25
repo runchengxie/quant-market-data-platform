@@ -10,6 +10,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 from scripts.operations import historical_minute_coverage_pilot as pilot
+from scripts.operations import historical_minute_legacy_canary as legacy
 
 
 def audit_selection(
@@ -46,16 +47,7 @@ def resolve(
     count = len(row["partitions"])
     if count not in (2, 3) or len(row["candidate_sidecars"]) != count:
         raise ValueError("Adjudication requires two or three paired explicit candidates")
-    parts = [paths[k] for k in row["partitions"]]
-    sides = [paths[k] for k in row["candidate_sidecars"]]
-    if len({p.resolve() for p in parts}) != count:
-        raise ValueError("Candidate paths must be distinct")
-    for part, side in zip(parts, sides, strict=True):
-        payload = json.loads(side.read_text())
-        if part != side.parent / "part-00000.parquet" or payload["trade_date"] != row["date"]:
-            raise ValueError("Candidate sidecar/path/date mismatch")
-        if not pilot._partition_binding_matches(payload, side.parent):
-            raise ValueError("Candidate sidecar binding failed")
+    parts = paired_candidates(row, paths)
     kind = resolution["kind"]
     if kind == "identical_content":
         if len({pilot.bind(part)["sha256"] for part in parts}) != 1:
@@ -65,6 +57,18 @@ def resolve(
         if count != 2:
             raise ValueError("Additive patch adjudication requires exactly two candidates")
         details = additive_patch(row, resolution, paths)
+    elif kind == "legacy_canary_patch":
+        selected, old, patch = legacy.authenticate(row, resolution, paths)
+        exact_union(selected, old, patch)
+        details = {
+            "added_rows": len(patch),
+            "added_symbols": sorted(set(patch.ts_code)),
+            "raw": pilot.bind(paths[resolution["raw"]]),
+            "canary": pilot.bind(paths[resolution["canary"]]),
+            "original_rows_unchanged": True,
+        }
+    elif kind == "corroborated_exact_subset":
+        details = corroborated_subset(parts, row["date"])
     else:
         raise ValueError("Unsupported candidate resolution")
     return {
@@ -73,6 +77,23 @@ def resolve(
         "retained_candidates": [pilot.bind(p) for p in parts],
         **details,
     }
+
+
+def paired_candidates(row: dict[str, Any], paths: dict[str, Path]) -> list[Path]:
+    count = len(row["partitions"])
+    parts = [paths[k] for k in row["partitions"]]
+    sides = [paths[k] for k in row["candidate_sidecars"]]
+    if sides[0] != paths[row["sidecar"]]:
+        raise ValueError("Selected sidecar must match primary candidate")
+    if len({p.resolve() for p in parts}) != count:
+        raise ValueError("Candidate paths must be distinct")
+    for part, side in zip(parts, sides, strict=True):
+        payload = json.loads(side.read_text())
+        if part != side.parent / "part-00000.parquet" or payload["trade_date"] != row["date"]:
+            raise ValueError("Candidate sidecar/path/date mismatch")
+        if not pilot._partition_binding_matches(payload, side.parent):
+            raise ValueError("Candidate sidecar binding failed")
+    return parts
 
 
 def dated_record(path: Path, collection: str, date_key: str, date: str) -> dict[str, Any]:
@@ -140,3 +161,39 @@ def exact_union(selected: pd.DataFrame, old: pd.DataFrame, patch: pd.DataFrame) 
         )
     except (AssertionError, KeyError) as exc:
         raise ValueError("Selected partition is not the exact old-plus-patch union") from exc
+
+
+def corroborated_subset(parts: list[Path], date: str) -> dict[str, Any]:
+    from quant_market_data_platform._minute_gap_repair_artifacts import _validate
+
+    if len(parts) != 3:
+        raise ValueError("Corroborated subset requires exactly three candidates")
+    frames = [pq.ParquetFile(p).read().to_pandas() for p in parts]
+    selected = frames[0]
+    full = [f for f in frames[1:] if len(f) == len(selected)]
+    subsets = [f for f in frames[1:] if 0 < len(f) < len(selected)]
+    if len(full) != 1 or len(subsets) != 1:
+        raise ValueError("Require two complete candidates and one strict subset")
+    for frame in frames:
+        keys = frame[["ts_code", "trade_time"]]
+        if keys.isna().any().any() or keys.duplicated().any():
+            raise ValueError("Missing or duplicate candidate keys")
+        # Validate each bounded native symbol group; the response validator scans
+        # its entire input per requested symbol and is quadratic for a full market.
+        for symbol, group in frame.groupby("ts_code", sort=False):
+            _validate(group, date, [str(symbol)])
+    # Empty patch proves the complete corroborator has exactly the same typed values.
+    exact_union(selected, full[0], full[0].iloc[:0])
+    subset = subsets[0]
+    keys = ["ts_code", "trade_time"]
+    selected_keys = pd.MultiIndex.from_frame(selected[keys])
+    subset_keys = pd.MultiIndex.from_frame(subset[keys])
+    patch = selected.loc[~selected_keys.isin(subset_keys)]
+    exact_union(selected, subset, patch)
+    return {
+        "added_rows": len(patch),
+        "added_symbols": sorted(set(patch.ts_code)),
+        "original_rows_unchanged": True,
+        "complete_candidates": 2,
+        "subset_candidates": 1,
+    }

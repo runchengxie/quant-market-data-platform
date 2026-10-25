@@ -635,3 +635,7 @@ marketdata tushare build-a-share-fundamentals-pit \
 `python -m quant_market_data_platform.offline_equities.repack --source <mirror> --output <new-version>`
 生成独立的无损差分编码 ZSTD12 候选。逐文件校验与续跑规则见
 [离线美股说明](offline-equities.md#已完成镜像的无损重压缩)。
+
+历史分钟离线候选裁决支持旧 canary 采集链路认证及两份完整一致候选加一份严格子集，
+输入和限制见[独立覆盖凭证](operations/historical-minute-coverage-receipts.md)。所有候选保留，
+独立参考和正式发布门禁继续生效。
