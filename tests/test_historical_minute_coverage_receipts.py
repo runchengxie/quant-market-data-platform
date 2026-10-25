@@ -477,3 +477,257 @@ def test_patch_union_cannot_change_original_column_types():
     selected = pd.concat([old, patch]).astype({"value": "int64"})
     with pytest.raises(ValueError, match="exact old-plus-patch"):
         tool.candidates.exact_union(selected, old, patch)
+
+
+def expanded_candidates(evidence, tmp_path, *, triple):
+    from quant_market_data_platform.providers._a_share_mins_partition import (
+        _atomic_write_partition,
+        _partition_state,
+    )
+
+    manifest, paths = (three_candidates if triple else duplicate_evidence)(evidence, tmp_path)
+    tool = module()
+    row = manifest["dates"][0]
+    old = pd.read_parquet(paths["other"])
+    patch = old.assign(ts_code="000002.SZ")
+    selected = pd.concat([old, patch], ignore_index=True)
+    keys = ["part", "third"] if triple else ["part"]
+    for key in keys:
+        _atomic_write_partition(selected, paths[key].parent, trade_date=row["date"])
+        side = "sidecar" if key == "part" else f"{key}_sidecar"
+        paths[side].write_text(
+            json.dumps(
+                {
+                    "trade_date": row["date"],
+                    "partition": _partition_state(paths[key].parent, trade_date=row["date"]),
+                }
+            )
+        )
+    for key in ["daily", "basic"]:
+        pd.DataFrame({"ts_code": ["000001.SZ", "000002.SZ"], "trade_date": row["date"]}).to_parquet(
+            paths[key]
+        )
+    stock = pd.read_parquet(paths["L"])
+    pd.concat([stock, stock.assign(ts_code="000002.SZ")], ignore_index=True).to_parquet(paths["L"])
+    audit = json.loads(paths["audit"].read_text())
+    audit["partitions"][0].update(
+        partition_sha256=tool.pilot.bind(paths["part"])["sha256"],
+        sidecar_sha256=tool.pilot.bind(paths["sidecar"])["sha256"],
+    )
+    paths["audit"].write_text(json.dumps(audit))
+    return manifest, paths, patch
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    [
+        "none",
+        "full_value",
+        "subset_value",
+        "subset_duplicate",
+        "subset_partial",
+        "sidecar",
+        "reference",
+    ],
+)
+def test_corroborated_exact_subset_preserves_all_candidates(evidence, tmp_path, corruption):
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    from quant_market_data_platform.providers._a_share_mins_constants import MINS_ARROW_SCHEMA
+    from quant_market_data_platform.providers._a_share_mins_partition import _partition_state
+
+    manifest, paths, _ = expanded_candidates(evidence, tmp_path, triple=True)
+    row = manifest["dates"][0]
+    manifest["resolutions"][row["date"]]["kind"] = "corroborated_exact_subset"
+    if corruption in {"full_value", "subset_value", "subset_duplicate", "subset_partial"}:
+        key = "third" if corruption == "full_value" else "other"
+        frame = pd.read_parquet(paths[key])
+        if corruption.endswith("value"):
+            frame.loc[0, "vol"] = 99.0
+        elif corruption == "subset_duplicate":
+            frame = pd.concat([frame, frame.iloc[:1]], ignore_index=True)
+        else:
+            frame = frame.iloc[:240]
+        pq.write_table(
+            pa.Table.from_pandas(frame, schema=MINS_ARROW_SCHEMA, preserve_index=False), paths[key]
+        )
+        paths[f"{key}_sidecar"].write_text(
+            json.dumps(
+                {
+                    "trade_date": row["date"],
+                    "partition": _partition_state(paths[key].parent, trade_date=row["date"]),
+                }
+            )
+        )
+    elif corruption == "sidecar":
+        paths["third_sidecar"].write_text("{}")
+    elif corruption == "reference":
+        pd.DataFrame({"ts_code": ["000001.SZ"], "trade_date": row["date"]}).to_parquet(
+            paths["basic"]
+        )
+    if corruption == "none":
+        result = module().evaluate(manifest, paths)[0]
+        assert result["status"] == "passed_retrospective_independent_coverage"
+        assert result["candidate_resolution"]["added_rows"] == 241
+        assert len(result["candidate_resolution"]["retained_candidates"]) == 3
+    elif corruption == "reference":
+        assert module().evaluate(manifest, paths)[0]["status"] == "unresolved"
+    else:
+        with pytest.raises((ValueError, KeyError)):
+            module().evaluate(manifest, paths)
+
+
+def legacy_canary(evidence, tmp_path):
+    manifest, paths, patch = expanded_candidates(evidence, tmp_path, triple=False)
+    tool = module()
+    row = manifest["dates"][0]
+    paths["raw"] = tmp_path / "raw.parquet"
+    patch.to_parquet(paths["raw"])
+    source = {
+        str(paths[k]): tool.pilot.bind(paths[k])["sha256"] for k in ["other", "other_sidecar"]
+    }
+    record = {
+        "date": row["date"],
+        "request_limit": 2,
+        "requests_attempted": 1,
+        "responses": [
+            {
+                "code": "000002.SZ",
+                "rows": 241,
+                "raw_files": {str(paths["raw"]): tool.pilot.bind(paths["raw"])["sha256"]},
+                "semantic_validation": "passed",
+            }
+        ],
+        "writes_production": False,
+        "full_market_accepted": False,
+        "cached_native_evidence": [
+            {
+                "code": "000001.SZ",
+                "rows": 241,
+                "semantic_validation": "passed",
+                "source": "existing_raw_partition",
+                "provider_requests": 0,
+            }
+        ],
+        "source_sidecar": str(paths["other_sidecar"]),
+        "source_hashes": source,
+        "repair_requests_used_before": 20,
+        "repair_requests_used_after": 21,
+        "source_hashes_unchanged": True,
+        "status": "isolated_candidate_ready",
+        "candidate": str(paths["part"].parent),
+        "validation": {
+            "schema_version": "tushare.a_share.minute_partition.promotion.v1",
+            "trade_date": row["date"],
+            "partition_path": str(paths["part"]),
+            "sidecar_path": str(paths["sidecar"]),
+            "partition_sha256": tool.pilot.bind(paths["part"])["sha256"],
+            "sidecar_sha256": tool.pilot.bind(paths["sidecar"])["sha256"],
+            "rows": 482,
+            "symbols": 2,
+            "expected_bars_per_symbol": 241,
+        },
+    }
+    paths["canary"] = tmp_path / "canary.json"
+    paths["canary"].write_text(json.dumps(record))
+    manifest["resolutions"][row["date"]].update(
+        kind="legacy_canary_patch",
+        canary="canary",
+        raw="raw",
+        canary_partition="part",
+        canary_sidecar="sidecar",
+    )
+    return manifest, paths, record
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    [
+        "none",
+        "raw_hash",
+        "source_hash",
+        "target_hash",
+        "date",
+        "status",
+        "response",
+        "requests",
+        "cached",
+        "raw_value",
+    ],
+)
+def test_legacy_canary_requires_bound_acquisition_and_exact_native_patch(
+    evidence, tmp_path, corruption
+):
+    manifest, paths, record = legacy_canary(evidence, tmp_path)
+    if corruption == "raw_hash":
+        record["responses"][0]["raw_files"][str(paths["raw"])] = "0" * 64
+    elif corruption == "source_hash":
+        record["source_hashes"][str(paths["other"])] = "0" * 64
+    elif corruption == "target_hash":
+        record["validation"]["sidecar_sha256"] = "0" * 64
+    elif corruption == "date":
+        record["date"] = "20200103"
+    elif corruption == "status":
+        record["status"] = "failed"
+    elif corruption == "response":
+        record["responses"].append(record["responses"][0])
+    elif corruption == "requests":
+        record["repair_requests_used_after"] = 22
+    elif corruption == "cached":
+        record["cached_native_evidence"][0]["code"] = "000003.SZ"
+    elif corruption == "raw_value":
+        frame = pd.read_parquet(paths["raw"])
+        frame.loc[0, "amount"] = 999.0
+        frame.to_parquet(paths["raw"])
+        record["responses"][0]["raw_files"][str(paths["raw"])] = module().pilot.bind(paths["raw"])[
+            "sha256"
+        ]
+    paths["canary"].write_text(json.dumps(record))
+    if corruption == "none":
+        result = module().evaluate(manifest, paths)[0]
+        assert result["status"] == "passed_retrospective_independent_coverage"
+        assert result["candidate_resolution"]["added_rows"] == 241
+        assert result["candidate_resolution"]["original_rows_unchanged"] is True
+    else:
+        with pytest.raises(ValueError):
+            module().evaluate(manifest, paths)
+
+
+def test_legacy_canary_authenticates_retained_copy_via_original_target_inputs(evidence, tmp_path):
+    import shutil
+
+    manifest, paths, record = legacy_canary(evidence, tmp_path)
+    original = tmp_path / "original-canary"
+    original.mkdir()
+    for key, name in [
+        ("canary_part", "part-00000.parquet"),
+        ("canary_side", "_minute_mirror.json"),
+    ]:
+        paths[key] = original / name
+        shutil.copy2(paths["part" if key == "canary_part" else "sidecar"], paths[key])
+    record["candidate"] = str(original)
+    record["validation"].update(
+        partition_path=str(paths["canary_part"]), sidecar_path=str(paths["canary_side"])
+    )
+    paths["canary"].write_text(json.dumps(record))
+    manifest["resolutions"]["20200102"].update(
+        canary_partition="canary_part", canary_sidecar="canary_side"
+    )
+    assert (
+        module().evaluate(manifest, paths)[0]["status"]
+        == "passed_retrospective_independent_coverage"
+    )
+
+
+@pytest.mark.parametrize("field", ["ts_code", "trade_time"])
+def test_corroborated_subset_rejects_null_keys_before_grouping(evidence, tmp_path, field):
+    manifest, paths, _ = expanded_candidates(evidence, tmp_path, triple=True)
+    frame = pd.read_parquet(paths["part"])
+    frame.loc[frame.ts_code.eq("000002.SZ"), field] = None
+    frame.to_parquet(paths["part"])
+    frame.to_parquet(paths["third"])
+    with pytest.raises(ValueError, match="keys"):
+        module().candidates.corroborated_subset(
+            [paths[k] for k in ["part", "other", "third"]], manifest["dates"][0]["date"]
+        )
