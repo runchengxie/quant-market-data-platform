@@ -1,19 +1,14 @@
 """History phases must not turn scoped acceptance or missing evidence into publication."""
 
 import hashlib
-import json
 from datetime import UTC, datetime
 
 import pytest
+from test_minute_history_status import put
 
 from quant_market_data_platform.minute_history_status import history_status
 
 NOW = datetime(2026, 10, 21, 12, tzinfo=UTC)
-
-
-def put(path, value):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value))
 
 
 def observe(tmp_path):

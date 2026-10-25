@@ -18,10 +18,10 @@ def _clear_platform_path_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def history_disk_space(monkeypatch: pytest.MonkeyPatch) -> None:
+def history_disk_space(monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
     """State-machine fixtures must not inherit the host's free-disk budget."""
     from quant_market_data_platform import minute_history_status
 
-    monkeypatch.setattr(
-        minute_history_status.shutil, "disk_usage", lambda _: SimpleNamespace(free=10**15)
-    )
+    space = SimpleNamespace(free=10**15)
+    monkeypatch.setattr(minute_history_status.shutil, "disk_usage", lambda _: space)
+    return space

@@ -107,15 +107,9 @@ def test_live_progress_does_not_bypass_semantic_audit_block(tmp_path):
     assert result["state"] == "audit_blocked"
 
 
-def test_live_progress_still_observes_current_low_disk_space(tmp_path, monkeypatch):
-    from types import SimpleNamespace
-
-    from quant_market_data_platform import minute_history_status
-
+def test_live_progress_still_observes_current_low_disk_space(tmp_path, history_disk_space):
     root, runtime, _ = setup_activity(tmp_path)
-    monkeypatch.setattr(
-        minute_history_status.shutil, "disk_usage", lambda _: SimpleNamespace(free=0)
-    )
+    history_disk_space.free = 0
     with held_writer(root):
         result = history_status(root, runtime, now=NOW)
     assert result["state"] == "storage_wait"
