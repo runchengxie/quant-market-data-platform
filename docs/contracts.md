@@ -586,3 +586,33 @@ owner 验证所有分区内容及精确交易所 universe rule，消费者仍须
 只读脚本 `--status-only` 返回 `a_share.minute_operational_status.v1`：`status`、
 `target_date`、`date_max`、`last_run`、`last_failed_run`。`behind` 返回退出码75。
 当前资产、自然调度和消息投递结果分别记录。历史JSON损坏或路径逃逸会明确失败，不能隐藏证据。
+
+### 独立的人工字段裁决研究资产
+
+`statement_field_adjudication.build_field_adjudicated_asset` 接收 `source=(Path, sha256)`
+和 `ledger=(Path, sha256)`、显式 `selections` 与完整 `code_revision`。每个选择为
+`(dataset, symbol, report_period, disclosure_date, field)`，必须对应原部分研究资产中的
+冲突字段。证据值按精确 JSON 类型至少匹配一个原候选。构建结果使用独立的
+`statement-manual-field-research.v1`，保留原共识、冲突标记、全部候选及选定字段的证据，
+不会选择整行或更改旧资产。
+
+证据 ledger 是人工解释记录，而非自动认证：每项含精确事件键、`fields`、`source_file`、
+PDF `sha256`、`official_url`、正整数 `pdf_pages`、含时区的 `verified_at`、
+`source_acquisition` 取得时间和 `field_semantics`。须声明
+`original_period_current_column=true`、`historical_possession_certified=false`、
+`whole_row_selector_certified=false`。取得时间采用 `retrieved_at`、
+`download_completed_before`、`verified_at`、`observed_at` 中存在的时间最大值。
+文件路径、URL 和 hash 只能绑定输入字节，不能证明人工解释正确或官方认可。
+附带的其他字段不自动获得裁决权限，未知事件、字段或重复事件记录均拒绝。
+
+消费必须调用 `read_adjudicated_field`，同时提供完整产物 `expected_sha256`、
+`accept_manual_field_adjudication=True`、精确 `field_key` 及含时区的 `as_of`。
+每次读取重验原资产、ledger 和选定证据 PDF。缺失或字节不符即拒绝。
+只有选定字段返回 `available`，未裁决字段返回 `unadjudicated` 并阻止回退。
+原行仍保留冲突状态。空值保持为空，不能当成零。字段可用时刻取原 `usable_at`、
+证据核验及取得时间、实际构建 `created_at` 的最大值。此前返回
+`not_yet_available`，不暴露候选或证据值。构建 API 不接受回填创建时间。
+
+此资产始终为 `partial_reconstructed`，不认证历史持有、完整 PIT、全市场覆盖或整行
+selector。旧 `read_research_event` 不接受该新 schema。生产发布、current 和 seal
+均不使用此模块。
