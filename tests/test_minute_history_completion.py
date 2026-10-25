@@ -9,6 +9,8 @@ from test_minute_history_status import NOW, fixture, put
 
 from quant_market_data_platform import minute_history_status as monitor
 
+pytestmark = pytest.mark.usefixtures("history_disk_space")
+
 
 def completed(tmp_path, monkeypatch):
     root, runtime = fixture(tmp_path, quota_date="20261018")

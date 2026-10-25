@@ -11,6 +11,7 @@ import pytest
 from quant_market_data_platform.minute_history_status import history_status
 
 NOW = datetime(2026, 10, 21, 3, 35, tzinfo=UTC)
+pytestmark = pytest.mark.usefixtures("history_disk_space")
 
 
 def setup_activity(tmp_path, *, age=5, rows=241, day="20261021", consumer="reverse_backfill"):

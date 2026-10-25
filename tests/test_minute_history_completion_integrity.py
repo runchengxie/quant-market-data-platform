@@ -13,6 +13,7 @@ from quant_market_data_platform import _minute_history_inventory
 from quant_market_data_platform.minute_history_status import history_status, watch_history
 
 NOW = datetime(2026, 10, 23, 7, tzinfo=UTC)
+pytestmark = pytest.mark.usefixtures("history_disk_space")
 
 
 def put(path, payload):
