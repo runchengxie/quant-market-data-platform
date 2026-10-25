@@ -8,16 +8,13 @@ from datetime import UTC, datetime, timedelta
 import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
+from test_minute_history_status import put
 
 from quant_market_data_platform import _minute_history_inventory
 from quant_market_data_platform.minute_history_status import history_status, watch_history
 
 NOW = datetime(2026, 10, 23, 7, tzinfo=UTC)
-
-
-def put(path, payload):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload))
+pytestmark = pytest.mark.usefixtures("history_disk_space")
 
 
 @pytest.fixture
@@ -194,15 +191,9 @@ def test_completed_pass_keeps_semantic_quarantine_alert(completed, tmp_path, mon
     assert result["pipeline"]["coverage"]["full_market_ready"] is False
 
 
-def test_completed_pass_keeps_storage_protection(completed, monkeypatch):
-    from types import SimpleNamespace
-
-    from quant_market_data_platform import minute_history_status
-
+def test_completed_pass_keeps_storage_protection(completed, history_disk_space):
     root, runtime, _ = completed
-    monkeypatch.setattr(
-        minute_history_status.shutil, "disk_usage", lambda _: SimpleNamespace(free=0)
-    )
+    history_disk_space.free = 0
     assert history_status(root, runtime, now=NOW)["state"] == "storage_wait"
 
 
