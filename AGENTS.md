@@ -91,6 +91,21 @@ TuShare 凭证与自定义 API 地址的规则见 `docs/operations/credentials.m
 
 ## 测试和质量检查
 
+完整本地门禁与公开 CI 使用同一入口：
+
+```bash
+uv run --locked --extra dev bash scripts/dev/check_quality.sh
+```
+
+入口从脚本位置确定仓库，分批执行 fixture 测试，并运行格式、类型、架构、兼容、
+公开边界、现有维护性预算与依赖漏洞检查。安全检查需要访问公共漏洞服务。
+`TMPDIR` 必须位于源码仓库外且至少有 20 GiB 可用空间，这是离线布局集成测试的
+既有条件。入口创建独立临时子目录。成功后清理，失败时保留并打印位置。
+系统临时盘空间不足时，显式将 `TMPDIR` 指向项目数据目录下的任务专属临时根目录。
+不要为测试更改生产磁盘阈值。
+
+以下命令用于单项诊断，不替代完整门禁：
+
 ```bash
 uv run --extra dev python scripts/dev/run_pytest_isolated.py -- -q
 uv run --extra dev python -m ruff check .

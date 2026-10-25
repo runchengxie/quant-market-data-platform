@@ -26,6 +26,18 @@ uv sync --extra dev --extra duckdb
 
 ## Local development checks
 
+Local development and public CI use the same complete gate:
+
+```bash
+uv sync --locked --extra dev
+uv run --locked --extra dev bash scripts/dev/check_quality.sh
+```
+
+Set `TMPDIR` to an external temporary root with at least 20 GiB available. The gate
+creates its own subdirectory, removes it on success, and retains it on failure.
+Dependency auditing requires public network access. The individual commands below
+are diagnostic tools, and their governance budgets are included in the full gate.
+
 ```bash
 uv sync --extra dev
 uv run --extra dev python scripts/dev/run_pytest_isolated.py -- -q
