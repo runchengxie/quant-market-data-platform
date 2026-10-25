@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 593,
-    "python_lines": 138582,
+    "python_lines": 138609,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "c3234f3b86eb1f356a92d4b0db1296b49140cf9e",
-    "reason": "Authenticate newly acquired multi-symbol minute deltas with independent immutable quota SQLite snapshots, explicit bounded retrospective prefix linkage, conservative uncertain accounting, raw-response hashes, exact typed union and negative formal-consumer regressions: exactly three Python files and 821 net Python lines against the actual merged source tree. Use exact combined totals after the shared fixture update. No structural, complexity, exclusion or reserved-headroom allowance increases.",
-    "exit_condition": "Remove this exact three-file/821-line allowance when acquired-delta adjudication is retired or consolidated with equivalent independent quota archive, truthful original-prefix linkage, per-response semantics, exact typed union and complete consumer rejection coverage. Preserve all prior retirement conditions."
+    "source_revision": "0327f23bbe17ca8b0fe6565157189f746aca6c12",
+    "reason": "Reject ambiguous context PIT revision/reconstruction flags before boolean conversion and prove the public as-of selector rejects strings, missing values and non-binary numbers while preserving boolean and numeric 0/1 semantics: exactly two existing Python files and 27 net Python lines. No Python file-count, structural, complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
+    "exit_condition": "Remove this exact 27-line allowance when boolean-flag validation and public PIT regression cases are consolidated or retired with equivalent fail-closed revision-certification semantics. Preserve all prior retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "c3234f3b86eb1f356a92d4b0db1296b49140cf9e",
+      "reason": "Authenticate newly acquired multi-symbol minute deltas with independent immutable quota SQLite snapshots, explicit bounded retrospective prefix linkage, conservative uncertain accounting, raw-response hashes, exact typed union and negative formal-consumer regressions: exactly three Python files and 821 net Python lines against the actual merged source tree. Use exact combined totals after the shared fixture update. No structural, complexity, exclusion or reserved-headroom allowance increases.",
+      "exit_condition": "Remove this exact three-file/821-line allowance when acquired-delta adjudication is retired or consolidated with equivalent independent quota archive, truthful original-prefix linkage, per-response semantics, exact typed union and complete consumer rejection coverage. Preserve all prior retirement conditions."
+    },
     {
       "source_revision": "141ceeb811d160f00f131a27f588be4011042288",
       "reason": "Add independent opt-in manual conflict-field research builder and reader with exact source/ledger/PDF hashes, unchanged candidates, field-only permissions, conservative availability and negative regressions: exactly two Python files and 462 Python lines. No complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
