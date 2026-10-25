@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 590,
-    "python_lines": 137763,
+    "python_files": 593,
+    "python_lines": 138582,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "141ceeb811d160f00f131a27f588be4011042288",
-    "reason": "Add independent opt-in manual conflict-field research builder and reader with exact source/ledger/PDF hashes, unchanged candidates, field-only permissions, conservative availability and negative regressions: exactly two Python files and 462 Python lines. No complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
-    "exit_condition": "Remove this exact two-file/462-line allowance when manual field adjudication is retired or consolidated with equivalent byte binding, explicit field-only scope, candidate preservation, timestamp and fail-closed evidence regressions. Preserve all previous retirement conditions."
+    "source_revision": "c3234f3b86eb1f356a92d4b0db1296b49140cf9e",
+    "reason": "Authenticate newly acquired multi-symbol minute deltas with independent immutable quota SQLite snapshots, explicit bounded retrospective prefix linkage, conservative uncertain accounting, raw-response hashes, exact typed union and negative formal-consumer regressions: exactly three Python files and 821 net Python lines against the actual merged source tree. Use exact combined totals after the shared fixture update. No structural, complexity, exclusion or reserved-headroom allowance increases.",
+    "exit_condition": "Remove this exact three-file/821-line allowance when acquired-delta adjudication is retired or consolidated with equivalent independent quota archive, truthful original-prefix linkage, per-response semantics, exact typed union and complete consumer rejection coverage. Preserve all prior retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "141ceeb811d160f00f131a27f588be4011042288",
+      "reason": "Add independent opt-in manual conflict-field research builder and reader with exact source/ledger/PDF hashes, unchanged candidates, field-only permissions, conservative availability and negative regressions: exactly two Python files and 462 Python lines. No complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
+      "exit_condition": "Remove this exact two-file/462-line allowance when manual field adjudication is retired or consolidated with equivalent byte binding, explicit field-only scope, candidate preservation, timestamp and fail-closed evidence regressions. Preserve all previous retirement conditions."
+    },
     {
       "source_revision": "ebe99d3352852496719e1b4afe85d613433a3947",
       "reason": "Authenticate retained legacy canary acquisition, original and retained target identity, and two complete matching minute candidates plus one exact native subset with falsified-lineage, null-key, hash, value and independent-reference regressions: exactly one Python file and 423 net Python lines. No complexity, oversized-file/function, exclusion, long-line or reserved-headroom allowance increases.",

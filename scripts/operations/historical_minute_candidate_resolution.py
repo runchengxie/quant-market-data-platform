@@ -9,6 +9,7 @@ from typing import Any
 import pandas as pd
 import pyarrow.parquet as pq
 
+from scripts.operations import historical_minute_acquired_delta as acquired
 from scripts.operations import historical_minute_coverage_pilot as pilot
 from scripts.operations import historical_minute_legacy_canary as legacy
 
@@ -66,6 +67,20 @@ def resolve(
             "raw": pilot.bind(paths[resolution["raw"]]),
             "canary": pilot.bind(paths[resolution["canary"]]),
             "original_rows_unchanged": True,
+        }
+    elif kind == "acquired_native_delta":
+        if count != 2:
+            raise ValueError("Acquired delta requires exactly two candidates")
+        selected, old, patch = acquired.authenticate(row, resolution, paths)
+        exact_union(selected, old, patch)
+        details = {
+            "added_rows": len(patch),
+            "added_symbols": sorted(set(patch.ts_code)),
+            "acquisition": pilot.bind(paths[resolution["acquisition"]]),
+            "quota_binding": pilot.bind(paths[resolution["quota_binding"]]),
+            "original_rows_unchanged": True,
+            "original_producer_revision": "unknown",
+            "acquisition_scope": "new corroboration; not original historical acquisition",
         }
     elif kind == "corroborated_exact_subset":
         details = corroborated_subset(parts, row["date"])
