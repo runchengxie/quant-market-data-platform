@@ -3,6 +3,8 @@ from __future__ import annotations
 import collections
 import pathlib
 import shutil
+import traceback
+from contextlib import contextmanager
 from typing import Any, cast
 
 import pyarrow as pa
@@ -28,42 +30,67 @@ def append_input(item, args, job, sinks, work):
         raise ValueError("Integrity check failed")
     if not sha_file(p) == item["sha256"]:
         raise ValueError("Input hash differs: " + str(p))
-    pf = pq.ParquetFile(p, page_checksum_verification=True)
-    if not pf.metadata.num_rows == item["rows"]:
-        raise ValueError("Integrity check failed")
-    selected = 0
-    for rg in range(pf.num_row_groups):
-        mask = None
-        if args.symbols:
-            ticks = pf.read_row_group(rg, columns=["Ticker"])["Ticker"]
-            mask = pc.is_in(ticks, value_set=pa.array(args.symbols))
-            if not pc.any(mask).as_py():
-                continue
-        t = pf.read_row_group(rg)
-        if mask is not None:
-            t = t.filter(mask)
-        if not pc.all(pc.equal(t["Date"], item["date"])).as_py():
+    with pq.ParquetFile(p, page_checksum_verification=True) as pf:
+        if not pf.metadata.num_rows == item["rows"]:
             raise ValueError("Integrity check failed")
-        t = add_identity(t)
-        selected += t.num_rows
-        month_rows += t.num_rows
-        month_volume += volume(t)
-        unique = pc.unique(t["Ticker"])
-        which = pc.index_in(t["Ticker"], value_set=unique)
-        lookup = pa.array(
-            [bucket_for(x, args.buckets) for x in unique.to_pylist()], type=pa.int32()
-        )
-        buckets = pc.take(lookup, which)
-        for b in pc.unique(buckets).to_pylist():
-            indexes = pc.indices_nonzero(pc.equal(buckets, b))
-            piece = t.take(indexes)
-            if b not in sinks:
-                sinks[b] = Sink(work / f"bucket-{b:03}.parquet", t.schema, args.stage_rows, 1)
-            sinks[b].append(piece)
-        job.update(active_source=item["file"], active_month_rows=month_rows)
-    pf.close()
+        selected = 0
+        for rg in range(pf.num_row_groups):
+            mask = None
+            if args.symbols:
+                ticks = pf.read_row_group(rg, columns=["Ticker"])["Ticker"]
+                mask = pc.is_in(ticks, value_set=pa.array(args.symbols))
+                if not pc.any(mask).as_py():
+                    continue
+            t = pf.read_row_group(rg)
+            if mask is not None:
+                t = t.filter(mask)
+            if not pc.all(pc.equal(t["Date"], item["date"])).as_py():
+                raise ValueError("Integrity check failed")
+            t = add_identity(t)
+            selected += t.num_rows
+            month_rows += t.num_rows
+            month_volume += volume(t)
+            unique = pc.unique(t["Ticker"])
+            which = pc.index_in(t["Ticker"], value_set=unique)
+            lookup = pa.array(
+                [bucket_for(x, args.buckets) for x in unique.to_pylist()], type=pa.int32()
+            )
+            buckets = pc.take(lookup, which)
+            for b in pc.unique(buckets).to_pylist():
+                indexes = pc.indices_nonzero(pc.equal(buckets, b))
+                piece = t.take(indexes)
+                if b not in sinks:
+                    sinks[b] = Sink(work / f"bucket-{b:03}.parquet", t.schema, args.stage_rows, 1)
+                sinks[b].append(piece)
+            job.update(active_source=item["file"], active_month_rows=month_rows)
     checked.append({"file": item["file"], "sha256": item["sha256"], "selected_rows": selected})
     return (month_rows, month_volume, checked[0])
+
+
+@contextmanager
+def _staging_sinks():
+    """Own every bucket writer, including buckets opened before a failed input."""
+    sinks = {}
+    error = None
+    try:
+        yield sinks
+    except BaseException as exc:
+        error = exc
+        raise
+    finally:
+        failures = []
+        for sink in sinks.values():
+            try:
+                sink.close()
+            except BaseException as cleanup_error:
+                failures.append(cleanup_error)
+        if failures:
+            primary = error if error is not None else failures.pop(0)
+            for cleanup_error in failures:
+                detail = "".join(traceback.format_exception_only(cleanup_error)).strip()
+                primary.add_note(f"Staging writer cleanup failed: {detail}")
+            if error is None:
+                raise primary
 
 
 def build_month(month, parts, args, job, totals):
@@ -77,7 +104,6 @@ def build_month(month, parts, args, job, totals):
     recover(work, out, "stage-work-" + month)
     recover(finaldir, out, "stage-publish-" + month)
     work.mkdir(parents=True)
-    sinks = {}
     month_rows = 0
     month_volume = 0
     checked = []
@@ -90,13 +116,12 @@ def build_month(month, parts, args, job, totals):
         active_month_rows=0,
         expected_rows=expected,
     )
-    for item in parts:
-        count, amount, proof = append_input(item, args, job, sinks, work)
-        month_rows += count
-        month_volume += amount
-        checked.append(proof)
-    for sink in sinks.values():
-        sink.close()
+    with _staging_sinks() as sinks:
+        for item in parts:
+            count, amount, proof = append_input(item, args, job, sinks, work)
+            month_rows += count
+            month_volume += amount
+            checked.append(proof)
     verified = []
     for b, sink in sorted(sinks.items()):
         job.update(phase="stage_readback", active_bucket=b)
