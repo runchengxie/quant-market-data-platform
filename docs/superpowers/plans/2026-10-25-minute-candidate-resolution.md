@@ -13,3 +13,5 @@
 - [ ] Verify owner destination and remote state, push PR for root review; retain worktree until merged.
 
 Review focus: no trusted passed flags alone; no hidden fourth candidate; dtype/value/key drift; no reference exemptions; immutable original evidence and fresh auditor identity.
+
+The shared CI ratchet requires the exact new one-file/423-line allowance. Only file and line budgets change, with the retirement condition recorded in the baseline. All structural budgets remain fixed.

@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 587,
-    "python_lines": 136878,
+    "python_files": 588,
+    "python_lines": 137301,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,9 +18,9 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "686d062",
-    "reason": "Add the approved standalone direct lossless delta/ZSTD12 repacker and synthetic regression coverage: exactly three Python files and 509 lines. Includes atomic data/proof publication, source inventory/hash binding, OS locking, decoded-memory bounds, failed-status invalidation and interruption recovery. All complexity, oversized-file/function and exclusion budgets remain unchanged.",
-    "exit_condition": "Remove this exact three-file/509-line allowance when direct repacking is retired or consolidated with equivalent all-field preservation, bounded memory, safe resume, ownership and corruption coverage. Preserve earlier retirement conditions."
+    "source_revision": "ebe99d3352852496719e1b4afe85d613433a3947",
+    "reason": "Authenticate retained legacy canary acquisition, original and retained target identity, and two complete matching minute candidates plus one exact native subset with falsified-lineage, null-key, hash, value and independent-reference regressions: exactly one Python file and 423 net Python lines. No complexity, oversized-file/function, exclusion, long-line or reserved-headroom allowance increases.",
+    "exit_condition": "Remove this exact one-file/423-line allowance when these offline resolutions are retired or consolidated with equivalent complete candidate preservation, acquisition and target hash/path binding, exact typed union/subset comparison, native semantics and independent-reference regression coverage. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
     {
@@ -172,6 +172,11 @@
       "source_revision": "0f5f165",
       "reason": "Port the existing external offline US equity lossless converter into nine focused implementation modules and two synthetic regression test modules: exactly eleven files and 1292 Python lines. Includes completed-summary/manifest reconciliation, explicit selection validation, failed-resume status and partial publication recovery tests. No complexity, oversized-function/file, exclusion or long-line budgets increased. No data, credentials or current-asset registration added.",
       "exit_condition": "Remove this exact eleven-file/1292-line allowance when the optional offline converter is retired or consolidated with equivalent case-sensitive encoding, all-field readback, safe resume/publication, source-completeness and explicit-selection regression coverage. Preserve previous retirement conditions."
+    },
+    {
+      "source_revision": "686d062",
+      "reason": "Add the approved standalone direct lossless delta/ZSTD12 repacker and synthetic regression coverage: exactly three Python files and 509 lines. Includes atomic data/proof publication, source inventory/hash binding, OS locking, decoded-memory bounds, failed-status invalidation and interruption recovery. All complexity, oversized-file/function and exclusion budgets remain unchanged.",
+      "exit_condition": "Remove this exact three-file/509-line allowance when direct repacking is retired or consolidated with equivalent all-field preservation, bounded memory, safe resume, ownership and corruption coverage. Preserve earlier retirement conditions."
     }
   ]
 }
