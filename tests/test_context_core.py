@@ -151,3 +151,28 @@ def test_context_freshness_uses_latest_series_state_without_dropping_history():
     assert len(panel.frame.loc[panel.frame["series_id"] == "rates.shibor_3m"]) == 2
     assert panel.audit["freshness_verified"] is True
     assert panel.audit["series_stale"] == []
+
+
+@pytest.mark.parametrize("column", ["revision_covered", "reconstructed"])
+@pytest.mark.parametrize("value", ["False", "True", "0", "1", "", None, float("nan"), pd.NA, -1, 2])
+def test_context_pit_rejects_invalid_boolean_flags(column, value):
+    frame = _observations().iloc[[0]].copy()
+    frame[column] = value
+    with pytest.raises(ValueError, match="boolean flags"):
+        select_context_as_of(frame, as_of="2026-01-15", require_revision_covered=True)
+
+
+@pytest.mark.parametrize("covered,reconstructed", [(True, False), (1, 0), (1.0, 0.0)])
+def test_context_pit_preserves_boolean_and_binary_flag_semantics(covered, reconstructed):
+    frame = _observations().iloc[[0]].copy()
+    frame["revision_covered"], frame["reconstructed"] = covered, reconstructed
+    panel = select_context_as_of(frame, as_of="2026-01-15", require_revision_covered=True)
+    assert panel.audit["revision_covered"] is True
+    assert panel.audit["reconstructed_series"] == []
+    frame["revision_covered"] = 0
+    with pytest.raises(ValueError, match="not revision-covered"):
+        select_context_as_of(frame, as_of="2026-01-15", require_revision_covered=True)
+    frame["reconstructed"] = 1
+    panel = select_context_as_of(frame, as_of="2026-01-15")
+    assert panel.audit["revision_covered"] is False
+    assert panel.audit["reconstructed_series"] == ["rates.shibor_3m"]

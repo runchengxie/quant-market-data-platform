@@ -5,6 +5,7 @@ import json
 import pathlib
 import struct
 import time
+import traceback
 from typing import Any, cast
 
 import pyarrow as pa
@@ -156,29 +157,40 @@ class Sink:
         self.buffered = 0
 
     def close(self):
-        self.flush()
-        if self.writer:
-            self.writer.close()
+        error = None
+        try:
+            self.flush()
+        except BaseException as exc:
+            error = exc
+            raise
+        finally:
+            if self.writer:
+                try:
+                    self.writer.close()
+                except BaseException as cleanup_error:
+                    if error is None:
+                        raise
+                    detail = "".join(traceback.format_exception_only(cleanup_error)).strip()
+                    error.add_note(f"Parquet writer cleanup failed: {detail}")
 
     def verify(self):
-        pf = pq.ParquetFile(self.path, page_checksum_verification=True)
-        if not pf.schema_arrow.equals(self.schema, check_metadata=False):
-            raise ValueError("Integrity check failed")
-        if not pf.num_row_groups == len(self.proofs):
-            raise ValueError("Integrity check failed")
-        last = None
-        for i, proof in enumerate(self.proofs):
-            t = pf.read_row_group(i)
-            if not (t.num_rows == proof["rows"] and fingerprint(t) == proof["sha256"]):
-                raise ValueError(str(self.path))
-            if self.ordered:
-                last = check_order(t, last)
-            if not all(
-                pf.metadata.row_group(i).column(j).compression == "ZSTD"
-                for j in range(pf.metadata.num_columns)
-            ):
+        with pq.ParquetFile(self.path, page_checksum_verification=True) as pf:
+            if not pf.schema_arrow.equals(self.schema, check_metadata=False):
                 raise ValueError("Integrity check failed")
-        pf.close()
+            if not pf.num_row_groups == len(self.proofs):
+                raise ValueError("Integrity check failed")
+            last = None
+            for i, proof in enumerate(self.proofs):
+                t = pf.read_row_group(i)
+                if not (t.num_rows == proof["rows"] and fingerprint(t) == proof["sha256"]):
+                    raise ValueError(str(self.path))
+                if self.ordered:
+                    last = check_order(t, last)
+                if not all(
+                    pf.metadata.row_group(i).column(j).compression == "ZSTD"
+                    for j in range(pf.metadata.num_columns)
+                ):
+                    raise ValueError("Integrity check failed")
         return {
             "rows": self.rows,
             "volume": self.volume,
