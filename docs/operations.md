@@ -639,3 +639,11 @@ marketdata tushare build-a-share-fundamentals-pit \
 历史分钟离线候选裁决支持旧 canary 采集链路认证及两份完整一致候选加一份严格子集，
 输入和限制见[独立覆盖凭证](operations/historical-minute-coverage-receipts.md)。所有候选保留，
 独立参考和正式发布门禁继续生效。
+
+## L2 试点输出安全
+
+`marketdata quality pilot --file <raw.parquet> --output-dir <task-output>`
+
+试点会在创建目录或写入前检查全部输入 Parquet 与输出计划。不同输入不能映射到同一个 canonical 或 labels 文件。同一输入的重复路径或硬链接别名、已存在的目标文件（包括符号链接或硬链接）和符号链接输出子目录都会被拒绝。已有输出目录可以保留，但本次计划的目标文件及 manifest 必须全部不存在。写文件使用独占创建，不能覆盖后来出现的目标。
+
+输入必须在运行期间保持稳定。发生后续 I/O 错误时可能留下部分派生文件，需保留现场。当前流程不提供原子发布或自动续跑。检查现场后选用新的输出目录，不要删除或覆盖原始输入。
