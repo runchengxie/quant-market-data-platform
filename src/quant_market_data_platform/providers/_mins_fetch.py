@@ -186,6 +186,7 @@ def _build_day_progress(  # noqa: PLR0913
         exclusions = load_provider_no_data_exclusions(
             options.provider_no_data_exceptions_path,
             trade_date=trade_date,
+            expected_source=("tushare", "stk_mins"),
         )
         if exclusions.codes:
             expected_symbols.difference_update(exclusions.codes)
