@@ -46,7 +46,7 @@
 - `marketdata data build-guan-annual-minutes`
 - `marketdata data build-guan-deal-minutes`
 - `marketdata data finalize-a-share-minute-coverage`
-- `marketdata data mirror-public-etf-minute`
+- `marketdata data mirror-public-etf-minute`：版本目录与只读预演约束见 [ETF 分钟数据](operations/etf-minutes.md)。
 - `marketdata tushare backfill-etf-history`
 - `marketdata tushare build-etf-daily-forward-adjusted`
 - `marketdata tushare validate-etf-daily-pair`
