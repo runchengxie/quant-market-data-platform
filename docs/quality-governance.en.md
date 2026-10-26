@@ -35,6 +35,10 @@ marketdata quality pilot \
 
 The pilot does not delete or rewrite inputs. `canonical/` contains rows currently safe for a downstream sample; `labels/` contains only `tag` and `exclude` rows with a source row number. Install the optional dependency with `uv sync --extra quality`. Model-input, label, leakage, alpha, and portfolio checks remain in downstream research projects.
 
+Before creating directories or writing, the pilot checks every input Parquet footer and the complete output plan. Inputs must not collide on canonical or labels filenames. Repeated source identities, existing output files (including symlinks or hardlinks), and symlinked output subdirectories are rejected. An existing output directory is allowed only when every planned leaf and manifest is new. Exclusive file creation also refuses a destination that appears after preflight.
+
+Keep inputs stable while the pilot runs. Later I/O failures may leave partial derived files; this is not atomic publication or automatic resume. Inspect that output and select a fresh directory instead of deleting or replacing raw inputs.
+
 Duplicate identities in raw L2 files are scoped by the resolved security and ID columns when a security column is available. For example, `SecuCode=000001, OrderID=7` and `SecuCode=000002, OrderID=7` are distinct. The report records this in `id_scope_columns`.
 
 When order and trade files are both available, check trade references separately:

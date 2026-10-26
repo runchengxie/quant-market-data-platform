@@ -176,3 +176,130 @@ def test_context_pit_preserves_boolean_and_binary_flag_semantics(covered, recons
     panel = select_context_as_of(frame, as_of="2026-01-15")
     assert panel.audit["revision_covered"] is False
     assert panel.audit["reconstructed_series"] == ["rates.shibor_3m"]
+
+
+@pytest.mark.parametrize("column", ["series_id", "vintage_id"])
+@pytest.mark.parametrize("value", [None, pd.NA, float("nan"), "", " \t "])
+def test_context_pit_rejects_missing_identity(column, value):
+    frame = _observations().iloc[[0]].copy()
+    frame[column] = value
+    with pytest.raises(ValueError, match="series_id.*vintage_id"):
+        select_context_as_of(frame, as_of="2026-01-15", require_revision_covered=True)
+
+
+@pytest.mark.parametrize("value", [None, pd.NA, float("nan"), "", " \t "])
+def test_context_catalog_rejects_missing_series_identity(value):
+    from quant_market_data_platform.context.models import (
+        CATALOG_REQUIRED_COLUMNS,
+        normalize_context_catalog,
+    )
+
+    row: dict[str, object] = dict.fromkeys(CATALOG_REQUIRED_COLUMNS, "example")
+    row.update(series_id=value, max_staleness=10)
+    with pytest.raises(ValueError, match="series_id"):
+        normalize_context_catalog(pd.DataFrame([row]))
+
+
+@pytest.mark.parametrize(
+    "value", [0.5, "0.5", None, pd.NA, float("nan"), float("inf"), -float("inf"), -1]
+)
+def test_context_pit_rejects_invalid_revision_numbers(value):
+    frame = _observations().iloc[[0]].copy()
+    frame["revision_number"] = value
+    with pytest.raises(ValueError, match="revision_number"):
+        select_context_as_of(frame, as_of="2026-01-15", require_revision_covered=True)
+
+
+@pytest.mark.parametrize("value", [0, "0", 0.0, "0.0", 1, "1", "1.0", "1e0"])
+def test_context_pit_preserves_integer_revision_representations(value):
+    frame = _observations().iloc[[0]].copy()
+    frame["revision_number"] = value
+    frame["series_id"], frame["vintage_id"] = " rates.shibor_3m ", " v1 "
+    panel = select_context_as_of(frame, as_of="2026-01-15", require_revision_covered=True)
+    assert panel.audit["revision_covered"] is True
+    assert panel.frame.iloc[0]["revision_number"] == float(value)
+    assert dict(panel.audit["selected_vintages"]) == {
+        "rates.shibor_3m|2026-01-01T00:00:00+00:00": "v1"
+    }
+
+
+def test_context_pit_orders_numeric_revisions_instead_of_numeric_text():
+    frame = pd.concat([_observations().iloc[[0]]] * 2, ignore_index=True)
+    frame["revision_number"], frame["vintage_id"], frame["value"] = (
+        ["10", "2"],
+        ["v10", "v2"],
+        [1.7, 1.6],
+    )
+    panel = select_context_as_of(frame, as_of="2026-01-15", require_revision_covered=True)
+    assert panel.frame.iloc[0]["value"] == pytest.approx(1.7)
+    assert panel.frame.iloc[0]["vintage_id"] == "v10"
+
+
+@pytest.mark.parametrize(
+    "value",
+    [float("inf"), -float("inf"), "inf", "-inf", "Infinity", "-Infinity", "+Infinity", " INF "],
+)
+def test_context_pit_rejects_infinite_observation_values(value):
+    frame = _observations().iloc[[0]].copy()
+    frame["value"] = value
+    with pytest.raises(ValueError, match="infinite"):
+        select_context_as_of(frame, as_of="2026-01-15", require_revision_covered=True)
+
+
+@pytest.mark.parametrize("value", [None, float("nan"), -1.5, 0, "-1.5", "0", "3.2", "unknown"])
+def test_context_pit_preserves_other_observation_value_semantics(value):
+    frame = _observations().iloc[[0]].copy()
+    frame["value"] = value
+    panel = select_context_as_of(frame, as_of="2026-01-15", require_revision_covered=True)
+    pd.testing.assert_series_equal(panel.frame["value"], frame["value"])
+
+
+@pytest.mark.parametrize("provider", ["tushare", "nbs"])
+@pytest.mark.parametrize("value", ["Infinity", "-Infinity"])
+def test_context_providers_reject_infinite_numeric_payload(provider, value):
+    import json
+
+    from quant_market_data_platform.context.source_payload import SourcePayload
+    from quant_market_data_platform.providers.nbs_context import parse_nbs_context
+    from quant_market_data_platform.providers.tushare_context import normalize_tushare_context
+
+    with pytest.raises(ValueError, match="infinite"):
+        if provider == "tushare":
+            normalize_tushare_context(
+                "shibor",
+                pd.DataFrame([{"date": "20260828", "on": value}]),
+                retrieved_at=datetime(2026, 8, 28, 4, tzinfo=UTC),
+                source_hash="a" * 64,
+            )
+        else:
+            envelope = {
+                "resolved": {
+                    "show_name": "规模以上工业增加值同比增长速度",
+                    "indic_id": "indicator",
+                },
+                "data_response": {
+                    "data": [
+                        {
+                            "code": "202607MM",
+                            "values": [
+                                {
+                                    "i_showname": "规模以上工业增加值同比增长速度",
+                                    "_id": "indicator",
+                                    "value": value,
+                                }
+                            ],
+                        }
+                    ]
+                },
+            }
+            parse_nbs_context(
+                SourcePayload(
+                    provider="nbs",
+                    dataset="industrial_value_added_yoy",
+                    source_locator="fixture://nbs",
+                    retrieved_at=datetime(2026, 8, 20, 4, tzinfo=UTC),
+                    content_type="application/json",
+                    body=json.dumps(envelope).encode(),
+                    metadata={},
+                )
+            )
