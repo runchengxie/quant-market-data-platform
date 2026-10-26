@@ -53,7 +53,9 @@ The default output is:
 $DATA_PLATFORM_ROOT/assets/derived/a_share/etf_minute_<period>m/<version>/
 ```
 
-Use `--out-dir` to select an explicit version directory. `--dry-run` parses options and pending dates without network access. `--no-skip` rewrites existing trading-day partitions.
+`--version` must be one non-empty directory name, excluding `.` and `..` or paths containing separators. Valid names are preserved as supplied. In the default layout, the version directory and its parents must not be symbolic links, so partitions and version receipts cannot be redirected into a parent or another version.
+
+Use `--out-dir` to select an explicit version directory; it continues to resolve as an explicit output path outside the default layout. `--dry-run` parses options and pending dates without creating directories, writing files, or accessing the network. Existing partitions are skipped by default; `--no-skip` rewrites them.
 
 ## Output contract
 
