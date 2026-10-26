@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 594,
-    "python_lines": 138850,
+    "python_lines": 138905,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "c2a97c8b25ee6dde65635ad6c980bd7c89e3ff3f",
-    "reason": "Reject ambiguous context PIT revision/reconstruction flags before boolean conversion and prove the public as-of selector rejects strings, missing values and non-binary numbers while preserving boolean and numeric 0/1 semantics: exactly two existing Python files and 27 net Python lines. No Python file-count, structural, complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
-    "exit_condition": "Remove this exact 27-line allowance when boolean-flag validation and public PIT regression cases are consolidated or retired with equivalent fail-closed revision-certification semantics. Preserve all prior retirement conditions."
+    "source_revision": "1a04870ada9cdbddf818117811be618ea73ecbd5",
+    "reason": "Enforce the existing unique nonempty string-list primary-key contract at public validation/writing boundaries, preserve legitimate names/order/optional empty keys, and prove rejected malformed inputs do not create or replace artifacts: exactly two existing Python files and 55 net Python lines. No structural, complexity, exclusion, security or reserved-headroom allowances increase.",
+    "exit_condition": "Remove this exact 55-line scope allowance if dataset key validation/writing is retired or consolidated with equivalent strict type, valid roundtrip and failed-write side-effect regressions. Preserve all prior retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "c2a97c8b25ee6dde65635ad6c980bd7c89e3ff3f",
+      "reason": "Reject ambiguous context PIT revision/reconstruction flags before boolean conversion and prove the public as-of selector rejects strings, missing values and non-binary numbers while preserving boolean and numeric 0/1 semantics: exactly two existing Python files and 27 net Python lines. No Python file-count, structural, complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
+      "exit_condition": "Remove this exact 27-line allowance when boolean-flag validation and public PIT regression cases are consolidated or retired with equivalent fail-closed revision-certification semantics. Preserve all prior retirement conditions."
+    },
     {
       "source_revision": "0327f23bbe17ca8b0fe6565157189f746aca6c12",
       "reason": "Close real offline Parquet readers and all staging writers on integrity, progress, flush and cleanup failures; preserve the original error with cleanup diagnostics and leave failed month artifacts unpublished for recovery. Record exactly 1 new Python regression file and 241 net Python lines, including nine real-file lifecycle cases. No structural, complexity, exclusion, coverage, security or reserved-headroom allowance increases. The pre-existing isolated C901 budget remains 9 and still fails at 26.",

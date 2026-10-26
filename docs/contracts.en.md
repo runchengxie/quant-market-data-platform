@@ -19,6 +19,10 @@ actual partitions and gaps. The default full-market `load_current` is unchanged.
 > - source_of_truth: yes
 > - superseded_by: n/a
 
+## Dataset semantic contracts
+
+`market_data_platform.dataset_contract.v1` uses a list of unique, nonempty strings for `primary_key`; omission and an empty list are allowed. Column types, names and order are not coerced. Public validation and writing APIs reject non-string members before replacing an existing contract. See [L2 ingestion gates](l2-ingestion-gate.en.md) for the full semantics.
+
 ## Artifact root
 
 The shared artifact root defines the storage boundary between data tooling and strategy repositories. Configure it with:
