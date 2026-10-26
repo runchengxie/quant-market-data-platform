@@ -40,14 +40,21 @@ def load_provider_no_data_exclusions(
     path: str | Path,
     *,
     trade_date: str,
+    expected_source: tuple[str, str] | None = None,
 ) -> ProviderNoDataExclusions:
     """Load exclusions only when explicitly enabled for acquisition.
 
     This policy can reduce the acquisition request universe for a known provider
-    omission. It never enables synthetic bars or canonical/promotion readiness.
+    omission. Callers can bind the provider/dataset pair with expected_source.
+    It never enables synthetic bars or canonical/promotion readiness.
     """
     policy_path = Path(path).expanduser().resolve()
     payload = _read(policy_path)
+    if (
+        expected_source is not None
+        and (payload.get("provider"), payload.get("dataset")) != expected_source
+    ):
+        raise ProviderNoDataExceptionError("Provider no-data policy source identity mismatch")
     policy = payload.get("policy")
     exceptions = payload.get("exceptions")
     if not isinstance(policy, dict) or not isinstance(exceptions, list):

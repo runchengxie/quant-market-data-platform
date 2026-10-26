@@ -9,6 +9,10 @@
 > source_of_truth: yes
 > superseded_by: n/a
 
+## 数据集语义契约
+
+`market_data_platform.dataset_contract.v1` 的 `primary_key` 使用互不重复的非空字符串列表，允许省略或为空列表。不转换列名的类型、内容或顺序。公开校验和写入 API 拒绝非字符串成员。无效输入不会替换已有契约。完整语义见 [L2 数据接入门禁](l2-ingestion-gate.md)。
+
 ## 数据产物根目录
 
 沪深历史分钟资产可通过独立契约

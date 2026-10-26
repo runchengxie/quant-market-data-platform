@@ -319,3 +319,11 @@ An optional standalone module mirrors audited by-day Parquet into by-security ZS
 Use `python -m quant_market_data_platform.offline_equities.repack --source <mirror> --output <new-version>`
 to create a separate lossless delta/ZSTD12 candidate from a completed security mirror.
 See the [offline guide](offline-equities.en.md#recompress-a-completed-mirror) for verification and resume.
+
+## L2 pilot output safety
+
+`marketdata quality pilot --file <raw.parquet> --output-dir <task-output>`
+
+Before creating directories or writing, the pilot checks every input Parquet footer and the complete output plan. Inputs must not collide on canonical or labels filenames. Repeated source identities, existing output files (including symlinks or hardlinks), and symlinked output subdirectories are rejected. An existing output directory is allowed only when every planned leaf and manifest is new. Exclusive file creation also refuses a destination that appears after preflight.
+
+Keep inputs stable while the pilot runs. Later I/O failures may leave partial derived files; this is not atomic publication or automatic resume. Inspect that output and select a fresh directory instead of deleting or replacing raw inputs.

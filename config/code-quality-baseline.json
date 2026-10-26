@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 594,
-    "python_lines": 138850,
+    "python_lines": 139500,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,36 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "c2a97c8b25ee6dde65635ad6c980bd7c89e3ff3f",
-    "reason": "Reject ambiguous context PIT revision/reconstruction flags before boolean conversion and prove the public as-of selector rejects strings, missing values and non-binary numbers while preserving boolean and numeric 0/1 semantics: exactly two existing Python files and 27 net Python lines. No Python file-count, structural, complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
-    "exit_condition": "Remove this exact 27-line allowance when boolean-flag validation and public PIT regression cases are consolidated or retired with equivalent fail-closed revision-certification semantics. Preserve all prior retirement conditions."
+    "source_revision": "49ed2c0a40d6355104ccdf7089a789f244043a1c",
+    "reason": "Bind TuShare stk_mins acquisition exclusions to its expected provider/dataset before universe reduction, retaining generic loader behavior by default and unchanged date/evidence/promotion restrictions; exercise wrong/missing identities on applicable and inapplicable days and generic source compatibility. Exactly three existing Python files and 53 net Python lines. No structural, complexity, exclusions or reserved-headroom allowances increase.",
+    "exit_condition": "Remove this exact 53-line allowance if the source-bound acquisition exception API is retired or consolidated with equivalent wrong-source rejection and generic/valid policy compatibility regressions. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "df520a9545e6fac78a107ba3931743110f6f75e0",
+      "reason": "Reject dot/parent version names and symbolic version/namespace aliases before public ETF minute mirror writes; keep dry-run read-only, valid original names, explicit output selection and normal resume. Record exactly 179 net Python lines in three existing Python files for the implementation and public API/CLI regressions. No file-count, structural, complexity, exclusion, coverage, security or reserved-headroom allowance increases. The configured complexity limit of 14 and pre-existing isolated C901 count budget of 9 remain unchanged.",
+      "exit_condition": "Remove this exact 179-line scope allowance when public ETF minute mirror version resolution is retired or consolidated with equivalent pre-write version isolation, read-only planning, explicit-output compatibility and resume regressions. Preserve all prior retirement conditions."
+    },
+    {
+      "source_revision": "3c4f9a3fbfbce9d883fefcdf45b5c70ef4b013b4",
+      "reason": "Prevent raw L2 pilot input rewrites and silent canonical/label collisions through a complete read-only plan and exclusively created outputs, preserving v1 filenames, schemas, row offsets and CLI failure behavior. Exactly two existing Python files: quality_pilot.py +47 net lines and test_quality_pilot.py +178 net lines, totaling +225; no new Python files. Retain real Parquet alias/hardlink, existing/late destination, later invalid input and multi-batch behavior regressions. No structural, exclusion, oversized-file/function, complexity or reserved-headroom allowance increases. Natural owned ExitStack cleanup removes two close guards, so actual isolated C901 findings are 25 rather than 26; the pre-existing budget stays 9 and remains exceeded.",
+      "exit_condition": "Remove this exact 47-source-line and 178-test-line allowance when the pilot is retired or consolidated with equivalent complete-plan, raw-byte preservation, canonical/label identity, no-overwrite/race and real CLI/schema regressions. Preserve all prior retirement conditions; do not increase the isolated C901 budget."
+    },
+    {
+      "source_revision": "50f650cd19857c7ff2496a6de4abdf2bf9bb4df6",
+      "reason": "Reject absent or blank context series/vintage identities, invalid ordinal revisions and infinite observation values before PIT selection; preserve integer-valued numeric text, zero/numeric ordering and existing missing/nonnumeric value representation. Public selector/catalog and real provider regressions add exactly 138 net Python lines in two existing Python files. The new infinity-only helper keeps prior audit boundaries intact. No Python file-count, structural, complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
+      "exit_condition": "Remove this exact 138-line allowance when context identity/revision and infinity-only validation with public selector/catalog/provider regressions are consolidated or retired with equivalent complete identities, finite ordinal revisions, infinity rejection and compatible value preservation. Preserve all prior retirement conditions."
+    },
+    {
+      "source_revision": "1a04870ada9cdbddf818117811be618ea73ecbd5",
+      "reason": "Enforce the existing unique nonempty string-list primary-key contract at public validation/writing boundaries, preserve legitimate names/order/optional empty keys, and prove rejected malformed inputs do not create or replace artifacts: exactly two existing Python files and 55 net Python lines. No structural, complexity, exclusion, security or reserved-headroom allowances increase.",
+      "exit_condition": "Remove this exact 55-line scope allowance if dataset key validation/writing is retired or consolidated with equivalent strict type, valid roundtrip and failed-write side-effect regressions. Preserve all prior retirement conditions."
+    },
+    {
+      "source_revision": "c2a97c8b25ee6dde65635ad6c980bd7c89e3ff3f",
+      "reason": "Reject ambiguous context PIT revision/reconstruction flags before boolean conversion and prove the public as-of selector rejects strings, missing values and non-binary numbers while preserving boolean and numeric 0/1 semantics: exactly two existing Python files and 27 net Python lines. No Python file-count, structural, complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
+      "exit_condition": "Remove this exact 27-line allowance when boolean-flag validation and public PIT regression cases are consolidated or retired with equivalent fail-closed revision-certification semantics. Preserve all prior retirement conditions."
+    },
     {
       "source_revision": "0327f23bbe17ca8b0fe6565157189f746aca6c12",
       "reason": "Close real offline Parquet readers and all staging writers on integrity, progress, flush and cleanup failures; preserve the original error with cleanup diagnostics and leave failed month artifacts unpublished for recovery. Record exactly 1 new Python regression file and 241 net Python lines, including nine real-file lifecycle cases. No structural, complexity, exclusion, coverage, security or reserved-headroom allowance increases. The pre-existing isolated C901 budget remains 9 and still fails at 26.",
