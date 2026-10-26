@@ -25,6 +25,11 @@ The retrieval-time condition prevents a historical webpage collected later, a la
 
 Historical values without reliable publication times or contemporaneous retrieval evidence are marked `reconstructed=true` and `revision_covered=false`. They can support exploration, but must not be presented as revision-safe historical evidence for promotion.
 
+`series_id` and `vintage_id` must be present and non-empty after trimming; catalog series IDs follow the same rule.
+`revision_number` must be a finite non-negative integer. Integer-valued numeric strings remain supported and sort numerically.
+Observation values reject positive/negative infinity and numeric strings such as `inf` and `Infinity`. Existing missing values, finite values, and other nonnumeric contents retain their existing handling and original representation.
+`revision_covered` describes revision evidence. Other data quality requires separate validation.
+
 ## Initial TuShare coverage
 
 The first adapter set covers `shibor`, `shibor_lpr`, `cn_m`, `sf_month`, `cn_pmi`, `cn_cpi`, `cn_ppi`, `cn_gdp`, and `cn_schedule`. Provider endpoints retrieve raw data; this platform owns stable `series_id` values, PIT semantics, and the current contract.

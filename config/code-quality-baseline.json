@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 594,
-    "python_lines": 138905,
+    "python_lines": 139043,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "1a04870ada9cdbddf818117811be618ea73ecbd5",
-    "reason": "Enforce the existing unique nonempty string-list primary-key contract at public validation/writing boundaries, preserve legitimate names/order/optional empty keys, and prove rejected malformed inputs do not create or replace artifacts: exactly two existing Python files and 55 net Python lines. No structural, complexity, exclusion, security or reserved-headroom allowances increase.",
-    "exit_condition": "Remove this exact 55-line scope allowance if dataset key validation/writing is retired or consolidated with equivalent strict type, valid roundtrip and failed-write side-effect regressions. Preserve all prior retirement conditions."
+    "source_revision": "50f650cd19857c7ff2496a6de4abdf2bf9bb4df6",
+    "reason": "Reject absent or blank context series/vintage identities, invalid ordinal revisions and infinite observation values before PIT selection; preserve integer-valued numeric text, zero/numeric ordering and existing missing/nonnumeric value representation. Public selector/catalog and real provider regressions add exactly 138 net Python lines in two existing Python files. The new infinity-only helper keeps prior audit boundaries intact. No Python file-count, structural, complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
+    "exit_condition": "Remove this exact 138-line allowance when context identity/revision and infinity-only validation with public selector/catalog/provider regressions are consolidated or retired with equivalent complete identities, finite ordinal revisions, infinity rejection and compatible value preservation. Preserve all prior retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "1a04870ada9cdbddf818117811be618ea73ecbd5",
+      "reason": "Enforce the existing unique nonempty string-list primary-key contract at public validation/writing boundaries, preserve legitimate names/order/optional empty keys, and prove rejected malformed inputs do not create or replace artifacts: exactly two existing Python files and 55 net Python lines. No structural, complexity, exclusion, security or reserved-headroom allowances increase.",
+      "exit_condition": "Remove this exact 55-line scope allowance if dataset key validation/writing is retired or consolidated with equivalent strict type, valid roundtrip and failed-write side-effect regressions. Preserve all prior retirement conditions."
+    },
     {
       "source_revision": "c2a97c8b25ee6dde65635ad6c980bd7c89e3ff3f",
       "reason": "Reject ambiguous context PIT revision/reconstruction flags before boolean conversion and prove the public as-of selector rejects strings, missing values and non-binary numbers while preserving boolean and numeric 0/1 semantics: exactly two existing Python files and 27 net Python lines. No Python file-count, structural, complexity, exclusion, oversized-file/function or reserved-headroom allowance increases.",
