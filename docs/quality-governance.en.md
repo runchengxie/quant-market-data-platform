@@ -50,7 +50,7 @@ marketdata quality integrity \
   --output /tmp/l2-integrity.json
 ```
 
-The reusable opening-auction accounting core is `market_data_platform.quality_opening`. It consumes explicit orders, trades, and cancels, reconstructs remaining bid/ask levels, and reports unknown identities and overdrawn volume. Raw-file discovery, event cutoffs, exchange-specific lag, and snapshot alignment remain downstream because those rules depend on the market and experiment.
+The reusable opening-auction accounting core is `quant_market_data_platform.quality_opening`. It consumes explicit orders, trades, and cancels, reconstructs remaining bid/ask levels, and reports unknown identities and overdrawn volume. Raw-file discovery, event cutoffs, exchange-specific lag, and snapshot alignment remain downstream because those rules depend on the market and experiment.
 
 ## Standard quality gates
 
