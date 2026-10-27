@@ -2,17 +2,20 @@
 
 [中文页面](index.zh-CN.md)
 
-`quant-market-data-platform` is the shared market-data control plane for quantitative research and reporting systems. It owns data ingestion, normalization, quality governance, versioning, and published assets.
+`quant-market-data-platform` collects market data from providers, normalizes its format, checks completeness and coverage, and publishes versioned datasets for research and reporting programs.
 
 The active market scope is mainland China, with A-share assets led by TuShare and Guan minute data as a supporting source. RQData and the historical Hong Kong production path are retired; archived assets remain separate from the active production boundary.
 
 ## Quick start
 
+You need Git, `uv`, and Python 3.11 or newer. Run these commands from this repository root. Installing dependencies needs network access; displaying help needs no provider credentials and downloads no market data.
+
 ```bash
-uv sync --extra dev
-export DATA_PLATFORM_ROOT=/data/market-data-platform
-marketdata --help
+uv sync --locked --extra dev
+uv run --locked marketdata --help
 ```
+
+Success displays the `marketdata` usage, subcommands, and `-h, --help` option, then exits with code 0. Next, choose a task in [Operations](operations.md) and follow [Credentials and configuration](operations/credentials.md) to set an external data directory and any required credentials.
 
 ## Responsibilities
 
