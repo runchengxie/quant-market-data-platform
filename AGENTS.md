@@ -80,7 +80,7 @@ A 股是当前活跃主线。下游系统只读消费本仓发布的数据资产
 ## 环境和凭证
 
 ```bash
-uv sync --extra dev
+uv sync --locked --extra dev
 ```
 
 真实凭证优先放在用户目录下的私有配置文件
@@ -92,14 +92,14 @@ TuShare 凭证与自定义 API 地址的规则见 `docs/operations/credentials.m
 ## 测试和质量检查
 
 ```bash
-uv run --extra dev python scripts/dev/run_pytest_isolated.py -- -q
-uv run --extra dev python -m ruff check .
-uv run --extra dev python -m ruff format --check .
-uv run --extra dev ty check --error-on-warning
-uv run --extra dev python scripts/dev/quality_debt.py
-uv run --extra dev python scripts/dev/maintainability_metrics.py
-uv run --extra dev python scripts/dev/compatibility_governance.py --check
-uv run --extra dev python scripts/dev/architecture_governance.py --check
+uv run --locked --extra dev python scripts/dev/run_pytest_isolated.py -- -q
+uv run --locked --extra dev python -m ruff check .
+uv run --locked --extra dev python -m ruff format --check .
+uv run --locked --extra dev ty check --error-on-warning
+uv run --locked --extra dev python scripts/dev/quality_debt.py
+uv run --locked --extra dev python scripts/dev/maintainability_metrics.py
+uv run --locked --extra dev python scripts/dev/compatibility_governance.py --check
+uv run --locked --extra dev python scripts/dev/architecture_governance.py --check
 ```
 
 `ty` 的配置范围合并了迁移前的日常检查与发布检查文件。发布检查沿用同一套类型配置。
@@ -107,7 +107,7 @@ uv run --extra dev python scripts/dev/architecture_governance.py --check
 需要 DuckDB 时额外安装：
 
 ```bash
-uv sync --extra dev --extra duckdb
+uv sync --locked --extra dev --extra duckdb
 ```
 
 ## GitHub Actions 策略
