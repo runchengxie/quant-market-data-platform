@@ -7,21 +7,31 @@ This page describes the current coverage provided by `tests/` and `scripts/dev/`
 ## Local checks
 
 ```bash
-uv sync --extra dev
-uv run --extra dev python scripts/dev/run_pytest_isolated.py -- -q
-uv run --extra dev python -m ruff check .
-uv run --extra dev python -m ruff format --check .
-uv run --extra dev ty check --error-on-warning
+uv sync --locked --extra dev
+uv run --locked --extra dev python scripts/dev/run_pytest_isolated.py -- -q
+uv run --locked --extra dev python -m ruff check .
+uv run --locked --extra dev python -m ruff format --check .
+uv run --locked --extra dev ty check --error-on-warning
 ```
 
 GitHub Actions checks pull requests and pushes to `main`. The quality workflow runs public-snapshot boundary checks, shared quality ratchets, Ruff, pytest, and dependency audit. The documentation workflow runs a strict MkDocs build. Required PR checks are merge gates.
 
-When used as a `research-workspace` submodule, the workspace may also configure a shared `.githooks/pre-push` hook. It runs Ruff, formatting, `ty`, pytest, complexity ratchets, maintainability baselines, compatibility governance, and architecture governance. The shared hook is a workspace convention; it is not managed by this repository's `.pre-commit-config.yaml` and does not replace CI. The `ty` configuration combines the former daily and release scopes.
+This repository has no registered submodules. Inspect the active Git hook configuration before running or changing local hooks; linked worktrees share that configuration. Hooks do not replace required CI. The `ty` configuration combines the former daily and release scopes.
+
+Offline equities layout integration tests exercise the real staging safeguard that requires at least 20 GiB free on the output filesystem. A small or memory-backed default temporary directory can therefore fail even for synthetic fixtures. Select a dedicated temporary root on a filesystem with sufficient free space before running the suite:
+
+```bash
+TEST_TMP_ROOT=/path/to/dedicated/test-scratch
+mkdir -p "$TEST_TMP_ROOT"
+TMPDIR="$TEST_TMP_ROOT" uv run --locked --extra dev python scripts/dev/run_pytest_isolated.py -- -q
+```
+
+Keep this scratch directory outside source checkouts and production data. `TMPDIR` changes fixture placement, not the disk-space requirement. A failed free-space check must not be bypassed by lowering the safeguard.
 
 The full suite accumulates memory in one pytest process. `run_pytest_isolated.py` starts one process per eight test files by default and releases memory between batches. A focused module can run directly with `python -m pytest tests/<file>.py`. Coverage is a release diagnostic; scope it to the target module:
 
 ```bash
-uv run --extra dev python -m pytest tests/<file>.py \
+uv run --locked --extra dev python -m pytest tests/<file>.py \
   --cov=quant_market_data_platform --cov-report=term-missing
 ```
 
@@ -43,7 +53,7 @@ behavior. The Git-sourced `research-code-quality` package is pinned to a full co
 and is outside the PyPI audit. Its owner repository validates the source, build provenance,
 and dependencies separately.
 
-Add DuckDB query support with `uv sync --extra dev --extra duckdb`.
+Add DuckDB query support with `uv sync --locked --extra dev --extra duckdb`.
 
 ## Optional integrations
 
@@ -57,7 +67,7 @@ uv run --locked --python 3.12 --extra dev --extra qlib python -m pytest \
   tests/test_published_assets.py -k qlib -q
 ```
 
-This only tests the read-only mapping from published Parquet assets to Qlib DataLoader. DataHandler, Dataset, model training, experiment tracking, and backtest backends are not implemented here. TuShare collection tests can install `uv sync --extra dev --extra tushare`.
+This only tests the read-only mapping from published Parquet assets to Qlib DataLoader. DataHandler, Dataset, model training, experiment tracking, and backtest backends are not implemented here. TuShare collection tests can install `uv sync --locked --extra dev --extra tushare`.
 
 Some tests require `pyarrow` during import, so use the `dev` extra for the complete suite. `tests/conftest.py` clears `DATA_PLATFORM_ROOT`, `DATA_PLATFORM_METADATA_DB_PATH`, `DATA_PLATFORM_WAREHOUSE_DB_PATH`, and `HK_DATA_PLATFORM_ROOT` to prevent shell configuration from changing path-resolution tests.
 
@@ -92,4 +102,4 @@ Some tests require `pyarrow` during import, so use the `dev` extra for the compl
 
 ## Documentation gates
 
-`tests/test_quality_governance.py` verifies that `docs/README.md` links the maintenance audit and operations guides, active prose avoids contrastive detours, every public leaf command reachable through `market_data_platform.cli.build_parser()` appears in active docs, the industry-membership download command has a clear entry point, and `docs/compatibility.md` covers all six lifecycle categories. When adding or renaming a `marketdata` command, update the public CLI list in `docs/operations.md`, add a topic-page example, and update tests.
+`tests/test_quality_governance.py` verifies that `docs/README.md` links the maintenance audit and operations guides, active prose avoids contrastive detours, every public leaf command reachable through `quant_market_data_platform.cli.build_parser()` appears in active docs, the industry-membership download command has a clear entry point, and `docs/compatibility.md` covers all six lifecycle categories. When adding or renaming a `marketdata` command, update the public CLI list in `docs/operations.md`, add a topic-page example, and update tests.
