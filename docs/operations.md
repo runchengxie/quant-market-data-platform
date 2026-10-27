@@ -28,7 +28,7 @@
 | 准备独立停复牌与分红执行研究输入 | [执行研究输入审计](operations/execution-input-readiness.md) |
 | 测试脚本与测试范围说明 | [operations/testing.md](operations/testing.md) |
 
-晚间融资融券的延迟补齐及 receipt 状态见 [A 股操作说明](operations/a-share-tushare.md#晚间融资融券的延迟补齐)。
+晚间融资融券的延迟补齐及 receipt 状态见 [A 股操作说明](operations/a-share-tushare.md#_2)。
 
 ## 常用命令族
 
@@ -319,7 +319,7 @@ marketdata tushare validate-a-share-statement-selector --selector <selector.json
 ```
 
 该命令只核验显式决定的机械约束并向 stdout 输出 JSON，不请求供应商、不写资产。
-使用已有完整 normalized 文件，字段格式见[选择契约](contracts.md#显式公司类别选择只读预检-v1)。
+使用已有完整 normalized 文件，字段格式见[选择契约](contracts.md#v1)。
 检查成功退出 0。未覆盖、重复覆盖、类别不存在等选择问题退出 1，保留逐事件错误清单。
 格式、文件、哈希或时间约束不合格、日期运算溢出、输入候选身份重复，
 以及读取中输入发生变化时退出 2。可以先提交 `decisions: []` 的文件，
@@ -364,7 +364,7 @@ marketdata config run --config "$DATA_PLATFORM_CONFIG" -- python -m quant_market
 
 本次 vintage 重试保护新增一个独立身份/attempt 模块和 fixture 负面路径覆盖，shared ratchet 只将 Python 文件库存增加 1、行数库存增加 499。复杂度和大文件预算不变。退出条件：若以后将重试身份、attempt 事件和 derived 语义校验整合进统一的资产事务接口，并保留 legacy 拒绝、参数变化拒绝及历史 receipt 保全覆盖，则移除本次增量预算。
 
-日线 clean 同日重跑应生成新计划并使用新的 clean 输出目录，不要将已完成版本或 latest 作为构建输出。保留失败现场的证据，必要时选择新目录。版本边界见[共享数据契约](contracts.md#日线-clean-构建版本)。
+日线 clean 同日重跑应生成新计划并使用新的 clean 输出目录，不要将已完成版本或 latest 作为构建输出。保留失败现场的证据，必要时选择新目录。版本边界见[共享数据契约](contracts.md#clean)。
 
 ### Clean 链接发布的计划与恢复
 
@@ -522,7 +522,7 @@ legacy `*_latest` 仍由现有 mirror 写分区和 manifest。不得把这些目
 该凭证限定回溯覆盖结论，不授权全市场发布，也不替代跨源 0.99 验收。
 
 `marketdata governance plan-retention --reference-root <directory>` 可重复指定研究和回滚证据目录。
-详见[保留引用与独立输入](data-governance.md#保留引用与独立输入)。该入口仅生成计划。
+详见[保留引用与独立输入](data-governance.md#_6)。该入口仅生成计划。
 
 ### 数据运行状态
 
@@ -634,7 +634,7 @@ marketdata tushare build-a-share-fundamentals-pit \
 完整的按证券保存的离线镜像可通过
 `python -m quant_market_data_platform.offline_equities.repack --source <mirror> --output <new-version>`
 生成独立的无损差分编码 ZSTD12 候选。逐文件校验与续跑规则见
-[离线美股说明](offline-equities.md#已完成镜像的无损重压缩)。
+[离线美股说明](offline-equities.md#_4)。
 
 历史分钟离线候选裁决支持旧 canary 采集链路认证及两份完整一致候选加一份严格子集，
 输入和限制见[独立覆盖凭证](operations/historical-minute-coverage-receipts.md)。所有候选保留，
