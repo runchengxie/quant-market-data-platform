@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 594,
-    "python_lines": 139500,
+    "python_files": 595,
+    "python_lines": 139732,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "49ed2c0a40d6355104ccdf7089a789f244043a1c",
-    "reason": "Bind TuShare stk_mins acquisition exclusions to its expected provider/dataset before universe reduction, retaining generic loader behavior by default and unchanged date/evidence/promotion restrictions; exercise wrong/missing identities on applicable and inapplicable days and generic source compatibility. Exactly three existing Python files and 53 net Python lines. No structural, complexity, exclusions or reserved-headroom allowances increase.",
-    "exit_condition": "Remove this exact 53-line allowance if the source-bound acquisition exception API is retired or consolidated with equivalent wrong-source rejection and generic/valid policy compatibility regressions. Preserve all earlier retirement conditions."
+    "source_revision": "4dab5007216467aecfbaae19f94568557ff85af0",
+    "reason": "Capture and recheck publication metadata identities, parse and hash the same serialized bytes, and expose a read-only CLI. Exactly 85 net implementation Python lines in two existing source files plus 147 lines in one new synthetic regression file. One Python file and 232 physical lines are the exact feature/test allowance; no structural, complexity, exclusion, oversized-file/function, coverage, security or reserved-headroom allowances increase.",
+    "exit_condition": "Remove this exact one-file/232-line allowance when metadata capture is retired or consolidated while retaining drift rejection, same-read parse/hash identity, stable pinned references, explicit manifest-only scope and CLI regression coverage. Preserve prior retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "49ed2c0a40d6355104ccdf7089a789f244043a1c",
+      "reason": "Bind TuShare stk_mins acquisition exclusions to its expected provider/dataset before universe reduction, retaining generic loader behavior by default and unchanged date/evidence/promotion restrictions; exercise wrong/missing identities on applicable and inapplicable days and generic source compatibility. Exactly three existing Python files and 53 net Python lines. No structural, complexity, exclusions or reserved-headroom allowances increase.",
+      "exit_condition": "Remove this exact 53-line allowance if the source-bound acquisition exception API is retired or consolidated with equivalent wrong-source rejection and generic/valid policy compatibility regressions. Preserve all earlier retirement conditions."
+    },
     {
       "source_revision": "df520a9545e6fac78a107ba3931743110f6f75e0",
       "reason": "Reject dot/parent version names and symbolic version/namespace aliases before public ETF minute mirror writes; keep dry-run read-only, valid original names, explicit output selection and normal resume. Record exactly 179 net Python lines in three existing Python files for the implementation and public API/CLI regressions. No file-count, structural, complexity, exclusion, coverage, security or reserved-headroom allowance increases. The configured complexity limit of 14 and pre-existing isolated C901 count budget of 9 remain unchanged.",

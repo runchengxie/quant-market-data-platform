@@ -647,3 +647,5 @@ marketdata tushare build-a-share-fundamentals-pit \
 试点会在创建目录或写入前检查全部输入 Parquet 与输出计划。不同输入不能映射到同一个 canonical 或 labels 文件。同一输入的重复路径或硬链接别名、已存在的目标文件（包括符号链接或硬链接）和符号链接输出子目录都会被拒绝。已有输出目录可以保留，但本次计划的目标文件及 manifest 必须全部不存在。写文件使用独占创建，不能覆盖后来出现的目标。
 
 输入必须在运行期间保持稳定。发生后续 I/O 错误时可能留下部分派生文件，需保留现场。当前流程不提供原子发布或自动续跑。检查现场后选用新的输出目录，不要删除或覆盖原始输入。
+
+- `marketdata contract capture`：固定并复核多项资产的元数据，见[输入身份记录](operations/published-asset-snapshot.md)。
