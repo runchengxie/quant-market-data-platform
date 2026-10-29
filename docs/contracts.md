@@ -620,3 +620,12 @@ PDF `sha256`、`official_url`、正整数 `pdf_pages`、含时区的 `verified_a
 此资产始终为 `partial_reconstructed`，不认证历史持有、完整 PIT、全市场覆盖或整行
 selector。旧 `read_research_event` 不接受该新 schema。生产发布、current 和 seal
 均不使用此模块。
+
+
+## 研究输入元数据记录
+
+`marketdata.asset-snapshot.v1` 保存已固定发布引用的只读元数据。
+它复用 `PublishedAssetRef` 身份，并拒绝检测到的元数据变化。
+`integrity_scope=manifest_identity`、`data_content_verified=false`、`atomic_transaction=false`
+限定记录的校验范围。manifest 的规范化指纹仅覆盖元数据。入口和复现方式见
+[契约采集命令](operations/published-asset-snapshot.md)。

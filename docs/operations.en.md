@@ -327,3 +327,5 @@ See the [offline guide](offline-equities.en.md#recompress-a-completed-mirror) fo
 Before creating directories or writing, the pilot checks every input Parquet footer and the complete output plan. Inputs must not collide on canonical or labels filenames. Repeated source identities, existing output files (including symlinks or hardlinks), and symlinked output subdirectories are rejected. An existing output directory is allowed only when every planned leaf and manifest is new. Exclusive file creation also refuses a destination that appears after preflight.
 
 Keep inputs stable while the pilot runs. Later I/O failures may leave partial derived files; this is not atomic publication or automatic resume. Inspect that output and select a fresh directory instead of deleting or replacing raw inputs.
+
+- `marketdata contract capture`: capture and recheck selected publication metadata; see [pinned input references](operations/published-asset-snapshot.en.md).

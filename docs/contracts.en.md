@@ -297,3 +297,12 @@ The script's read-only `--status-only` returns `a_share.minute_operational_statu
 `status`, `target_date`, `date_max`, `last_run` and `last_failed_run`. `behind` exits 75.
 Current data does not certify a natural scheduler run or message delivery. Malformed history
 or paths escaping the owner root fail explicitly instead of hiding evidence.
+
+
+## Research input metadata capture
+
+`marketdata.asset-snapshot.v1` is a read-only receipt of captured publication references, not a new
+market-data asset. It reuses `PublishedAssetRef` identities and rejects observed metadata drift.
+`integrity_scope=manifest_identity`, `data_content_verified=false`, and `atomic_transaction=false`
+are substantive limits. The canonical manifest fingerprint is not a Parquet content hash. See the
+[contract capture command](operations/published-asset-snapshot.en.md) for the API and reproduction.
