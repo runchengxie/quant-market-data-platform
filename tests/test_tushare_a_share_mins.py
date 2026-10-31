@@ -454,6 +454,10 @@ def test_historical_bse_request_uses_old_code_and_persists_920_code(
     assert result["dates_fetched"] == 1
     partition = pd.read_parquet(tmp_path / "trade_date=20241128" / "part-00000.parquet")
     assert set(partition["ts_code"]) == {"920000.BJ"}
+    sidecar_path = tmp_path / "trade_date=20241128" / mins.COMPLETENESS_FILENAME
+    lineage = json.loads(sidecar_path.read_text())["code_identity"]["920000.BJ"]
+    assert lineage["request_symbol"] == "832000.BJ"
+    assert lineage["response_symbols"] == ["832000.BJ"]
 
 
 def test_bse_historical_code_transition_dates() -> None:
@@ -1945,3 +1949,98 @@ def test_cm_property_code_transition_has_one_native_code(trade_date, expected):
 def test_port_and_360_code_change_suspensions_fail_closed(historical, successor, date):
     with pytest.raises(RuntimeError, match="code-transition gap"):
         _universe._apply_historical_code_transitions({historical, successor}, trade_date=date)
+
+
+def test_historical_shanghai_sidecar_and_receipt_preserve_observed_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    date = "20091231"
+    calls: list[str] = []
+
+    def provider(**kwargs: Any) -> pd.DataFrame:
+        calls.append(kwargs["ts_code"])
+        frame = _bars(kwargs["ts_code"].split(","))
+        frame["trade_time"] += pd.Timestamp(date) - pd.Timestamp(TRADE_DATE)
+        return frame
+
+    _install_fake_api(monkeypatch, provider)
+    history = pd.DataFrame(
+        {
+            "ts_code": ["601607.SH"],
+            "list_status": ["L"],
+            "list_date": ["19940324"],
+            "delist_date": [""],
+            "curr_type": ["CNY"],
+        }
+    )
+    monkeypatch.setattr(mins, "_stock_history_from_provider", lambda *_args: history)
+    monkeypatch.setattr(
+        mins, "_traded_symbols_from_provider", lambda *_args, **_kwargs: {"601607.SH"}
+    )
+    options = replace(
+        _options(tmp_path, []), start_date=date, end_date=date, trading_dates=[date], exchange="SH"
+    )
+    mins.mirror_minute_bars(options)
+    part_dir = tmp_path / f"trade_date={date}"
+    sidecar_path = part_dir / mins.COMPLETENESS_FILENAME
+    sidecar = json.loads(sidecar_path.read_text())
+    receipt = mins.validate_complete_minute_partition(
+        part_dir, trade_date=date, require_full_universe=False
+    )
+    assert calls == ["600849.SH"]
+    assert sidecar["expected_symbols"] == ["601607.SH"]
+    assert receipt["code_identity"] == sidecar["code_identity"]
+    assert receipt["code_identity"]["601607.SH"]["response_symbols"] == ["600849.SH"]
+    from test_minute_validation_cli import _call
+
+    cli = _call(tmp_path, exchange="SH", date=date)
+    assert cli.returncode == 0, cli.stderr
+    assert json.loads(cli.stdout)["code_identity"] == receipt["code_identity"]
+    del sidecar["code_identity"]
+    sidecar_path.write_text(json.dumps(sidecar))
+    with pytest.raises(ValueError, match="identity lineage"):
+        mins.validate_complete_minute_partition(
+            part_dir, trade_date=date, require_full_universe=False
+        )
+
+
+def test_partial_resume_keeps_historical_response_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    date = "20091231"
+    missing = True
+    calls: list[str] = []
+
+    def provider(**kwargs: Any) -> pd.DataFrame:
+        calls.append(kwargs["ts_code"])
+        symbols = kwargs["ts_code"].split(",")
+        if missing:
+            symbols = [symbol for symbol in symbols if symbol != "000001.SZ"]
+        frame = _bars(symbols)
+        if not frame.empty:
+            frame["trade_time"] += pd.Timestamp(date) - pd.Timestamp(TRADE_DATE)
+        return frame
+
+    _install_fake_api(monkeypatch, provider)
+    history = pd.DataFrame(
+        {
+            "ts_code": ["601607.SH", "000001.SZ"],
+            "list_date": ["19940324", "19910101"],
+            "delist_date": ["", ""],
+        }
+    )
+    monkeypatch.setattr(mins, "_stock_history_from_provider", lambda *_args: history)
+    monkeypatch.setattr(
+        mins, "_traded_symbols_from_provider", lambda *_args, **_kwargs: {"601607.SH", "000001.SZ"}
+    )
+    options = replace(_options(tmp_path, []), start_date=date, end_date=date, trading_dates=[date])
+    with pytest.raises(RuntimeError, match="incomplete batch"):
+        mins.mirror_minute_bars(options)
+    part_dir = tmp_path / f"trade_date={date}"
+    before = json.loads((part_dir / mins.COMPLETENESS_FILENAME).read_text())["code_identity"]
+    missing = False
+    calls.clear()
+    mins.mirror_minute_bars(options)
+    receipt = mins.validate_complete_minute_partition(part_dir, trade_date=date)
+    assert calls == ["000001.SZ"]
+    assert receipt["code_identity"] == before

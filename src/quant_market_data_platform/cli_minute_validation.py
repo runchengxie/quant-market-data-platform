@@ -59,6 +59,8 @@ def validate_minute_partition(args: argparse.Namespace) -> int:
         print(f"minute validation failed: {exc}", file=sys.stderr)
         return 1
     result = {key: receipt[key] for key in RECEIPT_FIELDS}
+    if "code_identity" in receipt:
+        result["code_identity"] = receipt["code_identity"]
     result.update(validation_schema_version=VALIDATION_SCHEMA, exchange=exchange)
     print(json.dumps(result, sort_keys=True))
     return 0
