@@ -94,6 +94,18 @@ def add_contract_parser(subparsers: argparse._SubParsersAction) -> None:
     )
     inspect.add_argument("--out")
     inspect.add_argument("--format", choices=("text", "json"), default="text")
+    from .agent_access import handle_assess
+
+    assess = contract_subparsers.add_parser(
+        "assess", help="Read bounded agent trust checks without publication."
+    )
+    assess.set_defaults(handler=handle_assess)
+    assess.add_argument("--artifacts-root")
+    assess.add_argument("--market", default="a_share", choices=MARKET_CHOICES)
+    assess.add_argument("--current-contract")
+    assess.add_argument("--asset", action="append", required=True)
+    assess.add_argument("--target-date")
+    assess.add_argument("--require-start-date")
     capture = contract_subparsers.add_parser(
         "capture", help="Capture and recheck selected publication metadata without writing."
     )

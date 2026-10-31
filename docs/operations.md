@@ -649,3 +649,24 @@ marketdata tushare build-a-share-fundamentals-pit \
 输入必须在运行期间保持稳定。发生后续 I/O 错误时可能留下部分派生文件，需保留现场。当前流程不提供原子发布或自动续跑。检查现场后选用新的输出目录，不要删除或覆盖原始输入。
 
 - `marketdata contract capture`：固定并复核多项资产的元数据，见[输入身份记录](operations/published-asset-snapshot.md)。
+
+## Agent 只读调用
+
+`marketdata capabilities` 输出 `quant.agent_capabilities.v1`，无需配置、数据或供应商访问。
+本轮目录只覆盖 `contract inspect`、`contract capture` 和 `contract assess`。目录不授予权限。
+
+```bash
+marketdata contract assess --artifacts-root /external/data-owner \
+  --asset daily_clean --target-date 20261030 --require-start-date 20260101
+```
+
+输出 `quant.data_assessment.v1`，以稳定检查 ID 分别报告清单身份、发布完成状态、新鲜度、
+内容完整性、连续覆盖及历史 PIT。它复用原有 inspect/capture，不发布数据、不写报告、不修改别名。
+快照只固定清单身份，不能证明数据文件完整性或历史可得性。未知维度保持 `unknown`，
+`research_ready=false`，不能据此晋升策略。`--asset` 必须显式指定，最多 50 项。
+新鲜度检查只核对发布元数据与指定日期。逐交易日覆盖需要额外证据。
+
+退出 0 表示成功生成评估，未知项仍须研究侧验证。已知未完成的发布返回非零。
+旧 inspect 的 severity 门禁保持原义。检查期间捕获到发布变化会拒绝混合版本的结果。
+将需要保留的输出重定向到任务数据目录。`contract inspect --out` 有写报告副作用，
+Agent 只读调用应省略该参数。

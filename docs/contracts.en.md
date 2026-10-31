@@ -306,3 +306,21 @@ market-data asset. It reuses `PublishedAssetRef` identities and rejects observed
 `integrity_scope=manifest_identity`, `data_content_verified=false`, and `atomic_transaction=false`
 are substantive limits. The canonical manifest fingerprint is not a Parquet content hash. See the
 [contract capture command](operations/published-asset-snapshot.en.md) for the API and reproduction.
+
+## Agent discovery and assessment
+
+`marketdata capabilities` describes the bounded read interfaces without reading
+configuration or data. `marketdata contract assess --artifacts-root /external/data-owner
+--asset daily_clean --target-date 20261030 --require-start-date 20260101` emits
+`quant.data_assessment.v1`. Explicit selection is limited to 50 unique assets.
+The adapter reuses inspect and capture, preserves legacy severity policy, and
+rejects observed metadata drift. It does not publish data or write output files.
+
+Stable check IDs distinguish manifest identity, publication completion, freshness,
+data-content integrity, contiguous coverage and historical PIT. Missing evidence
+is `unknown`, never a pass. Freshness is scoped to publication metadata and does
+not prove daily coverage. Metadata snapshots do not verify the data bytes.
+`research_ready=false` requires further research validation. Exit zero means the
+assessment was produced, not that unknown conditions passed; a known incomplete
+publication exits nonzero. Discovery grants no permission. Omit inspect's `--out`
+when using its read-only invocation.
