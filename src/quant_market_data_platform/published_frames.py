@@ -240,7 +240,14 @@ class PublishedFramePlan:
 class PublishedParquetFrameReader:
     """Load an explicitly mapped Qlib-shaped frame from published Parquet assets."""
 
-    def __init__(self, contract: PublishedAssetContract, plan: PublishedFramePlan) -> None:
+    def __init__(
+        self,
+        contract: PublishedAssetContract,
+        plan: PublishedFramePlan,
+        *,
+        quality_mode: str = "error",
+        acknowledged_missing_dates: Iterable[str] = (),
+    ) -> None:
         self.contract = contract
         self.plan = plan
         self._assets = dict(
@@ -250,6 +257,21 @@ class PublishedParquetFrameReader:
                 strict=True,
             )
         )
+
+        self._quality = None
+        header = contract.payload.get("contract", {}).get("minute_quality")
+        if header is not None:
+            from .minute_quality import MinuteQualityError, MinuteQualityGuard
+
+            if not isinstance(header, Mapping):
+                raise MinuteQualityError("minute_quality header must be an object")
+            self._quality = MinuteQualityGuard(
+                contract,
+                ((self._assets[frame.asset_key], frame.relative_path) for frame in plan.frames),
+                header,
+                mode=quality_mode,
+                acknowledged_missing_dates=acknowledged_missing_dates,
+            )
 
     @property
     def metadata(self) -> dict[str, Any]:
@@ -266,7 +288,15 @@ class PublishedParquetFrameReader:
                 ],
             }
         )
+        quality_metadata = {}
+        if self._quality is not None:
+            self._quality.validate()
+            quality_metadata = {"minute_quality": self._quality.policy}
+            content_fingerprint = _canonical_sha256(
+                {"source_content_fingerprint": content_fingerprint, **quality_metadata}
+            )
         return {
+            **quality_metadata,
             "schema_version": "market_data_platform.published_frame.v1",
             "backend": {
                 "name": "quant_market_data_platform.published_parquet",
@@ -293,7 +323,19 @@ class PublishedParquetFrameReader:
         """Load a deterministic ``(datetime, instrument)`` indexed pandas frame."""
 
         pd = _pandas()
-        frames = [self._read_feature_frame(mapping) for mapping in self.plan.frames]
+        decision: dict[str, Any] = {}
+        if self._quality is not None:
+            if instruments is not None and not isinstance(instruments, Mapping | str):
+                instruments = tuple(instruments)
+            decision = self._quality.assess(instruments, start_time, end_time)
+        frames = []
+        for mapping in self.plan.frames:
+            frame = self._read_feature_frame(mapping)
+            if self._quality is not None:
+                self._quality.validate_frame(
+                    mapping.asset_key, frame, (instruments, start_time, end_time)
+                )
+            frames.append(frame)
         data = pd.concat(frames, axis=1, join=self.plan.join).sort_index()
         if self.plan.calendar is not None:
             open_dates = self._read_open_dates(self.plan.calendar)
@@ -302,6 +344,9 @@ class PublishedParquetFrameReader:
             membership = self._read_membership(self.plan.universe)
             data = data[data.index.isin(membership)]
 
+        if self._quality is not None:
+            data = self._filter_guarded_request(data, instruments, start_time, end_time, pd)
+            return self._quality.apply(data.sort_index(), decision)
         data = _filter_instruments(data, instruments, pd)
         datetimes = data.index.get_level_values("datetime")
         if start_time is not None:
@@ -310,6 +355,51 @@ class PublishedParquetFrameReader:
         if end_time is not None:
             data = data[datetimes <= pd.Timestamp(end_time)]
         return data.sort_index()
+
+    def _filter_guarded_request(
+        self, data: Any, instruments: Any, start: Any, end: Any, pd: Any
+    ) -> Any:
+        from .minute_quality import local_index, local_timestamp
+
+        # Use local-aware timestamps only for selection; preserve the original index.
+        selected = data.copy()
+        original_index = selected.index
+        selected.index = pd.MultiIndex.from_arrays(
+            [
+                local_index(original_index.get_level_values("datetime")),
+                original_index.get_level_values("instrument"),
+            ],
+            names=original_index.names,
+        )
+        if isinstance(instruments, Mapping):
+            instruments = {
+                key: None
+                if spans is None
+                else [
+                    (
+                        local_timestamp(left) if left is not None else None,
+                        local_timestamp(right) if right is not None else None,
+                    )
+                    for left, right in (_instrument_spans(spans) or ())
+                ]
+                for key, spans in instruments.items()
+            }
+        selected = _filter_instruments(selected, instruments, pd)
+        dates = selected.index.get_level_values("datetime")
+        mask = [True] * len(selected)
+        if start is not None:
+            mask = dates >= local_timestamp(start)
+        if end is not None:
+            mask = pd.array(mask) & (dates <= local_timestamp(end))
+        selected = selected[mask]
+        # Reconstitute the original timezone convention after local comparisons.
+        dates = selected.index.get_level_values("datetime")
+        original_tz = original_index.get_level_values("datetime").tz
+        restored = dates.tz_localize(None) if original_tz is None else dates.tz_convert(original_tz)
+        selected.index = pd.MultiIndex.from_arrays(
+            [restored, selected.index.get_level_values("instrument")], names=original_index.names
+        )
+        return selected
 
     def _read_parquet(
         self,

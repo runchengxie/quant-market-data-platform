@@ -20,6 +20,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--token-env", default="TUSHARE_TOKEN_2")
     parser.add_argument("--api-url")
     parser.add_argument("--max-dates", type=int, default=1)
+    parser.add_argument(
+        "--history-start-date", help="Inclusive YYYYMMDD lower bound; persisted unless dry-run"
+    )
     parser.add_argument("--batch-size", type=int, default=20)
     parser.add_argument("--cooldown-seconds", type=float, default=1.2)
     parser.add_argument("--minute-quota-allow-burst", action="store_true")
@@ -38,6 +41,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             token_env=args.token_env,
             api_url=args.api_url,
             max_dates=args.max_dates,
+            history_start_date=args.history_start_date,
             batch_size=args.batch_size,
             cooldown_seconds=args.cooldown_seconds,
             minute_quota_allow_burst=args.minute_quota_allow_burst,
