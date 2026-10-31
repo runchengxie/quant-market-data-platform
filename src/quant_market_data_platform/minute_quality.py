@@ -126,18 +126,23 @@ def _requested_date(date: str, instruments: Any, start: Any, end: Any) -> bool:
 
 
 def _parquet_files(source: Path, asset_root: Path) -> tuple[Path, ...]:
+    """Match Arrow directory discovery, which does not require a filename suffix."""
     if source.is_dir():
         descendants = tuple(source.rglob("*"))
         if any(path.is_symlink() for path in descendants):
             raise MinuteQualityError("Mapped partition directory contains a symlink")
-        files = tuple(sorted(path for path in descendants if path.suffix == ".parquet"))
+        files = tuple(
+            sorted(
+                path
+                for path in descendants
+                if not path.is_dir()
+                and not any(part.startswith((".", "_")) for part in path.relative_to(source).parts)
+            )
+        )
     else:
         files = (source,)
     if not files or any(
-        not path.is_file()
-        or path.suffix != ".parquet"
-        or path.resolve() != path
-        or not path.is_relative_to(asset_root)
+        not path.is_file() or path.resolve() != path or not path.is_relative_to(asset_root)
         for path in files
     ):
         raise MinuteQualityError("Mapped partition path is missing or outside asset root")

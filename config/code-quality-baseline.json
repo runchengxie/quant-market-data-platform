@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 601,
-    "python_lines": 141215,
+    "python_lines": 141286,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -19,8 +19,8 @@
   },
   "change_record": {
     "source_revision": "2204cf7823976371e3a0296d6a504a14ac2c6ff4",
-    "reason": "Add opt-in version-bound minute research guards, mapped-byte and scope enforcement, persisted earlier-history bounds, and synthetic regressions. Exactly 4 Python files and 1077 net physical Python lines. No structural, complexity, oversized-function/file, exclusion, coverage, security or reserved-headroom allowance increases.",
-    "exit_condition": "Remove this exact 4-file/1077-line allowance when these reader guards and configurable history bounds are retired or consolidated with equivalent identity-drift, whole-stock-day, calendar, market-scope, dry-run and resume regressions. Preserve prior retirement conditions."
+    "reason": "Add opt-in version-bound minute research guards, mapped-byte and scope enforcement, persisted earlier-history bounds, and synthetic regressions. Exactly 4 Python files and 1148 net physical Python lines. No structural, complexity, oversized-function/file, exclusion, coverage, security or reserved-headroom allowance increases.",
+    "exit_condition": "Remove this exact 4-file/1148-line allowance when these reader guards and configurable history bounds are retired or consolidated with equivalent identity-drift, whole-stock-day, calendar, market-scope, dry-run and resume regressions. Preserve prior retirement conditions."
   },
   "previous_change_records": [
     {

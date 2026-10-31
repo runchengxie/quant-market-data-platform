@@ -430,3 +430,69 @@ def test_mapping_must_cover_requested_registered_available_dates(guarded):
         reader.load(["NONEXISTENT"], "2026-06-08", "2026-06-10 23:59")
     assert reader.load(["NONEXISTENT"], "2026-06-08", "2026-06-08 23:59").empty
     assert reader.load({"NONEXISTENT": [("2026-06-08", "2026-06-08 23:59")]}).empty
+
+
+@pytest.mark.parametrize("before_construction", [True, False])
+def test_arrow_nonstandard_suffix_cannot_bypass_bound_inventory(guarded, before_construction):
+    contract, plan, _, _ = guarded
+    root = contract.require_assets(["minute"])[0].resolved_path
+    source = root / "data/part.parquet"
+    injection = root / "data/unbound.pq"
+    if before_construction:
+        injection.write_bytes(source.read_bytes())
+        with pytest.raises(ValueError, match="partition_sha256"):
+            PublishedParquetFrameReader(contract, plan)
+    else:
+        reader = PublishedParquetFrameReader(contract, plan)
+        injection.write_bytes(source.read_bytes())
+        with pytest.raises(ValueError, match="inventory"):
+            reader.load(["000001.SZ"], "2026-06-08", "2026-06-08 23:59")
+
+
+@pytest.mark.parametrize(
+    "ignored",
+    [
+        ".metadata.pq",
+        "_metadata.pq",
+        ".cache/data.pq",
+        "_cache/data.pq",
+        "nested/.cache/data.pq",
+        "nested/_cache/data.pq",
+    ],
+)
+def test_arrow_ignored_metadata_and_parent_prefixes_not_data(guarded, ignored):
+    contract, plan, _, _ = guarded
+    root = contract.require_assets(["minute"])[0].resolved_path
+    reader = PublishedParquetFrameReader(contract, plan)
+    ignored_path = root / "data" / ignored
+    ignored_path.parent.mkdir(parents=True, exist_ok=True)
+    ignored_path.write_bytes(b"not parquet metadata")
+    assert len(reader.load(["000001.SZ"], "2026-06-08", "2026-06-08 23:59")) == 1
+
+
+def test_bound_nonstandard_suffix_is_read_and_hash_checked(guarded):
+    contract, _, _, _ = guarded
+    root = contract.require_assets(["minute"])[0].resolved_path
+    source = root / "data/part.parquet"
+    renamed = root / "data/part.pq"
+    source.rename(renamed)
+    contract, plan = _rewrite_registry(
+        guarded, lambda entry: entry.update(partition_sha256={"data/part.pq": _hash(renamed)})
+    )
+    reader = PublishedParquetFrameReader(contract, plan)
+    assert len(reader.load(["000001.SZ"], "2026-06-08", "2026-06-08 23:59")) == 1
+    renamed.write_bytes(b"changed")
+    with pytest.raises(ValueError, match="hash|identity"):
+        reader.load(["000001.SZ"], "2026-06-08", "2026-06-08 23:59")
+
+
+@pytest.mark.parametrize("name", ["link.pq", "_ignored/link.pq"])
+def test_directory_symlinks_remain_rejected_for_any_suffix(guarded, name):
+    contract, plan, _, _ = guarded
+    root = contract.require_assets(["minute"])[0].resolved_path
+    reader = PublishedParquetFrameReader(contract, plan)
+    link = root / "data" / name
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to(root / "data/part.parquet")
+    with pytest.raises(ValueError, match="symlink"):
+        reader.load(["000001.SZ"], "2026-06-08", "2026-06-08 23:59")
