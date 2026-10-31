@@ -673,3 +673,7 @@ marketdata contract assess --artifacts-root /external/data-owner \
 旧 inspect 的 severity 门禁保持原义。检查期间捕获到发布变化会拒绝混合版本的结果。
 将需要保留的输出重定向到任务数据目录。`contract inspect --out` 有写报告副作用，
 Agent 只读调用应省略该参数。
+
+历史分钟映射涉及的 `validate-minute-partition` 输出含可选 `code_identity`，保留
+sidecar 中的规范代码、源请求代码和观察到的响应代码。不涉及映射的凭证省略此字段。
+生效区间和证据限制见[数据契约](contracts.md#historical-minute-code-identity)。

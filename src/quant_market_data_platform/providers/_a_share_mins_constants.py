@@ -9,8 +9,9 @@ it without creating a circular import.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import pyarrow as pa
 
@@ -136,6 +137,7 @@ class _MinuteProgress:
     universe_source: str
     expected_symbols: frozenset[str]
     request_policy: TushareRequestPolicy
+    code_identity: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

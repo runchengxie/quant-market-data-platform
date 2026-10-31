@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 601,
-    "python_lines": 141286,
+    "python_files": 603,
+    "python_lines": 141627,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "2204cf7823976371e3a0296d6a504a14ac2c6ff4",
-    "reason": "Add opt-in version-bound minute research guards, mapped-byte and scope enforcement, persisted earlier-history bounds, and synthetic regressions. Exactly 4 Python files and 1148 net physical Python lines. No structural, complexity, oversized-function/file, exclusion, coverage, security or reserved-headroom allowance increases.",
-    "exit_condition": "Remove this exact 4-file/1148-line allowance when these reader guards and configurable history bounds are retired or consolidated with equivalent identity-drift, whole-stock-day, calendar, market-scope, dry-run and resume regressions. Preserve prior retirement conditions."
+    "source_revision": "a5e2f9d1dc83af0db7054dbe3f671a4d5bb91747",
+    "reason": "Add dated same-security minute request identity translation, observed source request/response lineage, promotion and CLI propagation, plus collision, date-boundary and partial-resume regressions. Exactly 2 Python files and 341 net physical Python lines. No structural, complexity, debt, typing, exclusion, oversized-file/function, coverage, security or reserved-headroom allowance increases.",
+    "exit_condition": "Remove this exact 2-file/341-line feature allowance when the dated minute identity helper and its lineage contract are retired or consolidated with equivalent request-collision, mixed-response, effective-date, absorbed-security separation, unchanged-values, promotion, CLI and resume regressions. Preserve all prior retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "2204cf7823976371e3a0296d6a504a14ac2c6ff4",
+      "reason": "Add opt-in version-bound minute research guards, mapped-byte and scope enforcement, persisted earlier-history bounds, and synthetic regressions. Exactly 4 Python files and 1148 net physical Python lines. No structural, complexity, oversized-function/file, exclusion, coverage, security or reserved-headroom allowance increases.",
+      "exit_condition": "Remove this exact 4-file/1148-line allowance when these reader guards and configurable history bounds are retired or consolidated with equivalent identity-drift, whole-stock-day, calendar, market-scope, dry-run and resume regressions. Preserve prior retirement conditions."
+    },
     {
       "source_revision": "8d8293099de93afa5c3ca8a7abc86dad8d0908df",
       "reason": "Add bounded read-only capability discovery and scoped publication trust assessment, reusing inspect/capture with unknown PIT/content/coverage, freshness skip protection and JSON discovery regressions. Exactly 2 Python files and 406 net physical Python lines. Existing function-length, complexity, exclusion, oversized-file, coverage and security limits remain unchanged; no reserved headroom.",

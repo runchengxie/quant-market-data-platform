@@ -40,7 +40,10 @@ from quant_market_data_platform.providers._a_share_mins_universe import (
     _historical_symbols,
     _resolve_minute_universe,
 )
-from quant_market_data_platform.providers._bse_code_mapping import bse_minute_request_symbol
+from quant_market_data_platform.providers._minute_code_identity import (
+    request_identity,
+    validate_request_identities,
+)
 from quant_market_data_platform.providers._minute_provider_exceptions import (
     load_provider_no_data_exclusions,
 )
@@ -194,6 +197,7 @@ def _build_day_progress(  # noqa: PLR0913
                 f"{universe_rule}:provider_no_data_exceptions={exclusions.policy_sha256[:16]}"
             )
             universe_source = f"{universe_source}:audited_provider_no_data_exclusions"
+    validate_request_identities(sorted(expected_symbols), trade_date)
     if not expected_symbols:
         raise ValueError(f"No acquisition symbols remain for {trade_date}")
     progress = _MinuteProgress(
@@ -218,10 +222,11 @@ def _fetch_validated_minute_batch(  # noqa: PLR0913
     quota_ledger: Any | None,
     *,
     cooldown_seconds: float,
+    code_identity: dict[str, Any] | None = None,
 ) -> tuple[list[pd.DataFrame], set[str], dict[str, str], int]:
     """Fetch a batch and bisect incomplete responses down to individual symbols."""
 
-    request_symbols = [bse_minute_request_symbol(symbol, trade_date) for symbol in symbols]
+    request_symbols = validate_request_identities(symbols, trade_date)
     raw = _fetch_minute_batch(
         pro,
         request_symbols,
@@ -234,6 +239,19 @@ def _fetch_validated_minute_batch(  # noqa: PLR0913
         canonical_by_request = dict(zip(request_symbols, symbols, strict=True))
         raw = raw.copy()
         response_symbols = raw["ts_code"].astype(str).str.strip().str.upper()
+        for symbol in symbols:
+            identity = request_identity(symbol, trade_date)
+            if identity is None:
+                continue
+            observed = sorted(set(response_symbols) & {symbol, identity["request_symbol"]})
+            if len(observed) > 1:
+                raise ValueError(f"Conflicting minute response identities for {symbol}: {observed}")
+            if code_identity is not None:
+                prior = code_identity.get(symbol, {}).get("response_symbols", [])
+                code_identity[symbol] = {
+                    **identity,
+                    "response_symbols": sorted(set(prior) | set(observed)),
+                }
         raw["ts_code"] = response_symbols.map(canonical_by_request).fillna(response_symbols)
     frame, valid_symbols, issues = _validate_batch_frame(
         raw,
@@ -263,6 +281,7 @@ def _fetch_validated_minute_batch(  # noqa: PLR0913
             policy,
             quota_ledger,
             cooldown_seconds=cooldown_seconds,
+            code_identity=code_identity,
         )
         frames.extend(child_frames)
         valid_symbols.update(child_valid)
