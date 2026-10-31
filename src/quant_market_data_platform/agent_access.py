@@ -110,7 +110,7 @@ def assess(args: argparse.Namespace) -> dict[str, Any]:
     )
     checks = []
     for ref in snapshot.assets:
-        checks.extend(_asset_checks(ref, report, args))
+        checks.extend(_asset_checks(ref, report, args, snapshot.contract_sha256))
     for issue in report["quality_checks"]:
         checks.append(
             _check(
@@ -141,10 +141,17 @@ def assess(args: argparse.Namespace) -> dict[str, Any]:
 
 
 def _asset_checks(
-    ref: PublishedAssetRef, report: dict[str, Any], args: argparse.Namespace
+    ref: PublishedAssetRef,
+    report: dict[str, Any],
+    args: argparse.Namespace,
+    contract_sha256: str,
 ) -> list[dict[str, Any]]:
     checks = []
-    evidence = {"kind": "manifest_sha256", "sha256": ref.manifest_sha256}
+    evidence = {
+        "kind": "publication_metadata",
+        "manifest_sha256": ref.manifest_sha256,
+        "contract_sha256": contract_sha256,
+    }
     status = ref.manifest.get("status")
     record = report["assets"][ref.key]
     freshness_issues = {

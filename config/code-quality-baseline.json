@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 597,
-    "python_lines": 140131,
+    "python_lines": 140138,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -19,8 +19,8 @@
   },
   "change_record": {
     "source_revision": "8d8293099de93afa5c3ca8a7abc86dad8d0908df",
-    "reason": "Add bounded read-only capability discovery and scoped publication trust assessment, reusing inspect/capture with unknown PIT/content/coverage, freshness skip protection and JSON discovery regressions. Exactly 2 Python files and 399 net physical Python lines. Existing function-length, complexity, exclusion, oversized-file, coverage and security limits remain unchanged; no reserved headroom.",
-    "exit_condition": "Remove this exact 2-file/399-line feature allowance when these agent interfaces are retired or consolidated with equivalent read-only discovery, drift rejection, unknown-evidence, freshness and JSON invocation regressions. Preserve all prior retirement conditions."
+    "reason": "Add bounded read-only capability discovery and scoped publication trust assessment, reusing inspect/capture with unknown PIT/content/coverage, freshness skip protection and JSON discovery regressions. Exactly 2 Python files and 406 net physical Python lines. Existing function-length, complexity, exclusion, oversized-file, coverage and security limits remain unchanged; no reserved headroom.",
+    "exit_condition": "Remove this exact 2-file/406-line feature allowance when these agent interfaces are retired or consolidated with equivalent read-only discovery, drift rejection, unknown-evidence, freshness and JSON invocation regressions. Preserve all prior retirement conditions."
   },
   "previous_change_records": [
     {
