@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 597,
-    "python_lines": 140138,
+    "python_files": 601,
+    "python_lines": 141215,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "8d8293099de93afa5c3ca8a7abc86dad8d0908df",
-    "reason": "Add bounded read-only capability discovery and scoped publication trust assessment, reusing inspect/capture with unknown PIT/content/coverage, freshness skip protection and JSON discovery regressions. Exactly 2 Python files and 406 net physical Python lines. Existing function-length, complexity, exclusion, oversized-file, coverage and security limits remain unchanged; no reserved headroom.",
-    "exit_condition": "Remove this exact 2-file/406-line feature allowance when these agent interfaces are retired or consolidated with equivalent read-only discovery, drift rejection, unknown-evidence, freshness and JSON invocation regressions. Preserve all prior retirement conditions."
+    "source_revision": "2204cf7823976371e3a0296d6a504a14ac2c6ff4",
+    "reason": "Add opt-in version-bound minute research guards, mapped-byte and scope enforcement, persisted earlier-history bounds, and synthetic regressions. Exactly 4 Python files and 1077 net physical Python lines. No structural, complexity, oversized-function/file, exclusion, coverage, security or reserved-headroom allowance increases.",
+    "exit_condition": "Remove this exact 4-file/1077-line allowance when these reader guards and configurable history bounds are retired or consolidated with equivalent identity-drift, whole-stock-day, calendar, market-scope, dry-run and resume regressions. Preserve prior retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "8d8293099de93afa5c3ca8a7abc86dad8d0908df",
+      "reason": "Add bounded read-only capability discovery and scoped publication trust assessment, reusing inspect/capture with unknown PIT/content/coverage, freshness skip protection and JSON discovery regressions. Exactly 2 Python files and 406 net physical Python lines. Existing function-length, complexity, exclusion, oversized-file, coverage and security limits remain unchanged; no reserved headroom.",
+      "exit_condition": "Remove this exact 2-file/406-line feature allowance when these agent interfaces are retired or consolidated with equivalent read-only discovery, drift rejection, unknown-evidence, freshness and JSON invocation regressions. Preserve all prior retirement conditions."
+    },
     {
       "source_revision": "4dab5007216467aecfbaae19f94568557ff85af0",
       "reason": "Capture and recheck publication metadata identities, parse and hash the same serialized bytes, and expose a read-only CLI. Exactly 85 net implementation Python lines in two existing source files plus 147 lines in one new synthetic regression file. One Python file and 232 physical lines are the exact feature/test allowance; no structural, complexity, exclusion, oversized-file/function, coverage, security or reserved-headroom allowances increase.",

@@ -9,6 +9,9 @@
 > source_of_truth: yes
 > superseded_by: n/a
 
+分钟研究读取的范围限定质量保护与可配置历史起点，见
+[分钟质量保护](operations/minute-quality-guard.md)。
+
 本页是运维入口索引。具体命令按主题拆到 `docs/operations/`，避免把凭证、A 股采集、备份和本地治理混在同一页。
 
 ## 推荐入口
