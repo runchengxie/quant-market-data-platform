@@ -7,7 +7,7 @@ import json
 from typing import Any
 
 from .contract_health import ContractInspectionOptions, inspect_current_contract
-from .published_assets import PublishedAssetContract, PublishedAssetContractError
+from .published_assets import PublishedAssetContract, PublishedAssetContractError, PublishedAssetRef
 
 
 def capabilities() -> dict[str, Any]:
@@ -110,77 +110,7 @@ def assess(args: argparse.Namespace) -> dict[str, Any]:
     )
     checks = []
     for ref in snapshot.assets:
-        evidence = {"kind": "manifest_sha256", "sha256": ref.manifest_sha256}
-        status = ref.manifest.get("status")
-        record = report["assets"][ref.key]
-        freshness_issues = {
-            "asset_as_of_missing_for_target_date",
-            "asset_as_of_lagging_target_date",
-        }
-        failed = any(
-            issue["asset_key"] == ref.key and issue["check"] in freshness_issues
-            for issue in report["quality_checks"]
-        )
-        outcome = (
-            "unknown"
-            if not args.target_date or not record.get("as_of") or not record.get("exists")
-            else ("failed" if failed else "passed")
-        )
-        checks.append(
-            _check(
-                ref.key,
-                "freshness",
-                outcome,
-                (
-                    record.get("as_of"),
-                    f"publication as_of meets {args.target_date or 'an explicit target date'}",
-                ),
-                evidence,
-            )
-        )
-        checks.extend(
-            [
-                _check(
-                    ref.key,
-                    "manifest_identity",
-                    "passed",
-                    (ref.manifest_sha256, "captured manifest remains unchanged"),
-                    evidence,
-                ),
-                _check(
-                    ref.key,
-                    "publication_complete",
-                    "passed"
-                    if status == "completed"
-                    else "unknown"
-                    if status is None
-                    else "failed",
-                    (status, "completed"),
-                    evidence,
-                ),
-                _check(
-                    ref.key,
-                    "data_content_integrity",
-                    "unknown",
-                    (None, "independent verification of data bytes required"),
-                    evidence,
-                ),
-                _check(
-                    ref.key,
-                    "historical_pit",
-                    "unknown",
-                    (None, "research-window-specific observation/disclosure evidence required"),
-                    evidence,
-                ),
-                _check(
-                    ref.key,
-                    "contiguous_coverage",
-                    "unknown",
-                    (None, "per-session coverage evidence required; bounds alone are insufficient"),
-                    evidence,
-                ),
-            ]
-        )
+        checks.extend(_asset_checks(ref, report, args))
     for issue in report["quality_checks"]:
         checks.append(
             _check(
@@ -208,6 +138,81 @@ def assess(args: argparse.Namespace) -> dict[str, Any]:
             "No economic or promotion approval",
         ],
     }
+
+
+def _asset_checks(
+    ref: PublishedAssetRef, report: dict[str, Any], args: argparse.Namespace
+) -> list[dict[str, Any]]:
+    checks = []
+    evidence = {"kind": "manifest_sha256", "sha256": ref.manifest_sha256}
+    status = ref.manifest.get("status")
+    record = report["assets"][ref.key]
+    freshness_issues = {
+        "asset_as_of_missing_for_target_date",
+        "asset_as_of_lagging_target_date",
+    }
+    failed = any(
+        issue["asset_key"] == ref.key and issue["check"] in freshness_issues
+        for issue in report["quality_checks"]
+    )
+    outcome = (
+        "unknown"
+        if not args.target_date or not record.get("as_of") or not record.get("exists")
+        else ("failed" if failed else "passed")
+    )
+    checks.append(
+        _check(
+            ref.key,
+            "freshness",
+            outcome,
+            (
+                record.get("as_of"),
+                f"publication as_of meets {args.target_date or 'an explicit target date'}",
+            ),
+            evidence,
+        )
+    )
+    checks.extend(
+        [
+            _check(
+                ref.key,
+                "manifest_identity",
+                "passed",
+                (ref.manifest_sha256, "captured manifest remains unchanged"),
+                evidence,
+            ),
+            _check(
+                ref.key,
+                "publication_complete",
+                "passed" if status == "completed" else "unknown" if status is None else "failed",
+                (status, "completed"),
+                evidence,
+            ),
+            _check(
+                ref.key,
+                "data_content_integrity",
+                "unknown",
+                (None, "independent verification of data bytes required"),
+                evidence,
+            ),
+            _check(
+                ref.key,
+                "historical_pit",
+                "unknown",
+                (None, "research-window-specific observation/disclosure evidence required"),
+                evidence,
+            ),
+            _check(
+                ref.key,
+                "contiguous_coverage",
+                "unknown",
+                (None, "per-session coverage evidence required; bounds alone are insufficient"),
+                evidence,
+            ),
+        ]
+    )
+
+    return checks
 
 
 def handle_capabilities(_args: argparse.Namespace) -> int:
