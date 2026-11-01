@@ -19,6 +19,10 @@ actual partitions and gaps. The default full-market `load_current` is unchanged.
 > - source_of_truth: yes
 > - superseded_by: n/a
 
+## Dataset semantic contracts
+
+`market_data_platform.dataset_contract.v1` uses a list of unique, nonempty strings for `primary_key`; omission and an empty list are allowed. Column types, names and order are not coerced. Public validation and writing APIs reject non-string members before replacing an existing contract. See [L2 ingestion gates](l2-ingestion-gate.en.md) for the full semantics.
+
 ## Artifact root
 
 The shared artifact root defines the storage boundary between data tooling and strategy repositories. Configure it with:
@@ -293,3 +297,30 @@ The script's read-only `--status-only` returns `a_share.minute_operational_statu
 `status`, `target_date`, `date_max`, `last_run` and `last_failed_run`. `behind` exits 75.
 Current data does not certify a natural scheduler run or message delivery. Malformed history
 or paths escaping the owner root fail explicitly instead of hiding evidence.
+
+
+## Research input metadata capture
+
+`marketdata.asset-snapshot.v1` is a read-only receipt of captured publication references, not a new
+market-data asset. It reuses `PublishedAssetRef` identities and rejects observed metadata drift.
+`integrity_scope=manifest_identity`, `data_content_verified=false`, and `atomic_transaction=false`
+are substantive limits. The canonical manifest fingerprint is not a Parquet content hash. See the
+[contract capture command](operations/published-asset-snapshot.en.md) for the API and reproduction.
+
+## Agent discovery and assessment
+
+`marketdata capabilities` describes the bounded read interfaces without reading
+configuration or data. `marketdata contract assess --artifacts-root /external/data-owner
+--asset daily_clean --target-date 20261030 --require-start-date 20260101` emits
+`quant.data_assessment.v1`. Explicit selection is limited to 50 unique assets.
+The adapter reuses inspect and capture, preserves legacy severity policy, and
+rejects observed metadata drift. It does not publish data or write output files.
+
+Stable check IDs distinguish manifest identity, publication completion, freshness,
+data-content integrity, contiguous coverage and historical PIT. Missing evidence
+is `unknown`, never a pass. Freshness is scoped to publication metadata and does
+not prove daily coverage. Metadata snapshots do not verify the data bytes.
+`research_ready=false` requires further research validation. Exit zero means the
+assessment was produced, not that unknown conditions passed; a known incomplete
+publication exits nonzero. Discovery grants no permission. Omit inspect's `--out`
+when using its read-only invocation.

@@ -44,6 +44,7 @@ from quant_market_data_platform.providers._a_share_mins_validation import (
     _normalize_stock_dates,
     _validate_batch_frame,
 )
+from quant_market_data_platform.providers._minute_code_identity import validated_identity_lineage
 from quant_market_data_platform.providers.tushare_a_share_dates import _validate_date
 
 __all__ = [
@@ -365,6 +366,7 @@ def validate_complete_minute_partition(
         for exchange in ("SH", "SZ", "BJ")
     }
     partition_path = part_dir / "part-00000.parquet"
+    lineage = validated_identity_lineage(payload, expected_symbols, trade_date)
     return {
         "schema_version": "tushare.a_share.minute_partition.promotion.v1",
         "trade_date": trade_date,
@@ -381,6 +383,7 @@ def validate_complete_minute_partition(
         "universe_rule": universe_rule,
         "universe_source": str(payload.get("universe_source", "")),
         "mirror_generated_at": str(payload.get("generated_at", "")),
+        **({"code_identity": lineage} if lineage else {}),
         "request_policy": request_policy,
     }
 
@@ -421,6 +424,7 @@ def _write_completeness(
         "completed_symbols": sorted(completed_symbols),
         "missing_request_symbols": sorted(expected_symbols - completed_symbols),
         "partition": partition,
+        "code_identity": progress.code_identity,
         "request_policy": {
             "attempts": progress.request_policy.attempts,
             "retry_sleep_seconds": progress.request_policy.retry_sleep_seconds,

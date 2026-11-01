@@ -118,22 +118,26 @@ def _safe_path(
     return lexical, resolved
 
 
-def _load_json_mapping(path: Path) -> dict[str, Any]:
+def _load_json_snapshot(path: Path) -> tuple[dict[str, Any], str]:
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+        content = path.read_bytes()
+        payload = json.loads(content.decode("utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise PublishedAssetContractError(
             f"Cannot read current-asset contract {path}: {exc}"
         ) from exc
-    return _mapping(payload, context=f"Current-asset contract {path}")
+    return _mapping(payload, context=f"Current-asset contract {path}"), hashlib.sha256(
+        content
+    ).hexdigest()
 
 
-def _load_yaml_mapping(path: Path) -> dict[str, Any]:
+def _load_yaml_snapshot(path: Path) -> tuple[dict[str, Any], str]:
     try:
-        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
-    except (OSError, yaml.YAMLError) as exc:
+        content = path.read_bytes()
+        payload = yaml.safe_load(content.decode("utf-8"))
+    except (OSError, UnicodeError, yaml.YAMLError) as exc:
         raise PublishedAssetContractError(f"Cannot read asset manifest {path}: {exc}") from exc
-    return _mapping(payload, context=f"Asset manifest {path}")
+    return _mapping(payload, context=f"Asset manifest {path}"), hashlib.sha256(content).hexdigest()
 
 
 def _contract_artifacts_root(
@@ -278,6 +282,42 @@ class PublishedAssetRef:
 
 
 @dataclass(frozen=True)
+class PublishedAssetSnapshot:
+    """Pinned metadata references; not a data-tree scan or filesystem transaction."""
+
+    contract_path: Path
+    contract_sha256: str
+    assets: tuple[PublishedAssetRef, ...]
+
+    def validate_metadata(self) -> None:
+        """Recheck pinned manifests without following later current aliases."""
+        for ref in self.assets:
+            try:
+                physical = (
+                    ref.resolved_path.resolve(strict=True) == ref.resolved_path
+                    and ref.manifest_path.resolve(strict=True) == ref.manifest_path
+                )
+                unchanged = physical and _sha256_file(ref.manifest_path) == ref.manifest_sha256
+            except OSError as exc:
+                raise PublishedAssetContractError(
+                    "Captured asset metadata changed or disappeared"
+                ) from exc
+            if not unchanged:
+                raise PublishedAssetContractError("Captured asset metadata changed")
+
+    def provenance_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": "marketdata.asset-snapshot.v1",
+            "contract_path": str(self.contract_path),
+            "contract_sha256": self.contract_sha256,
+            "integrity_scope": "manifest_identity",
+            "data_content_verified": False,
+            "atomic_transaction": False,
+            "assets": [ref.provenance_dict() for ref in self.assets],
+        }
+
+
+@dataclass(frozen=True)
 class PublishedAssetContract:
     """Validated, framework-neutral view of a current-asset contract."""
 
@@ -321,7 +361,7 @@ class PublishedAssetContract:
             raise PublishedAssetContractError(
                 f"Current-asset contract does not exist: {candidate}"
             ) from exc
-        payload = _load_json_mapping(contract_path)
+        payload, contract_digest = _load_json_snapshot(contract_path)
         header = _mapping(payload.get("contract"), context="Current-asset contract.contract")
         raw_assets = _mapping(payload.get("assets"), context="Current-asset contract.assets")
         root = _contract_artifacts_root(contract_path, header, artifacts_root)
@@ -334,7 +374,7 @@ class PublishedAssetContract:
             market=market,
             provider=provider,
             version=version,
-            contract_sha256=_sha256_file(contract_path),
+            contract_sha256=contract_digest,
             payload=_freeze(payload),
             assets=_validated_contract_assets(raw_assets),
         )
@@ -346,9 +386,33 @@ class PublishedAssetContract:
         return tuple(sorted(self.assets))
 
     def require_assets(self, keys: Iterable[str]) -> tuple[PublishedAssetRef, ...]:
-        """Resolve several required assets in caller-specified order."""
+        """Resolve required assets in order, rejecting observed metadata drift."""
 
-        return tuple(self.asset(key) for key in keys)
+        return self.capture(keys).assets
+
+    def capture(self, keys: Iterable[str]) -> PublishedAssetSnapshot:
+        """Optimistically capture and recheck metadata without scanning data bytes.
+
+        Publication targets are pinned; aliases may advance after return. This
+        does not lock writers, prevent later mutations, or exclude ABA races.
+        """
+        self._validate_contract_identity()
+        refs = tuple(self.asset(key) for key in keys)
+        snapshot = PublishedAssetSnapshot(self.path, self.contract_sha256, refs)
+        snapshot.validate_metadata()
+        for ref in refs:
+            if self.asset(ref.key) != ref:
+                raise PublishedAssetContractError("Asset identity changed during capture")
+        self._validate_contract_identity()
+        return snapshot
+
+    def _validate_contract_identity(self) -> None:
+        try:
+            digest = _sha256_file(self.path)
+        except OSError as exc:
+            raise PublishedAssetContractError("Current contract changed or disappeared") from exc
+        if digest != self.contract_sha256:
+            raise PublishedAssetContractError("Current contract changed during capture")
 
     def asset(self, key: str) -> PublishedAssetRef:
         """Load and validate one published asset and its complete manifest."""
@@ -396,7 +460,7 @@ class PublishedAssetContract:
             raise PublishedAssetUnavailableError(
                 f"Asset '{normalized_key}' manifest is not a file: {manifest_path}"
             )
-        manifest_payload = _load_yaml_mapping(manifest_path)
+        manifest_payload, manifest_digest = _load_yaml_snapshot(manifest_path)
         if not manifest_payload:
             raise PublishedAssetContractError(
                 f"Asset '{normalized_key}' manifest must not be empty: {manifest_path}"
@@ -414,6 +478,6 @@ class PublishedAssetContract:
             manifest_path=manifest_path,
             manifest=_freeze(manifest_payload),
             contract_sha256=self.contract_sha256,
-            manifest_sha256=_sha256_file(manifest_path),
+            manifest_sha256=manifest_digest,
             content_fingerprint=_canonical_sha256(manifest_payload),
         )

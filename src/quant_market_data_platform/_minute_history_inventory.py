@@ -9,6 +9,8 @@ from typing import Any
 
 import pyarrow.parquet as pq
 
+from quant_market_data_platform._minute_history_scope import read_history_start
+
 
 def read_json(path: Path, warnings: list[str]) -> dict[str, Any]:
     if not path.exists():
@@ -91,11 +93,12 @@ def _open_dates(root: Path, minimum: str | None, warnings: list[str]) -> set[str
     if not path.exists() or not minimum:
         return None
     try:
+        start_date = read_history_start(root / "metadata/minute_backfill/reverse_scheduler")
         table = pq.ParquetFile(path).read(columns=["cal_date", "is_open"]).to_pydict()
         return {
             str(day).replace("-", "")[:8]
             for day, opened in zip(table["cal_date"], table["is_open"], strict=True)
-            if str(opened) == "1" and "20160101" <= str(day) < minimum
+            if str(opened) == "1" and start_date <= str(day) < minimum
         }
     except (OSError, ValueError, KeyError) as exc:
         warnings.append(f"calendar: {exc}")

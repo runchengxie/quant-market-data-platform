@@ -218,6 +218,7 @@ def _mirror_resolve_day(  # noqa: PLR0913
     ):
         # A partial sidecar is authoritative. Old rows can remain in a force-refresh
         # partition, but only symbols completed by that run may be resumed as done.
+        progress.code_identity.update(sidecar.get("code_identity", {}))
         completed_symbols = {str(value) for value in sidecar["completed_symbols"]}
         completed_symbols.intersection_update(
             _complete_symbols(existing, trade_date=trade_date), expected_symbols
@@ -312,6 +313,7 @@ def _mirror_fetch_day(  # noqa: PLR0913
                 policy,
                 quota_ledger,
                 cooldown_seconds=options.cooldown_seconds,
+                code_identity=progress.code_identity,
             )
         except BaseException as exc:
             _persist_progress(

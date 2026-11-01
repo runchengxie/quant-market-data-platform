@@ -9,6 +9,10 @@
 > source_of_truth: yes
 > superseded_by: n/a
 
+## 数据集语义契约
+
+`market_data_platform.dataset_contract.v1` 的 `primary_key` 使用互不重复的非空字符串列表，允许省略或为空列表。不转换列名的类型、内容或顺序。公开校验和写入 API 拒绝非字符串成员。无效输入不会替换已有契约。完整语义见 [L2 数据接入门禁](l2-ingestion-gate.md)。
+
 ## 数据产物根目录
 
 沪深历史分钟资产可通过独立契约
@@ -616,3 +620,33 @@ PDF `sha256`、`official_url`、正整数 `pdf_pages`、含时区的 `verified_a
 此资产始终为 `partial_reconstructed`，不认证历史持有、完整 PIT、全市场覆盖或整行
 selector。旧 `read_research_event` 不接受该新 schema。生产发布、current 和 seal
 均不使用此模块。
+
+
+## 研究输入元数据记录
+
+`marketdata.asset-snapshot.v1` 保存已固定发布引用的只读元数据。
+它复用 `PublishedAssetRef` 身份，并拒绝检测到的元数据变化。
+`integrity_scope=manifest_identity`、`data_content_verified=false`、`atomic_transaction=false`
+限定记录的校验范围。manifest 的规范化指纹仅覆盖元数据。入口和复现方式见
+[契约采集命令](operations/published-asset-snapshot.md)。
+
+### 历史分钟请求代码与规范证券代码 {#historical-minute-code-identity}
+
+TuShare 分钟分区继续使用股票池的规范 `ts_code`。上海医药的同一上市证券在
+`19940324 <= trade_date < 20100305` 内以 `600849.SH` 请求，响应中的该代码映射为
+`601607.SH`。从代码变更生效日 `20100305` 起请求 `601607.SH`，不以复牌日作为代码
+边界。上市日期和代码沿革见发行人[2011 年半年度报告](https://static.cninfo.com.cn/finalpage/2011-08-15/59816208.PDF)。
+精确生效日另据发行人[2010 年年报财务附注](https://static.sse.com.cn/cs/zhs/scfw/gg/ssgs/2011-03-09/601607_2010_n.pdf)
+的已索引正文及[2010 年 3 月 8 日复牌公告](https://epaper.stcn.com/paper/zqsb/page/1/2010-03-08/C007/58121267983257628.pdf)。
+这两项精确日期来源目前仅核对了索引文本，未取得可验证的 PDF 本体。2011 年半年度
+报告本体已核验，但它本身不提供精确变更日。血缘字段据此标记精确日期证据阶段。
+停牌期间仍由 daily / daily_basic 交易股票池决定是否采集，不补造分钟行情。
+`600607.SH`、`600842.SH` 是被吸收合并的其他证券，不参与这项代码映射。
+
+新写入的 `_minute_mirror.json` 使用 `code_identity` 记录映射涉及的规范代码、实际请求
+代码和实际观察到的响应代码。上海医药条目另含生效区间和来源。北交所已有请求代码
+映射也记录同样的请求、响应标识。绑定的 partial 分区恢复时保留这些记录。
+`minute_partition.promotion.v1` 凭证携带同一字段，并通过 sidecar 哈希绑定。
+上述上海医药区间的规范分区缺少有效标识血缘时，promotion 校验失败。
+历史代码与规范代码同时产生相同请求标识时拒绝采集。响应归一后分钟键重复时拒绝该
+证券，不去重相加。行情数值及 Parquet 列结构保持不变。

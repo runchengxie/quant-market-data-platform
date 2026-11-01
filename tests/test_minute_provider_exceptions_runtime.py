@@ -143,3 +143,48 @@ def test_invalid_policy_rejected_even_on_inapplicable_date(tmp_path, monkeypatch
     _write_policy(path, allow=False)
     with pytest.raises(ProviderNoDataExceptionError, match="acquisition exclusion"):
         _day_progress(tmp_path, monkeypatch, date="20160105", codes=["600000.SH"], policy_path=path)
+
+
+@pytest.mark.parametrize("field", ["provider", "dataset"])
+@pytest.mark.parametrize("value", [None, "unrelated"])
+@pytest.mark.parametrize("date", ["20160104", "20160105"])
+def test_acquisition_rejects_wrong_policy_source_even_without_active_entries(
+    tmp_path, monkeypatch, field, value, date
+):
+    path = tmp_path / "exceptions.json"
+    _write_policy(path, allow=True)
+    payload = json.loads(path.read_text())
+    if value is None:
+        del payload[field]
+    else:
+        payload[field] = value
+    path.write_text(json.dumps(payload))
+    before = path.read_bytes()
+    with pytest.raises(ProviderNoDataExceptionError, match="source identity"):
+        _day_progress(
+            tmp_path,
+            monkeypatch,
+            date=date,
+            codes=["001872.SZ", "600000.SH"],
+            policy_path=path,
+        )
+    assert path.read_bytes() == before
+    assert not (tmp_path / f"trade_date={date}").exists()
+
+
+def test_generic_policy_loader_preserves_optional_source_binding(tmp_path):
+    path = tmp_path / "exceptions.json"
+    _write_policy(path, allow=True)
+    payload = json.loads(path.read_text())
+    payload.update(provider="custom", dataset="custom_minute")
+    path.write_text(json.dumps(payload))
+    generic = load_provider_no_data_exclusions(path, trade_date="20160104")
+    bound = load_provider_no_data_exclusions(
+        path, trade_date="20160104", expected_source=("custom", "custom_minute")
+    )
+    assert bound == generic
+    assert bound.codes == ("001872.SZ",)
+    with pytest.raises(ProviderNoDataExceptionError, match="source identity"):
+        load_provider_no_data_exclusions(
+            path, trade_date="20160104", expected_source=("tushare", "stk_mins")
+        )

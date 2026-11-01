@@ -253,3 +253,5 @@ candidate with the correct universe rather than rewriting old evidence. Supplier
 availability still requires verification for each historical stock-day.
 
 A configured provider-no-data policy is strictly validated for every trading date. Its policy marker is attached to the acquisition universe rule and source only when the policy has effective exception codes for that date, even if those codes do not intersect the day’s universe. Dates without effective exceptions retain their native universe identity; completeness and publication gates remain unchanged.
+
+Minute acquisition requires a provider-no-data policy with `provider: tushare` and `dataset: stk_mins`. The acquisition consumer checks this pair before reducing its universe, including dates with no active exclusions. Existing generic loader calls remain supported; other callers can bind their own pair with `expected_source`. Completeness, synthetic-bar and publication restrictions stay unchanged. Operators must verify and correct wrong or missing identities in existing policies before adopting the new version; this change does not rewrite policies or switch production releases.

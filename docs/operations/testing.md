@@ -16,21 +16,31 @@
 完整开发环境：
 
 ```bash
-uv sync --extra dev
-uv run --extra dev python scripts/dev/run_pytest_isolated.py -- -q
-uv run --extra dev python -m ruff check .
-uv run --extra dev python -m ruff format --check .
-uv run --extra dev ty check --error-on-warning
+uv sync --locked --extra dev
+uv run --locked --extra dev python scripts/dev/run_pytest_isolated.py -- -q
+uv run --locked --extra dev python -m ruff check .
+uv run --locked --extra dev python -m ruff format --check .
+uv run --locked --extra dev ty check --error-on-warning
 ```
 
 仓库通过 GitHub Actions 检查拉取请求和 `main` 推送。质量工作流运行公开快照边界检查、共享代码质量 ratchet、Ruff、pytest 和依赖审计，文档工作流执行 strict MkDocs 构建。PR 上的必需检查是合并门禁。
 
-作为 `research-workspace` 子模块使用时，工作区可能额外配置共享 `.githooks/pre-push`，在本地运行 Ruff、格式、`ty`、pytest、复杂度 ratchet、维护性 baseline、兼容层和架构治理。该共享 hook 属于工作区约定，不由本仓 `.pre-commit-config.yaml` 管理，也不替代 CI。`ty` 已合并迁移前的日常与发布检查范围，发布检查沿用同一配置。
+本仓没有登记 submodule。运行或修改本地 hook 前，先检查当前 Git hook 配置，关联 worktree 会共享该配置。hook 不替代必需 CI。`ty` 已合并迁移前的日常与发布检查范围，发布检查沿用同一配置。
+
+离线股票布局集成测试会执行真实的 staging 保护，要求输出文件系统至少有 20 GiB 空闲空间。即使使用小型合成样本，容量较小或基于内存的默认临时目录仍可能触发保护。运行全量测试前，可在空闲空间充足的文件系统中选择独立临时目录：
+
+```bash
+TEST_TMP_ROOT=/path/to/dedicated/test-scratch
+mkdir -p "$TEST_TMP_ROOT"
+TMPDIR="$TEST_TMP_ROOT" uv run --locked --extra dev python scripts/dev/run_pytest_isolated.py -- -q
+```
+
+临时目录应位于源码检出和生产数据之外。`TMPDIR` 只改变 fixture 的位置，不改变磁盘空间要求。空间检查失败时，不应通过降低保护门槛获得通过结果。
 
 完整测试在单个 pytest 进程中会累积较多内存。`run_pytest_isolated.py` 默认每 8 个测试文件启动一个进程，并在批次结束后释放内存。聚焦单个模块时仍可直接运行 `python -m pytest tests/<file>.py`。coverage 属于发布诊断，按目标模块运行：
 
 ```bash
-uv run --extra dev python -m pytest tests/<file>.py \
+uv run --locked --extra dev python -m pytest tests/<file>.py \
   --cov=quant_market_data_platform --cov-report=term-missing
 ```
 
@@ -53,7 +63,7 @@ uvx bandit -q -r src -lll
 带 DuckDB 查询能力：
 
 ```bash
-uv sync --extra dev --extra duckdb
+uv sync --locked --extra dev --extra duckdb
 ```
 
 ## Qlib 条件化测试
@@ -77,7 +87,7 @@ uv run --locked --python 3.12 --extra dev --extra qlib python -m pytest \
 带 TuShare 采集能力：
 
 ```bash
-uv sync --extra dev --extra tushare
+uv sync --locked --extra dev --extra tushare
 ```
 
 当前部分测试在导入阶段需要 `pyarrow`，完整测试建议用 `dev` extra 执行。系统 Python 下若无 `pyarrow`，相关 Parquet 测试可能无法收集。`tests/conftest.py` 会清理 `DATA_PLATFORM_ROOT`、`DATA_PLATFORM_METADATA_DB_PATH`、`DATA_PLATFORM_WAREHOUSE_DB_PATH` 和 `HK_DATA_PLATFORM_ROOT`，避免开发机 shell 配置污染路径解析测试。

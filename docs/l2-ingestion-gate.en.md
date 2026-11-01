@@ -10,6 +10,8 @@ Use `market_data_platform.dataset_contract.v1` to record semantics that cannot b
 
 Exchange event datasets must state their ordering rules. A contract may declare an exchange sequence only when it explicitly names the sequence column. A total order across channels must remain false unless the source protocol guarantees it. Quality overrides may be `ignore`, `research_only`, or `quarantine`. This lets a snapshot tolerate structurally valid empty book levels without weakening sequence or identity checks.
 
+`primary_key` must be a list of unique, nonempty strings; omission and an empty list remain valid. Numeric, boolean, null and nested values are not coerced into column names. Valid names and their order are preserved. Invalid contracts are rejected before creating output directories or replacing an existing file.
+
 ```json
 {
   "schema_version": "market_data_platform.dataset_contract.v1",

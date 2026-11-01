@@ -38,6 +38,10 @@ source_retrieved_at <= as_of
 第二个条件用于阻止晚抓的历史网页、晚获取的修订值或后来补齐的发布时间信息穿越回历史研究。
 
 同一个 `series_id + period_end` 存在多次修订时，PIT 读取器选择 as-of 当时已经可见的最新 vintage。
+`series_id` 和 `vintage_id` 去除两端空白后必须非空，目录中的 `series_id` 也遵循同一规则。
+`revision_number` 必须为有限的非负整数。整数值的数值字符串继续支持，并按数值排序。
+观测值拒绝正负无穷大及 `inf`、`Infinity` 等数值字符串。已有缺测值、有限值和其他非数值内容的处理不变，不改写原值。
+`revision_covered` 说明修订证据。其他数据质量需要单独验证。
 
 历史值如果缺少可靠发布时间或当时抓取证据，会标记：
 

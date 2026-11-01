@@ -47,6 +47,11 @@ downstream sample, while `labels/` contains only `tag` and `exclude` rows with a
 Install the optional dependency with `uv sync --extra quality`. Model-input, label, leakage,
 alpha, and portfolio checks remain in their downstream research projects.
 
+Before creating directories or writing, the pilot checks every input Parquet footer and the complete output plan. Inputs must not collide on canonical or labels filenames. Repeated source identities, existing output files (including symlinks or hardlinks), and symlinked output subdirectories are rejected. An existing output directory is allowed only when every planned leaf and manifest is new. Exclusive file creation also refuses a destination that appears after preflight.
+
+Keep inputs stable while the pilot runs. Later I/O failures may leave partial derived files; this is not atomic publication or automatic resume. Inspect that output and select a fresh directory instead of deleting or replacing raw inputs.
+
+
 For raw L2 files, duplicate identity checks are scoped by the resolved security column and ID
 column when a security column is available. For example, `SecuCode=000001, OrderID=7` and
 `SecuCode=000002, OrderID=7` are treated as different identities. The report exposes this
