@@ -68,6 +68,11 @@ uv sync --locked --extra dev --extra duckdb
 
 ## Qlib 条件化测试
 
+`qlib` extra 要求 `mlflow>=3.17.2`，防止解析器为升级其他依赖而退回存在已知漏洞的旧版本。
+[MLflow 3.17.2 的发布元数据](https://pypi.org/pypi/mlflow/3.17.2/json)要求 `pyarrow<26`，
+因此当前共享锁文件保留 Arrow 25。上游支持 Arrow 26 后，重新解析并运行全部 extras 的
+严格依赖审计和下述真实运行时测试；不得覆盖上游约束或忽略审计失败。
+
 标准 `dev` 门禁不安装 `pyqlib`。默认测试会检查原生 DataFrame 等价性、延迟导入和缺失
 依赖时的错误信息。真实 Qlib DataLoader 用例通过 `pytest.importorskip` 检测运行时，未安装
 `pyqlib` 时会明确跳过。
