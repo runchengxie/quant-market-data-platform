@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -85,29 +86,83 @@ def _classify_batch(batch: pa.RecordBatch, kind: str, offset: int) -> tuple[pa.T
     return canonical, labels
 
 
+@dataclass(frozen=True)
+class _PilotSource:
+    source: Path
+    canonical: Path
+    labels: Path
+
+
+def _check_destination(path: Path, output_dir: Path) -> None:
+    if path.exists() or path.is_symlink():
+        raise FileExistsError(f"Pilot output already exists: {path}")
+    for parent in (path.parent, output_dir):
+        if parent.is_symlink() or (parent.exists() and not parent.is_dir()):
+            raise ValueError(f"Pilot output parent must be a regular directory: {parent}")
+
+
+def _plan_pilot(options: L2PilotOptions) -> tuple[Path, list[_PilotSource]]:
+    """Validate every source and destination without creating or replacing any file."""
+    output_dir = Path(options.output_dir).expanduser().resolve()
+    sources: list[_PilotSource] = []
+    identities: set[tuple[int, int]] = set()
+    for raw_file in options.files:
+        source = Path(raw_file).expanduser().resolve(strict=True)
+        if not source.is_file():
+            raise ValueError(f"Pilot input must be a regular file: {source}")
+        identity = source.stat()
+        key = (identity.st_dev, identity.st_ino)
+        if key in identities:
+            raise ValueError(f"Pilot input aliases another selected input: {source}")
+        identities.add(key)
+        with pq.ParquetFile(source):
+            pass
+        sources.append(
+            _PilotSource(
+                source,
+                output_dir / "canonical" / source.name,
+                output_dir / "labels" / f"{source.stem}.parquet",
+            )
+        )
+    targets = [output_dir / "manifest.json"]
+    for source in sources:
+        targets.extend((source.canonical, source.labels))
+    if len({path.resolve() for path in targets}) != len(targets):
+        raise ValueError("Pilot output names collide across selected inputs")
+    for target in targets:
+        _check_destination(target, output_dir)
+    return output_dir, sources
+
+
+def _open_writer(path: Path, schema: pa.Schema, resources: ExitStack) -> pq.ParquetWriter:
+    """Own and close an exclusively created file and its Parquet writer together."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    destination = resources.enter_context(path.open("xb"))
+    return resources.enter_context(pq.ParquetWriter(destination, schema))
+
+
 def _write_table(path: Path, table: pa.Table) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    pq.write_table(table, path)
+    with path.open("xb") as destination:
+        pq.write_table(table, destination)
 
 
 def run_l2_pilot(options: L2PilotOptions) -> dict[str, Any]:
     """Write keep-only canonical samples and sparse labels without changing raw files."""
-    output_dir = Path(options.output_dir).expanduser().resolve()
-    canonical_dir = output_dir / "canonical"
-    labels_dir = output_dir / "labels"
+    output_dir, sources = _plan_pilot(options)
     summary = {"keep": 0, "tag": 0, "exclude": 0}
     reports = []
-    for raw_file in options.files:
-        path = Path(raw_file).expanduser().resolve()
+    for source in sources:
+        path = source.source
         kind = _kind(path)
         rows_read = 0
-        canonical_path = canonical_dir / path.name
-        labels_path = labels_dir / f"{path.stem}.parquet"
+        canonical_path = source.canonical
+        labels_path = source.labels
         canonical_writer = None
         labels_writer = None
         labels_rows = 0
-        try:
-            for batch in pq.ParquetFile(path).iter_batches(batch_size=options.batch_size):
+        with pq.ParquetFile(path) as parquet, ExitStack() as resources:
+            for batch in parquet.iter_batches(batch_size=options.batch_size):
                 if options.max_rows_per_file is not None:
                     remaining = options.max_rows_per_file - rows_read
                     if remaining <= 0:
@@ -123,20 +178,13 @@ def run_l2_pilot(options: L2PilotOptions) -> dict[str, Any]:
                     pa.compute.equal(labels["decision"], "exclude")  # ty: ignore[unresolved-attribute]
                 ).num_rows
                 if canonical_writer is None:
-                    canonical_path.parent.mkdir(parents=True, exist_ok=True)
-                    canonical_writer = pq.ParquetWriter(canonical_path, canonical.schema)
+                    canonical_writer = _open_writer(canonical_path, canonical.schema, resources)
                 canonical_writer.write_table(canonical)
                 if labels.num_rows:
                     if labels_writer is None:
-                        labels_path.parent.mkdir(parents=True, exist_ok=True)
-                        labels_writer = pq.ParquetWriter(labels_path, labels.schema)
+                        labels_writer = _open_writer(labels_path, labels.schema, resources)
                     labels_writer.write_table(labels)
                     labels_rows += labels.num_rows
-        finally:
-            if canonical_writer is not None:
-                canonical_writer.close()
-            if labels_writer is not None:
-                labels_writer.close()
         if labels_writer is None:
             _write_table(
                 labels_path,
@@ -165,7 +213,6 @@ def run_l2_pilot(options: L2PilotOptions) -> dict[str, Any]:
         "reports": reports,
     }
     output_dir.mkdir(parents=True, exist_ok=True)
-    (output_dir / "manifest.json").write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
+    with (output_dir / "manifest.json").open("x", encoding="utf-8") as destination:
+        destination.write(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     return manifest

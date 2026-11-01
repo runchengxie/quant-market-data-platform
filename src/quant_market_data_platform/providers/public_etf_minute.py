@@ -588,7 +588,7 @@ def _validate_mirror_options(options: EtfMinuteMirrorOptions) -> EtfMinuteMirror
         raise ValueError("新浪源不支持可用的 1 分钟历史数据")
     if options.version is not None:
         version = options.version.strip()
-        if not version or Path(version).name != version:
+        if not version or version in {".", ".."} or Path(version).name != version:
             raise ValueError("version 必须是单个非空目录名")
     return replace(options, symbols=normalized_symbols)
 
@@ -600,7 +600,10 @@ def _resolve_output_dir(options: EtfMinuteMirrorOptions) -> Path:
     version = options.version or (
         f"etf_minute_{options.period}m_{options.start_date}_{options.end_date}"
     )
-    return root / "assets" / "derived" / "a_share" / f"etf_minute_{options.period}m" / version
+    output = root / "assets" / "derived" / "a_share" / f"etf_minute_{options.period}m" / version
+    if output.is_symlink() or output.parent.resolve() != output.parent:
+        raise ValueError("version 目录及父目录不能是符号链接")
+    return output
 
 
 def _partition_path(output_dir: Path, trade_date: str) -> Path:
@@ -812,7 +815,6 @@ def mirror_public_etf_minute(
     options = _validate_mirror_options(options)
     dates = _date_range(options.start_date, options.end_date)
     output_dir = _resolve_output_dir(options)
-    output_dir.mkdir(parents=True, exist_ok=True)
     existing_dates = {
         path.parent.name.split("=", 1)[1] for path in output_dir.glob("trade_date=*/part-*.parquet")
     }
@@ -832,6 +834,7 @@ def mirror_public_etf_minute(
             "symbols": list(options.symbols),
         }
 
+    output_dir.mkdir(parents=True, exist_ok=True)
     frames: list[pd.DataFrame] = []
     source_by_symbol: dict[str, str] = {}
     errors: dict[str, str] = {}

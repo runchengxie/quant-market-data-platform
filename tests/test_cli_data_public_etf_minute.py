@@ -89,3 +89,51 @@ def test_public_etf_minute_missing_dependency_message_names_extra() -> None:
         "akshare is required for this command. "
         "Install optional dependencies with `uv sync --extra etf-minute-public`."
     )
+
+
+def test_cli_rejects_parent_version_before_writing(tmp_path):
+    import pytest
+
+    with pytest.raises(ValueError, match="version"):
+        cli.main(
+            [
+                "data",
+                "mirror-public-etf-minute",
+                "--symbols",
+                "512880.SH",
+                "--start-date",
+                "20260824",
+                "--end-date",
+                "20260824",
+                "--artifacts-root",
+                str(tmp_path),
+                "--version",
+                "..",
+                "--dry-run",
+            ]
+        )
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_cli_dry_run_is_read_only_with_explicit_output(tmp_path, capsys):
+    import json
+
+    output = tmp_path / "selected/version"
+    result = cli.main(
+        [
+            "data",
+            "mirror-public-etf-minute",
+            "--symbols",
+            "512880.SH",
+            "--start-date",
+            "20260824",
+            "--end-date",
+            "20260824",
+            "--out-dir",
+            str(output),
+            "--dry-run",
+        ]
+    )
+    assert result == 0
+    assert json.loads(capsys.readouterr().out)["output_dir"] == str(output)
+    assert list(tmp_path.iterdir()) == []

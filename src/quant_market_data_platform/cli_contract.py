@@ -94,6 +94,26 @@ def add_contract_parser(subparsers: argparse._SubParsersAction) -> None:
     )
     inspect.add_argument("--out")
     inspect.add_argument("--format", choices=("text", "json"), default="text")
+    from .agent_access import handle_assess
+
+    assess = contract_subparsers.add_parser(
+        "assess", help="Read bounded agent trust checks without publication."
+    )
+    assess.set_defaults(handler=handle_assess)
+    assess.add_argument("--artifacts-root")
+    assess.add_argument("--market", default="a_share", choices=MARKET_CHOICES)
+    assess.add_argument("--current-contract")
+    assess.add_argument("--asset", action="append", required=True)
+    assess.add_argument("--target-date")
+    assess.add_argument("--require-start-date")
+    capture = contract_subparsers.add_parser(
+        "capture", help="Capture and recheck selected publication metadata without writing."
+    )
+    capture.set_defaults(handler=handle_contract_capture)
+    capture.add_argument("--artifacts-root")
+    capture.add_argument("--market", default="a_share", choices=MARKET_CHOICES)
+    capture.add_argument("--current-contract")
+    capture.add_argument("--asset", action="append", required=True)
 
 
 def add_registry_parser(subparsers: argparse._SubParsersAction) -> None:
@@ -263,3 +283,16 @@ def handle_registry_build(args: argparse.Namespace) -> int:
         write_combined_dataset_registry(output, contracts)
         print(str(output))
         return 0
+
+
+def handle_contract_capture(args: argparse.Namespace) -> int:
+    from .published_assets import PublishedAssetContract
+
+    contract = (
+        PublishedAssetContract.load(args.current_contract, artifacts_root=args.artifacts_root)
+        if args.current_contract
+        else PublishedAssetContract.load_current(args.artifacts_root, market=args.market)
+    )
+    snapshot = contract.capture(args.asset)
+    print(json.dumps(snapshot.provenance_dict(), ensure_ascii=False, indent=2, sort_keys=True))
+    return 0

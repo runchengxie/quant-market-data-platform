@@ -92,13 +92,19 @@ def normalize_context_catalog(frame: pd.DataFrame) -> pd.DataFrame:
             continue
         normalized[column] = normalized[column].astype("string").str.strip()
     normalized["max_staleness"] = pd.to_numeric(normalized["max_staleness"], errors="raise")
-    if normalized["series_id"].eq("").any():
+    if normalized["series_id"].fillna("").eq("").any():
         raise ValueError("context catalog series_id must be non-empty")
     if normalized["series_id"].duplicated().any():
         raise ValueError("context catalog contains duplicate series_id values")
     if normalized["max_staleness"].lt(0).any():
         raise ValueError("context catalog max_staleness must be non-negative")
     return normalized.reset_index(drop=True)
+
+
+def _reject_infinite_observation_values(values: pd.Series) -> None:
+    numeric = pd.to_numeric(values.astype("string").str.strip(), errors="coerce")
+    if numeric.isin([float("inf"), -float("inf")]).any():
+        raise ValueError("context observations value cannot be infinite")
 
 
 def validate_context_observations(frame: pd.DataFrame) -> pd.DataFrame:
@@ -118,10 +124,11 @@ def validate_context_observations(frame: pd.DataFrame) -> pd.DataFrame:
             raise ValueError(f"context observations {required_timestamp} must be valid timestamps")
     normalized["series_id"] = normalized["series_id"].astype("string").str.strip()
     normalized["vintage_id"] = normalized["vintage_id"].astype("string").str.strip()
+    if normalized[["series_id", "vintage_id"]].fillna("").eq("").any().any():
+        raise ValueError("context observations series_id and vintage_id must be non-empty")
     normalized["source_hash"] = normalized["source_hash"].astype("string").str.strip()
-    normalized["revision_number"] = pd.to_numeric(
-        normalized["revision_number"], errors="raise", downcast="integer"
-    )
+    normalized["revision_number"] = pd.to_numeric(normalized["revision_number"], errors="raise")
+    _reject_infinite_observation_values(normalized["value"])
     flags = ["revision_covered", "reconstructed"]
     if not normalized[flags].isin([True, False]).all().all():
         raise ValueError("context observations boolean flags must be bool or numeric 0/1")
@@ -132,8 +139,12 @@ def validate_context_observations(frame: pd.DataFrame) -> pd.DataFrame:
         raise ValueError("context observations contain duplicate series/period/vintage rows")
     if (normalized["period_start"] > normalized["period_end"]).any():
         raise ValueError("context observations period_start cannot exceed period_end")
-    if normalized["revision_number"].lt(0).any():
-        raise ValueError("context observations revision_number must be non-negative")
+    revisions = normalized["revision_number"]
+    if not (revisions.ge(0) & revisions.mod(1).eq(0)).fillna(False).all():
+        raise ValueError(
+            "context observations revision_number must be finite non-negative integers"
+        )
+    normalized["revision_number"] = pd.to_numeric(revisions, downcast="integer")
     if normalized["source_hash"].str.fullmatch(r"[0-9a-fA-F]{64}").fillna(False).eq(False).any():
         raise ValueError("context observations source_hash must be a SHA-256 hex digest")
     if (normalized["source_retrieved_at"] < normalized["observed_at"]).any():

@@ -54,7 +54,9 @@ marketdata data mirror-public-etf-minute \
 $DATA_PLATFORM_ROOT/assets/derived/a_share/etf_minute_<period>m/<version>/
 ```
 
-也可以使用 `--out-dir` 指定一个明确的版本目录。`--dry-run` 只解析参数和待处理日期，不访问网络。`--no-skip` 会重新写入已有交易日分区。
+`--version` 必须是单个非空目录名，不能是 `.`、`..` 或包含路径分隔符的路径。合法目录名按原值保留。默认布局中的版本目录及其父目录不能通过符号链接寻址，避免把分区或版本凭证写到父层及其他版本。
+
+也可以使用 `--out-dir` 指定一个明确的版本目录。该路径仍按显式输出路径解析，不受默认布局限制。`--dry-run` 只解析参数和待处理日期，不创建目录或写入文件，也不访问网络。已有分区默认跳过。`--no-skip` 会重新写入已有交易日分区。
 
 ## 产物契约
 

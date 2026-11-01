@@ -6,6 +6,7 @@ import socket
 import sys
 import tomllib
 import types
+from dataclasses import replace
 from pathlib import Path
 from typing import cast
 
@@ -439,3 +440,130 @@ def test_mirror_public_etf_minute_records_failed_fetch_without_partition(
     assert result["failed_dates"] == ["20260824"]
     assert not (output / "trade_date=20260824" / "part-00000.parquet").exists()
     assert receipt["status"] == "failed"
+
+
+@pytest.mark.parametrize("version", [".", "..", " ../ ", "v1/../v2", "", "  "])
+@pytest.mark.parametrize("override", [False, True])
+def test_mirror_rejects_invalid_version_before_creating_output(tmp_path, version, override):
+    output = tmp_path / "explicit" if override else None
+    with pytest.raises(ValueError, match="version"):
+        provider.mirror_public_etf_minute(
+            provider.EtfMinuteMirrorOptions(
+                symbols=("512880.SH",),
+                start_date="20260824",
+                end_date="20260824",
+                artifacts_root=tmp_path / "artifacts",
+                version=version,
+                output_dir=output,
+                dry_run=True,
+            )
+        )
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_mirror_parent_version_cannot_overwrite_parent_manifest(tmp_path, monkeypatch):
+    parent = tmp_path / "assets/derived/a_share"
+    part = parent / "trade_date=20260824/part-00000.parquet"
+    part.parent.mkdir(parents=True)
+    _fixture_frame("2026-08-24 09:30:00").to_parquet(part, index=False)
+    manifest = parent / "manifest.yml"
+    manifest.write_bytes(b"parent asset owner\n")
+    before = {p.relative_to(tmp_path): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()}
+    monkeypatch.setattr(provider, "fetch_etf_minute_range", lambda *a, **k: pytest.fail("network"))
+    with pytest.raises(ValueError, match="version"):
+        provider.mirror_public_etf_minute(
+            provider.EtfMinuteMirrorOptions(
+                symbols=("512880.SH",),
+                start_date="20260824",
+                end_date="20260824",
+                artifacts_root=tmp_path,
+                version="..",
+            )
+        )
+    assert {
+        p.relative_to(tmp_path): p.read_bytes() for p in tmp_path.rglob("*") if p.is_file()
+    } == before
+
+
+@pytest.mark.parametrize("layer", ["version", "asset"])
+def test_mirror_rejects_version_alias_before_writing(tmp_path, layer):
+    asset = tmp_path / "assets/derived/a_share/etf_minute_1m"
+    asset.parent.mkdir(parents=True)
+    if layer == "version":
+        asset.mkdir()
+        alias = asset / "v1"
+        alias.symlink_to("..", target_is_directory=True)
+    else:
+        alias = asset
+        alias.symlink_to(".", target_is_directory=True)
+    with pytest.raises(ValueError, match="version"):
+        provider.mirror_public_etf_minute(
+            provider.EtfMinuteMirrorOptions(
+                symbols=("512880.SH",),
+                start_date="20260824",
+                end_date="20260824",
+                artifacts_root=tmp_path,
+                version="v1",
+                dry_run=True,
+            )
+        )
+    assert alias.is_symlink()
+    assert not list(tmp_path.rglob("manifest.yml"))
+
+
+@pytest.mark.parametrize("version", [None, "v1", "研究版本", " original name "])
+def test_mirror_plan_preserves_version_name_without_creating_directory(tmp_path, version):
+    result = provider.mirror_public_etf_minute(
+        provider.EtfMinuteMirrorOptions(
+            symbols=("512880.SH",),
+            start_date="20260824",
+            end_date="20260824",
+            artifacts_root=tmp_path,
+            version=version,
+            dry_run=True,
+        )
+    )
+    name = version if version is not None else "etf_minute_1m_20260824_20260824"
+    assert result["output_dir"] == str(tmp_path / "assets/derived/a_share/etf_minute_1m" / name)
+    assert result["pending_dates"] == ["20260824"]
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("override", [False, True])
+@pytest.mark.parametrize("root_alias", [False, True])
+def test_named_mirror_and_explicit_output_keep_normal_resume(
+    tmp_path, monkeypatch, override, root_alias
+):
+    calls = []
+
+    def fetch(*args, **kwargs):
+        calls.append(args)
+        return _fixture_frame("2026-08-24 09:30:00"), "eastmoney-akshare"
+
+    monkeypatch.setattr(provider, "fetch_etf_minute_range", fetch)
+    selected = tmp_path / "custom/selected" if override else None
+    root = tmp_path / "physical"
+    root.mkdir()
+    configured_root = tmp_path / "root-alias" if root_alias else root
+    if root_alias:
+        configured_root.symlink_to(root, target_is_directory=True)
+    options = provider.EtfMinuteMirrorOptions(
+        symbols=("512880.SH",),
+        start_date="20260824",
+        end_date="20260824",
+        artifacts_root=configured_root,
+        version="named version",
+        output_dir=selected,
+    )
+    expected = selected or root / "assets/derived/a_share/etf_minute_1m/named version"
+    planned = provider.mirror_public_etf_minute(replace(options, dry_run=True))
+    assert planned["output_dir"] == str(expected)
+    assert not expected.exists()
+    assert calls == []
+    assert provider.mirror_public_etf_minute(options)["output_dir"] == str(expected)
+    part = expected / "trade_date=20260824/part-00000.parquet"
+    before = part.read_bytes()
+    resumed = provider.mirror_public_etf_minute(options)
+    assert resumed["totals"]["dates_skipped"] == 1
+    assert part.read_bytes() == before
+    assert len(calls) == 1

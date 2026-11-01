@@ -78,9 +78,11 @@ def validate_dataset_contract(payload: Mapping[str, Any]) -> dict[str, Any]:
     _required_text(dataset.get("schema_version"), "dataset.schema_version")
 
     primary_key = normalized.get("primary_key", [])
-    if not isinstance(primary_key, list) or any(not str(value).strip() for value in primary_key):
+    if not isinstance(primary_key, list) or any(
+        not isinstance(value, str) or not value.strip() for value in primary_key
+    ):
         raise ValueError("primary_key must be a list of non-empty strings")
-    if len(set(map(str, primary_key))) != len(primary_key):
+    if len(set(primary_key)) != len(primary_key):
         raise ValueError("primary_key entries must be unique")
 
     ordering = normalized.get("ordering", {})

@@ -5,6 +5,7 @@ import sys
 from collections.abc import Callable
 from typing import cast
 
+from quant_market_data_platform.agent_access import handle_capabilities
 from quant_market_data_platform.cli_backup import add_backup_parser
 from quant_market_data_platform.cli_config import add_config_parser
 from quant_market_data_platform.cli_context import add_context_parser
@@ -32,6 +33,7 @@ OPTIONAL_DEPENDENCIES = {
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="marketdata")
     subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("capabilities").set_defaults(handler=handle_capabilities)
     add_config_parser(subparsers)
     add_quantzone_parser(subparsers)
     add_paths_parser(subparsers)

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from quant_market_data_platform._minute_history_lock import HistoryWriterBusy, history_writer_lock
+from quant_market_data_platform._minute_history_scope import prepare_history_scope
 from quant_market_data_platform._minute_operational_receipt import read_operational_receipt
 from quant_market_data_platform._reverse_backfill_bj_policy import (
     persist_bj_report,
@@ -50,6 +51,7 @@ class ReverseBackfillOptions:
     minute_quota_allow_burst: bool = False
     minute_quota_limit_rows: int = 160_000_000
     minute_quota_safety_rows: int = 4_000_000
+    history_start_date: str | None = None
 
 
 def _select_reverse_dates(
@@ -159,11 +161,18 @@ def _plan_dates(plan_path: Path) -> set[str]:
 
 
 def _resume_paths(
-    metadata: Path, *, max_dates: int = 1, settled_dates: set[str] | None = None
+    metadata: Path,
+    *,
+    max_dates: int = 1,
+    settled_dates: set[str] | None = None,
+    start_date: str = "00000000",
 ) -> tuple[Path, Path] | None:
     for plan_path in sorted(metadata.glob("plans/reverse_*.plan.json")):
         date_count = _plan_date_count(plan_path)
         if date_count is None or date_count > max_dates:
+            continue
+        dates = _plan_dates(plan_path)
+        if not dates or any(not isinstance(day, str) or day < start_date for day in dates):
             continue
         if settled_dates:
             dates = _plan_dates(plan_path)
@@ -186,7 +195,9 @@ def _run_reverse_backfill(options: ReverseBackfillOptions) -> dict[str, Any]:
         raise ValueError("bj_missing_policy must be report or error")
     root = options.artifacts_root.expanduser().resolve()
     paths = _paths(root)
-    paths["metadata"].mkdir(parents=True, exist_ok=True)
+    start_date = prepare_history_scope(
+        paths["metadata"], options.history_start_date, dry_run=options.dry_run
+    )
     reports = scan_bj_missing(paths["staging"]) if options.bj_missing_policy == "report" else []
     settled = _complete_dates(paths["staging"]) | {report["trade_date"] for report in reports}
     report_path = paths["metadata"] / "bj_missing_report.json"
@@ -198,11 +209,13 @@ def _run_reverse_backfill(options: ReverseBackfillOptions) -> dict[str, Any]:
     )
     deferred = set(queue["dates"])
     skipped = settled | (set() if options.retry_deferred else deferred)
-    resume = _resume_paths(paths["metadata"], max_dates=options.max_dates, settled_dates=skipped)
+    resume = _resume_paths(
+        paths["metadata"], max_dates=options.max_dates, settled_dates=skipped, start_date=start_date
+    )
     if resume is None:
         current_min = _current_min_date(paths["alias"])
         open_dates = _load_open_dates(
-            paths["trade_calendar"], start_date="20160101", end_date=current_min
+            paths["trade_calendar"], start_date=start_date, end_date=current_min
         )
         dates = _select_reverse_dates(
             open_dates=open_dates,
