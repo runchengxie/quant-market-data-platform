@@ -19,6 +19,39 @@ MARKER = "retirement_receipt.json"
 SCHEMA = "a_share.daily_clean_input_retirement.v1"
 
 
+def _verify_shard(file: Path, record: dict[str, Any], row: dict[str, Any]):
+    before = _stamp(file)
+    if (
+        not file.is_file()
+        or file.stat().st_size != row["bytes"]
+        or record["bytes"] != row["bytes"]
+        or record["sha256"] != row["sha256"]
+        or _hash(file) != row["sha256"]
+        or before != _stamp(file)
+    ):
+        raise ValueError(f"shard hash/size mismatch or changed: {file}")
+    return before
+
+
+def _snapshot_records(path: Path, receipt: dict[str, Any]) -> dict[Path, dict[str, Any]]:
+    records = {}
+    for dataset in DATASETS:
+        for row in receipt["datasets"][dataset]["files"]:
+            relative = Path(row["path"])
+            if (
+                relative.is_absolute()
+                or ".." in relative.parts
+                or relative.parts[0] != "data"
+                or relative.suffix != ".parquet"
+            ):
+                raise ValueError("invalid receipt shard path")
+            shard = path / dataset / relative
+            if shard in records:
+                raise ValueError("duplicate receipt shard")
+            records[shard] = row
+    return records
+
+
 def _real(path: Path) -> Path:
     path = path.absolute()
     if path != path.resolve(strict=True):
@@ -69,21 +102,7 @@ def _snapshot(path: Path, inputs: Path) -> dict[Path, dict[str, Any]]:
         or set(receipt.get("datasets", {})) != set(DATASETS)
     ):
         raise ValueError("completed owner snapshot receipt required")
-    records = {}
-    for dataset in DATASETS:
-        for row in receipt["datasets"][dataset]["files"]:
-            relative = Path(row["path"])
-            if (
-                relative.is_absolute()
-                or ".." in relative.parts
-                or relative.parts[0] != "data"
-                or relative.suffix != ".parquet"
-            ):
-                raise ValueError("invalid receipt shard path")
-            shard = path / dataset / relative
-            if shard in records:
-                raise ValueError("duplicate receipt shard")
-            records[shard] = row
+    records = _snapshot_records(path, receipt)
     expected = (
         set(records)
         | {path / "snapshot_receipt.json"}
@@ -164,11 +183,7 @@ def _lock(root: Path, apply: bool):
         yield
 
 
-def _preflight(root: Path, target: Path, peer_map: Path):
-    inputs = root / "assets/tushare/a_share/daily_clean_inputs"
-    records = _snapshot(target, inputs)
-    _restore_dependencies(inputs, target)
-    _references(root, target)
+def _retirement_peers(peer_map: Path, target: Path, records: dict, inputs: Path):
     opener = gzip.open if peer_map.suffix == ".gz" else open
     with opener(peer_map, "rt") as handle:
         rows = json.load(handle)
@@ -178,6 +193,15 @@ def _preflight(root: Path, target: Path, peer_map: Path):
     if len(selected) != len(records) or {Path(row["path"]) for row in selected} != set(records):
         raise ValueError("reviewed peer map must cover each target shard exactly once")
     retired_targets = {inputs / Path(row["path"]).relative_to(inputs).parts[0] for row in rows}
+    return selected, retired_targets
+
+
+def _preflight(root: Path, target: Path, peer_map: Path):
+    inputs = root / "assets/tushare/a_share/daily_clean_inputs"
+    records = _snapshot(target, inputs)
+    _restore_dependencies(inputs, target)
+    _references(root, target)
+    selected, retired_targets = _retirement_peers(peer_map, target, records, inputs)
     donors = {}
     stamps = {}
     metadata = [
@@ -203,17 +227,7 @@ def _preflight(root: Path, target: Path, peer_map: Path):
         if peer not in donors[peer_root]:
             raise ValueError("donor absent from receipt")
         for file, record in ((path, records[path]), (peer, donors[peer_root][peer])):
-            before = _stamp(file)
-            if (
-                not file.is_file()
-                or file.stat().st_size != row["bytes"]
-                or record["bytes"] != row["bytes"]
-                or record["sha256"] != row["sha256"]
-                or _hash(file) != row["sha256"]
-                or before != _stamp(file)
-            ):
-                raise ValueError(f"shard hash/size mismatch or changed: {file}")
-            stamps[file] = before
+            stamps[file] = _verify_shard(file, record, row)
     if any(_stamp(path) != stamp for path, stamp in stamps.items()):
         raise ValueError("snapshot or donor changed during preflight")
     return selected, stamps, metadata

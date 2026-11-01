@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 603,
-    "python_lines": 141627,
+    "python_lines": 141701,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "a5e2f9d1dc83af0db7054dbe3f671a4d5bb91747",
-    "reason": "Add dated same-security minute request identity translation, observed source request/response lineage, promotion and CLI propagation, plus collision, date-boundary and partial-resume regressions. Exactly 2 Python files and 341 net physical Python lines. No structural, complexity, debt, typing, exclusion, oversized-file/function, coverage, security or reserved-headroom allowance increases.",
-    "exit_condition": "Remove this exact 2-file/341-line feature allowance when the dated minute identity helper and its lineage contract are retired or consolidated with equivalent request-collision, mixed-response, effective-date, absorbed-security separation, unchanged-values, promotion, CLI and resume regressions. Preserve all prior retirement conditions."
+    "source_revision": "5497dabcd37a02f634563f3b125c029f1f94b0a9",
+    "reason": "Extract ordered validation, immutable snapshot inventory, alias recovery, request retry and bounded bucket-writing stages in 12 existing modules. Exactly 74 net Python lines, no files added. Restore the existing strict C901 total budget from 25 findings to 9 without changing rules, thresholds, exclusions, guards, types, structural limits or reserved headroom.",
+    "exit_condition": "Recover this exact 74-line extraction allowance when equivalent validation/recovery stages can be consolidated while retaining the strict nine-finding complexity budget, full type coverage, guard ordering and existing failure-path behavior. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "a5e2f9d1dc83af0db7054dbe3f671a4d5bb91747",
+      "reason": "Add dated same-security minute request identity translation, observed source request/response lineage, promotion and CLI propagation, plus collision, date-boundary and partial-resume regressions. Exactly 2 Python files and 341 net physical Python lines. No structural, complexity, debt, typing, exclusion, oversized-file/function, coverage, security or reserved-headroom allowance increases.",
+      "exit_condition": "Remove this exact 2-file/341-line feature allowance when the dated minute identity helper and its lineage contract are retired or consolidated with equivalent request-collision, mixed-response, effective-date, absorbed-security separation, unchanged-values, promotion, CLI and resume regressions. Preserve all prior retirement conditions."
+    },
     {
       "source_revision": "2204cf7823976371e3a0296d6a504a14ac2c6ff4",
       "reason": "Add opt-in version-bound minute research guards, mapped-byte and scope enforcement, persisted earlier-history bounds, and synthetic regressions. Exactly 4 Python files and 1148 net physical Python lines. No structural, complexity, oversized-function/file, exclusion, coverage, security or reserved-headroom allowance increases.",

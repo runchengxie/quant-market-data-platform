@@ -115,6 +115,23 @@ def build_statement_version_ledger(
     return summary
 
 
+def _read_observation_part(path: Path, columns: list[str] | None):
+    import pandas as pd
+    import pyarrow.parquet as pq
+
+    if columns is None:
+        frame = pd.read_parquet(path)
+    else:
+        schema = pq.ParquetFile(path)
+        if schema.metadata.num_rows == 0:
+            return None
+        requested = list(dict.fromkeys([*columns, "dataset", "available_from", "report_type"]))
+        frame = pd.read_parquet(
+            path, columns=[c for c in requested if c in schema.schema_arrow.names]
+        )
+    return frame
+
+
 def read_statement_observations(
     *,
     asset_dir: str,
@@ -125,7 +142,6 @@ def read_statement_observations(
 ) -> Any:
     """Read verified observations visible on a date; retain all versions for caller audit."""
     import pandas as pd
-    import pyarrow.parquet as pq
 
     if dataset is not None and dataset not in _DATASETS.values():
         raise ValueError("Unsupported statement dataset")
@@ -144,17 +160,8 @@ def read_statement_observations(
         path = root / part["path"]
         if path.resolve().parent != root.resolve() or _digest(path) != part["sha256"]:
             raise ValueError("Ledger partition path or checksum mismatch")
-        if columns is None:
-            frame = pd.read_parquet(path)
-        else:
-            schema = pq.ParquetFile(path)
-            if schema.metadata.num_rows == 0:
-                continue
-            requested = list(dict.fromkeys([*columns, "dataset", "available_from", "report_type"]))
-            frame = pd.read_parquet(
-                path, columns=[c for c in requested if c in schema.schema_arrow.names]
-            )
-        if frame.empty:
+        frame = _read_observation_part(path, columns)
+        if frame is None or frame.empty:
             continue
         mask = (frame["available_from"] <= cutoff) & (
             frame["report_type"].astype(str) == report_type

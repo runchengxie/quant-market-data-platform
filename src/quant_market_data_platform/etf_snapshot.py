@@ -29,6 +29,32 @@ class SnapshotUnavailable(ValueError):
     """Token-safe reason for an incomplete snapshot."""
 
 
+def _wait_to_retry(attempt: int, deadline: datetime | None, now: Callable[[], datetime]) -> None:
+    wait = float(2**attempt)
+    if deadline is not None:
+        remaining = (deadline - _instant(now)).total_seconds()
+        if remaining <= wait:
+            raise SnapshotUnavailable("acquisition_deadline_exceeded") from None
+    time.sleep(wait)
+
+
+def _validate_acquisition_request(
+    symbols: tuple[str, ...], start_date: str, end_date: str, max_requests: int
+) -> None:
+    if (
+        not symbols
+        or len(set(symbols)) != len(symbols)
+        or any(not re.fullmatch(r"[0-9]{6}\.(SH|SZ)", symbol) for symbol in symbols)
+    ):
+        raise ValueError("invalid or duplicate ETF symbol")
+    for day in (start_date, end_date):
+        if not re.fullmatch(r"[0-9]{8}", day):
+            raise ValueError("date must be YYYYMMDD")
+        datetime.strptime(day, "%Y%m%d")
+    if start_date > end_date or not 1 <= max_requests <= 96:
+        raise ValueError("invalid date range or request budget")
+
+
 def _instant(now: Callable[[], datetime]) -> datetime:
     value = now()
     if value.tzinfo is None or value.utcoffset() is None:
@@ -51,18 +77,7 @@ def acquire_etf_snapshot(  # noqa: PLR0913
     client: object | None = None,
 ) -> dict[str, Any]:
     """Acquire a new snapshot; incomplete work is never admitted as a panel."""
-    if (
-        not symbols
-        or len(set(symbols)) != len(symbols)
-        or any(not re.fullmatch(r"[0-9]{6}\.(SH|SZ)", symbol) for symbol in symbols)
-    ):
-        raise ValueError("invalid or duplicate ETF symbol")
-    for day in (start_date, end_date):
-        if not re.fullmatch(r"[0-9]{8}", day):
-            raise ValueError("date must be YYYYMMDD")
-        datetime.strptime(day, "%Y%m%d")
-    if start_date > end_date or not 1 <= max_requests <= 96:
-        raise ValueError("invalid date range or request budget")
+    _validate_acquisition_request(symbols, start_date, end_date, max_requests)
     started = _instant(now)
     if deadline is not None and (deadline.tzinfo is None or deadline <= started):
         raise ValueError("deadline must be aware and in the future")
@@ -241,12 +256,7 @@ def _requester(  # noqa: PLR0913
                     raise SnapshotUnavailable("provider_request_rejected") from None
                 if attempt == 2:
                     raise SnapshotUnavailable("provider_retries_exhausted") from None
-                wait = float(2**attempt)
-                if deadline is not None:
-                    remaining = (deadline - _instant(now)).total_seconds()
-                    if remaining <= wait:
-                        raise SnapshotUnavailable("acquisition_deadline_exceeded") from None
-                time.sleep(wait)
+                _wait_to_retry(attempt, deadline, now)
         raise SnapshotUnavailable("provider_retries_exhausted")
 
     return request

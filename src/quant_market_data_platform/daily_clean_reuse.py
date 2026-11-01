@@ -108,6 +108,14 @@ class SnapshotReuse:
             or receipt.get("end_date") != match[2]
         ):
             raise ValueError("completed owner receipt with four datasets required for reuse")
+        self._load_records(receipt)
+        self.inodes: dict[tuple[int, int], list[Path]] = {}
+        for path, value in self.stamps.items():
+            self.inodes.setdefault(value[:2], []).append(path)
+        self.expected = set(self.records) | set(metadata)
+        self.verify()
+
+    def _load_records(self, receipt: dict[str, Any]) -> None:
         for dataset in DATASETS:
             for record in receipt["datasets"][dataset]["files"]:
                 relative = Path(record["path"])
@@ -118,7 +126,7 @@ class SnapshotReuse:
                     or relative.suffix != ".parquet"
                 ):
                     raise ValueError("invalid donor receipt path")
-                path = donor / dataset / relative
+                path = self.donor / dataset / relative
                 if path in self.records:
                     raise ValueError("duplicate donor receipt path")
                 self._remember(path)
@@ -133,11 +141,6 @@ class SnapshotReuse:
                 self.records[path] = record
         if not self.records:
             raise ValueError("empty donor inventory")
-        self.inodes: dict[tuple[int, int], list[Path]] = {}
-        for path, value in self.stamps.items():
-            self.inodes.setdefault(value[:2], []).append(path)
-        self.expected = set(self.records) | set(metadata)
-        self.verify()
 
     def bind_raw_sources(self, roots: tuple[Path, ...]) -> None:
         self.raw_roots = roots

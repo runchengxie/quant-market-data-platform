@@ -43,6 +43,27 @@ DECLARED_FIELDS = (
 )
 
 
+def _minute_contract(root: Path) -> tuple[Path, str | None]:
+    alias = root / "assets/derived/a_share/minute_1m_tushare"
+    contract_path = root / "metadata/current_assets/a_share_current.json"
+    contract_as_of = None
+    if contract_path.exists():
+        contract, _ = _read(contract_path)
+        entry = contract["assets"]["minute_1m_tushare"]
+        alias = Path(entry["alias_path"])
+        if not alias.is_absolute() or alias.resolve() != Path(entry["resolved_path"]).resolve():
+            raise ValueError("invalid contract path")
+        if entry.get("availability") != "available":
+            raise ValueError("asset unavailable in contract")
+        contract_as_of = entry.get("as_of")
+        if contract_as_of is not None and (
+            not isinstance(contract_as_of, str)
+            or datetime.strptime(contract_as_of, "%Y%m%d").strftime("%Y%m%d") != contract_as_of
+        ):
+            raise ValueError("invalid contract date")
+    return alias, contract_as_of
+
+
 def _finite_float(value: str) -> float:
     result = float(value)
     if not math.isfinite(result):
@@ -84,23 +105,7 @@ def _error(exc: Exception) -> dict[str, str]:
 
 def _minute(root: Path, target: str, now: datetime) -> dict[str, Any]:
     try:
-        alias = root / "assets/derived/a_share/minute_1m_tushare"
-        contract_path = root / "metadata/current_assets/a_share_current.json"
-        contract_as_of = None
-        if contract_path.exists():
-            contract, _ = _read(contract_path)
-            entry = contract["assets"]["minute_1m_tushare"]
-            alias = Path(entry["alias_path"])
-            if not alias.is_absolute() or alias.resolve() != Path(entry["resolved_path"]).resolve():
-                raise ValueError("invalid contract path")
-            if entry.get("availability") != "available":
-                raise ValueError("asset unavailable in contract")
-            contract_as_of = entry.get("as_of")
-            if contract_as_of is not None and (
-                not isinstance(contract_as_of, str)
-                or datetime.strptime(contract_as_of, "%Y%m%d").strftime("%Y%m%d") != contract_as_of
-            ):
-                raise ValueError("invalid contract date")
+        alias, contract_as_of = _minute_contract(root)
         output = alias.resolve(strict=True)
         output.relative_to(root)
         path = output / "_operational_receipt.json"
@@ -192,6 +197,13 @@ def _history(root: Path, now: datetime, max_age: float) -> dict[str, Any]:
         return _error(exc)
 
 
+def _validate_run_symbols(value: Any, message: str, *, nullable: bool = False) -> None:
+    if nullable and value is None:
+        return
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise ValueError(message)
+
+
 def _index_row(path: Path, now: datetime) -> tuple[float, dict[str, Any]]:
     row, _ = _read(path)
     age = _age(row["ended_utc"], now)
@@ -206,9 +218,7 @@ def _index_row(path: Path, now: datetime) -> tuple[float, dict[str, Any]]:
         type(row["duration_seconds"]) not in (int, float) or row["duration_seconds"] < 0
     ):
         raise ValueError("invalid run duration")
-    recovered = row.get("recovered_indices", [])
-    if not isinstance(recovered, list) or any(not isinstance(item, str) for item in recovered):
-        raise ValueError("invalid recovered symbols")
+    _validate_run_symbols(row.get("recovered_indices", []), "invalid recovered symbols")
     if datetime.strptime(row["date"], "%Y%m%d").strftime("%Y%m%d") != row["date"]:
         raise ValueError("invalid run date")
     if row["schema_version"] != 1 or row["outcome"] not in {
@@ -218,10 +228,7 @@ def _index_row(path: Path, now: datetime) -> tuple[float, dict[str, Any]]:
     }:
         raise ValueError("invalid run schema")
     missing = row["final_missing_symbols"]
-    if missing is not None and (
-        not isinstance(missing, list) or any(not isinstance(item, str) for item in missing)
-    ):
-        raise ValueError("invalid missing symbols")
+    _validate_run_symbols(missing, "invalid missing symbols", nullable=True)
     if row["outcome"] == "complete" and (row["exit_code"] != 0 or missing != []):
         raise ValueError("inconsistent complete result")
     return age, row

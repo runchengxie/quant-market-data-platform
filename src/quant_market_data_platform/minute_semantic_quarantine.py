@@ -30,6 +30,21 @@ def bound_path(root: Path, ref: dict) -> Path:
     return path
 
 
+def _validate_registry_entry(date: Any, entry: Any) -> None:
+    if not isinstance(date, str) or len(date) != 8 or not date.isdigit():
+        raise ValueError("invalid semantic quarantine date")
+    if not isinstance(entry, dict) or entry.get("trade_date") != date:
+        raise ValueError("invalid semantic quarantine entry")
+    if entry.get("status") != "quarantined" or not entry.get("symbol"):
+        raise ValueError("invalid semantic quarantine disposition")
+    for name in ("partition", "sidecar", "acceptance", "requery"):
+        ref = entry.get(name)
+        if not isinstance(ref, dict) or not isinstance(ref.get("path"), str):
+            raise ValueError("invalid semantic quarantine reference")
+        if not isinstance(ref.get("sha256"), str) or len(ref["sha256"]) != 64:
+            raise ValueError("invalid semantic quarantine digest")
+
+
 def load_registry(root: Path) -> dict:
     path = root / REGISTRY
     if not path.exists():
@@ -41,18 +56,7 @@ def load_registry(root: Path) -> dict:
     if not isinstance(dates, dict):
         raise ValueError("invalid semantic quarantine dates")
     for date, entry in dates.items():
-        if not isinstance(date, str) or len(date) != 8 or not date.isdigit():
-            raise ValueError("invalid semantic quarantine date")
-        if not isinstance(entry, dict) or entry.get("trade_date") != date:
-            raise ValueError("invalid semantic quarantine entry")
-        if entry.get("status") != "quarantined" or not entry.get("symbol"):
-            raise ValueError("invalid semantic quarantine disposition")
-        for name in ("partition", "sidecar", "acceptance", "requery"):
-            ref = entry.get(name)
-            if not isinstance(ref, dict) or not isinstance(ref.get("path"), str):
-                raise ValueError("invalid semantic quarantine reference")
-            if not isinstance(ref.get("sha256"), str) or len(ref["sha256"]) != 64:
-                raise ValueError("invalid semantic quarantine digest")
+        _validate_registry_entry(date, entry)
     return data
 
 
