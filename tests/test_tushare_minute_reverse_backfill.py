@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
@@ -116,11 +118,9 @@ def test_reverse_burst_is_opt_in_at_shared_quota_gate(tmp_path, monkeypatch, ena
         return {"status": "complete", "summary": {"dates": 1, "rows": 1}}
 
     monkeypatch.setattr(scheduler, "run_minute_backfill", provider_step)
-    options = scheduler.ReverseBackfillOptions(
-        artifacts_root=tmp_path,
-        bj_missing_policy="error",
-        **({"minute_quota_allow_burst": True} if enable_burst else {}),
-    )
+    options = scheduler.ReverseBackfillOptions(artifacts_root=tmp_path, bj_missing_policy="error")
+    if enable_burst:
+        options = replace(options, minute_quota_allow_burst=True)
     if enable_burst:
         assert scheduler.run_reverse_backfill(options)["status"] == "complete"
         assert ledger.status()["committed_requests"] == 11
