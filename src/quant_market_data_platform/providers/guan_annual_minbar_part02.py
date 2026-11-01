@@ -311,9 +311,8 @@ def _compact_raw_dates(
         destination = destination_dir / "part-00000.parquet"
         temporary = destination_dir / f".{destination.name}.{uuid.uuid4().hex}.tmp"
         try:
-            connection.execute(
+            result = connection.execute(  # Arrow fixes the schema DuckDB 2 infers from data.
                 f"""
-                COPY (
                     SELECT
                         CAST(ts_code AS VARCHAR) AS ts_code,
                         CAST(trade_time AS TIMESTAMP_NS) AS trade_time,
@@ -326,13 +325,14 @@ def _compact_raw_dates(
                     FROM read_parquet({source_glob}, hive_partitioning = false)
                     WHERE _keep
                     ORDER BY ts_code, trade_time
-                ) TO {_sql_literal(temporary)} (
-                    FORMAT PARQUET,
-                    COMPRESSION ZSTD,
-                    ROW_GROUP_SIZE 250000
-                )
                 """
             )
+            with (
+                result.to_arrow_reader(batch_size=250000) as reader,
+                pq.ParquetWriter(temporary, CANONICAL_MINUTE_SCHEMA, compression="zstd") as writer,
+            ):
+                for batch in reader:
+                    writer.write_batch(batch.cast(CANONICAL_MINUTE_SCHEMA), row_group_size=250000)
             os.replace(temporary, destination)
         finally:
             temporary.unlink(missing_ok=True)
