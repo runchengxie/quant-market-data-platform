@@ -4597,6 +4597,7 @@ offline-equities = [
     { name = "pyarrow" },
 ]
 qlib = [
+    { name = "mlflow" },
     { name = "pandas" },
     { name = "pyarrow" },
     { name = "pyqlib" },
@@ -4633,6 +4634,7 @@ requires-dist = [
     { name = "duckdb", marker = "extra == 'offline-equities'", specifier = ">=1.5.5" },
     { name = "filelock", marker = "extra == 'dev'", specifier = ">=3.20" },
     { name = "filelock", marker = "extra == 'offline-equities'", specifier = ">=3.20" },
+    { name = "mlflow", marker = "extra == 'qlib'", specifier = ">=3.17.2" },
     { name = "numpy", specifier = ">=1.23,<3" },
     { name = "pandas", marker = "extra == 'dev'", specifier = ">=2.2" },
     { name = "pandas", marker = "extra == 'etf-minute-public'", specifier = ">=2.2" },

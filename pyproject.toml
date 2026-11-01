@@ -58,6 +58,7 @@ minute-fusion = [
   "pyarrow>=25.0.0",
 ]
 qlib = [
+  "mlflow>=3.17.2",
   "pandas>=2.2",
   "pyarrow>=25.0.0",
   "pyqlib>=0.9.7",
