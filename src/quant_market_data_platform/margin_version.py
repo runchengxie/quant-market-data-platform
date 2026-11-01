@@ -15,6 +15,18 @@ import yaml
 DATASETS = ("margin", "margin_detail")
 
 
+def _candidate_bounds(raw: dict[str, Any]) -> tuple[str, str]:
+    query = raw.get("query") or {}
+    start, end = str(query.get("start_date", "")), str(query.get("end_date", ""))
+    if not re.fullmatch(r"[0-9]{8}", start) or not re.fullmatch(r"[0-9]{8}", end):
+        raise ValueError("Invalid query date format")
+    datetime.strptime(start, "%Y%m%d")
+    datetime.strptime(end, "%Y%m%d")
+    if start > end:
+        raise ValueError("Invalid query bounds")
+    return start, end
+
+
 def file_hash(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -94,14 +106,7 @@ def validate_candidate(root: Path) -> tuple[dict[str, Any], dict[str, Any]]:
         or raw.get("status") != "completed"
     ):
         raise ValueError("Invalid native candidate manifest")
-    query = raw.get("query") or {}
-    start, end = str(query.get("start_date", "")), str(query.get("end_date", ""))
-    if not re.fullmatch(r"[0-9]{8}", start) or not re.fullmatch(r"[0-9]{8}", end):
-        raise ValueError("Invalid query date format")
-    datetime.strptime(start, "%Y%m%d")
-    datetime.strptime(end, "%Y%m%d")
-    if start > end:
-        raise ValueError("Invalid query bounds")
+    start, end = _candidate_bounds(raw)
     files = sorted((root / "data").glob("trade_date=*/part.parquet"))
     if set((root / "data").rglob("*parquet")) != set(files):
         raise ValueError("Unexpected candidate data layout")

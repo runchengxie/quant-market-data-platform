@@ -33,6 +33,29 @@ from quant_market_data_platform.runtime_memory import (
 from .tushare_a_share_daily_schema import PRICE_COLUMNS
 
 
+def _read_st_history(path: Path, receipt: dict[str, Any], manifest: dict[str, Any] | None):
+    with path.open("rb") as source_file:
+        digest = hashlib.file_digest(source_file, "sha256").hexdigest()
+    if receipt.get("history_sha256", receipt.get("sha256")) != digest:
+        raise ValueError("dated ST history receipt hash does not match")
+    query = (manifest or {}).get("query", {})
+    if str(query.get("start_date", "99999999")) < receipt.get("start_date", "99999999") or str(
+        query.get("end_date", "00000000")
+    ) > receipt.get("end_date", "00000000"):
+        raise ValueError("dated ST history receipt does not cover daily_clean dates")
+    if "available_from" not in pq.read_schema(path).names:
+        raise ValueError("dated ST history is missing available_from")
+    history = pd.read_parquet(path, columns=["ts_code", "trade_date", "available_from"])
+    if history.duplicated(["ts_code", "trade_date"]).any():
+        raise ValueError("dated ST history has duplicate symbol/date keys")
+    availability = history["available_from"].astype("string").str.replace("-", "", regex=False)
+    valid = availability.isna() | availability.str.fullmatch(r"\d{8}", na=False)
+    if not bool(valid.all()):
+        raise ValueError("dated ST history contains malformed availability dates")
+    history["available_from"] = availability
+    return history
+
+
 def _load_st_keys(
     manifest: dict[str, Any] | None,
 ) -> tuple[dict[tuple[str, str], str | None] | None, str | None]:
@@ -56,25 +79,7 @@ def _load_st_keys(
             or receipt.get("source_quality_status", "complete") != "complete"
         ):
             raise ValueError("dated ST history receipt is not quality complete")
-        with path.open("rb") as source_file:
-            digest = hashlib.file_digest(source_file, "sha256").hexdigest()
-        if receipt.get("history_sha256", receipt.get("sha256")) != digest:
-            raise ValueError("dated ST history receipt hash does not match")
-        query = (manifest or {}).get("query", {})
-        if str(query.get("start_date", "99999999")) < receipt.get("start_date", "99999999") or str(
-            query.get("end_date", "00000000")
-        ) > receipt.get("end_date", "00000000"):
-            raise ValueError("dated ST history receipt does not cover daily_clean dates")
-        if "available_from" not in pq.read_schema(path).names:
-            raise ValueError("dated ST history is missing available_from")
-        history = pd.read_parquet(path, columns=["ts_code", "trade_date", "available_from"])
-        if history.duplicated(["ts_code", "trade_date"]).any():
-            raise ValueError("dated ST history has duplicate symbol/date keys")
-        availability = history["available_from"].astype("string").str.replace("-", "", regex=False)
-        valid = availability.isna() | availability.str.fullmatch(r"\d{8}", na=False)
-        if not bool(valid.all()):
-            raise ValueError("dated ST history contains malformed availability dates")
-        history["available_from"] = availability
+        history = _read_st_history(path, receipt, manifest)
     except (OSError, ValueError, KeyError, pd.errors.ParserError) as error:
         return None, f"dated ST history could not be read: {error}"
     return {

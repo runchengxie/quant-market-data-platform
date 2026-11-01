@@ -20,6 +20,19 @@ pc = cast(Any, arrow_compute)
 P = pathlib.Path
 
 
+def _append_buckets(t, args, sinks, work):
+    unique = pc.unique(t["Ticker"])
+    which = pc.index_in(t["Ticker"], value_set=unique)
+    lookup = pa.array([bucket_for(x, args.buckets) for x in unique.to_pylist()], type=pa.int32())
+    buckets = pc.take(lookup, which)
+    for b in pc.unique(buckets).to_pylist():
+        indexes = pc.indices_nonzero(pc.equal(buckets, b))
+        piece = t.take(indexes)
+        if b not in sinks:
+            sinks[b] = Sink(work / f"bucket-{b:03}.parquet", t.schema, args.stage_rows, 1)
+        sinks[b].append(piece)
+
+
 def append_input(item, args, job, sinks, work):
     source = P(args.source)
     month_rows = 0
@@ -50,18 +63,7 @@ def append_input(item, args, job, sinks, work):
             selected += t.num_rows
             month_rows += t.num_rows
             month_volume += volume(t)
-            unique = pc.unique(t["Ticker"])
-            which = pc.index_in(t["Ticker"], value_set=unique)
-            lookup = pa.array(
-                [bucket_for(x, args.buckets) for x in unique.to_pylist()], type=pa.int32()
-            )
-            buckets = pc.take(lookup, which)
-            for b in pc.unique(buckets).to_pylist():
-                indexes = pc.indices_nonzero(pc.equal(buckets, b))
-                piece = t.take(indexes)
-                if b not in sinks:
-                    sinks[b] = Sink(work / f"bucket-{b:03}.parquet", t.schema, args.stage_rows, 1)
-                sinks[b].append(piece)
+            _append_buckets(t, args, sinks, work)
             job.update(active_source=item["file"], active_month_rows=month_rows)
     checked.append({"file": item["file"], "sha256": item["sha256"], "selected_rows": selected})
     return (month_rows, month_volume, checked[0])

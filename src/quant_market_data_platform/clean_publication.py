@@ -26,6 +26,39 @@ from quant_market_data_platform.clean_migration import (
 from quant_market_data_platform.publication_lock import publication_lock
 
 
+def _recover_alias(root: Path, alias: Path, state: dict[str, Any]) -> None:
+    if alias.exists() and not alias.is_symlink():
+        raise ValueError("Refusing recovery over a physical alias")
+    current = str(alias.readlink()) if alias.is_symlink() else None
+    if current not in (state["old_link"], state["new_link"]):
+        raise ValueError("Alias changed outside this publication; recovery stopped")
+    for link in (state["old_link"], state["new_link"]):
+        if link is not None:
+            _contained(root, alias.parent / link)
+    _restore_metadata(root, state["metadata"])
+    if state["old_link"] is None:
+        alias.unlink(missing_ok=True)
+    else:
+        _link(alias, state["old_link"])
+
+
+def _validate_clean_target(target: Path) -> None:
+    manifest = target / "manifest.yml"
+    if manifest.is_symlink() or not manifest.is_file():
+        raise ValueError("Clean target requires a physical manifest")
+    payload = yaml.safe_load(manifest.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict) or payload.get("status") != "completed":
+        raise ValueError("Clean target manifest must be completed")
+    if payload.get("dataset") != "daily_clean":
+        raise ValueError("Only daily_clean targets are supported")
+    if Path(str(payload.get("output_dir", ""))).resolve() != target:
+        raise ValueError("Manifest output_dir must identify the real version")
+    if not (target / "data").is_dir() or (target / "data").is_symlink():
+        raise ValueError("Clean target requires a physical data directory")
+    if any(path.is_symlink() for path in (target / "data").rglob("*")):
+        raise ValueError("Clean data must not contain symlinks")
+
+
 def _contained(root: Path, path: Path) -> Path:
     path = Path(os.path.abspath(path.expanduser()))
     if not path.is_relative_to(root) or not path.resolve().is_relative_to(root):
@@ -43,20 +76,7 @@ def _paths(root: Path, alias: Path, target: Path) -> tuple[Path, Path, Path]:
         raise ValueError("Alias and target must be disjoint")
     if not target.is_dir() or target.is_symlink():
         raise ValueError("Clean target must be a directory")
-    manifest = target / "manifest.yml"
-    if manifest.is_symlink() or not manifest.is_file():
-        raise ValueError("Clean target requires a physical manifest")
-    payload = yaml.safe_load(manifest.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict) or payload.get("status") != "completed":
-        raise ValueError("Clean target manifest must be completed")
-    if payload.get("dataset") != "daily_clean":
-        raise ValueError("Only daily_clean targets are supported")
-    if Path(str(payload.get("output_dir", ""))).resolve() != target:
-        raise ValueError("Manifest output_dir must identify the real version")
-    if not (target / "data").is_dir() or (target / "data").is_symlink():
-        raise ValueError("Clean target requires a physical data directory")
-    if any(path.is_symlink() for path in (target / "data").rglob("*")):
-        raise ValueError("Clean data must not contain symlinks")
+    _validate_clean_target(target)
     if alias.is_symlink():
         alias.resolve(strict=True)
     elif alias.exists() and not alias.is_dir():
@@ -198,19 +218,7 @@ def recover_clean(*, root: Path, alias: Path) -> dict[str, Any]:
             state["status"] = "rolled_back"
             _save(journal, state)
             return state
-        if alias.exists() and not alias.is_symlink():
-            raise ValueError("Refusing recovery over a physical alias")
-        current = str(alias.readlink()) if alias.is_symlink() else None
-        if current not in (state["old_link"], state["new_link"]):
-            raise ValueError("Alias changed outside this publication; recovery stopped")
-        for link in (state["old_link"], state["new_link"]):
-            if link is not None:
-                _contained(root, alias.parent / link)
-        _restore_metadata(root, state["metadata"])
-        if state["old_link"] is None:
-            alias.unlink(missing_ok=True)
-        else:
-            _link(alias, state["old_link"])
+        _recover_alias(root, alias, state)
         state["status"] = "rolled_back"
         _save(journal, state)
         return state

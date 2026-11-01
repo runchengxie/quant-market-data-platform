@@ -22,25 +22,7 @@ from .margin_version import (
 from .publish.json_manifest import write_json_manifest
 
 
-def _sync_directory(path: Path) -> None:
-    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
-    try:
-        os.fsync(descriptor)
-    finally:
-        os.close(descriptor)
-
-
-def durable_json(path: Path, payload: dict[str, Any]) -> None:
-    write_json_manifest(path, payload)
-    with path.open("rb") as stream:
-        os.fsync(stream.fileno())
-    _sync_directory(path.parent)
-
-
-@contextmanager
-def catalog_lock(
-    catalog: Path, *, create: bool = False, allow_pending: bool = False
-) -> Generator[None]:
+def _prepare_catalog(catalog: Path, create: bool) -> tuple[Path, Path, bool]:
     require_external(catalog)
     if catalog.is_symlink():
         raise ValueError("Publication catalog must be physical")
@@ -63,6 +45,29 @@ def catalog_lock(
         raise ValueError("An existing complete catalog is required")
     if new:
         catalog.mkdir(parents=True)
+    return marker, lock, new
+
+
+def _sync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def durable_json(path: Path, payload: dict[str, Any]) -> None:
+    write_json_manifest(path, payload)
+    with path.open("rb") as stream:
+        os.fsync(stream.fileno())
+    _sync_directory(path.parent)
+
+
+@contextmanager
+def catalog_lock(
+    catalog: Path, *, create: bool = False, allow_pending: bool = False
+) -> Generator[None]:
+    marker, lock, new = _prepare_catalog(catalog, create)
     descriptor = os.open(lock, os.O_RDWR | os.O_NOFOLLOW | (os.O_CREAT if new else 0), 0o600)
     try:
         fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)

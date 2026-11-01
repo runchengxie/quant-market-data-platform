@@ -26,6 +26,16 @@ from quant_market_data_platform.providers.a_share_minute_price_flow import price
 from quant_market_data_platform.quality_a_share_minute import _frame_validation_issues
 
 
+def _validate_audit_issues(record: dict, bad: pd.DataFrame) -> None:
+    issues = record["issues"]
+    if not isinstance(issues, dict) or any(type(v) is not int or v < 0 for v in issues.values()):
+        raise ValueError("invalid quarantine audit issues")
+    if {k: v for k, v in issues.items() if v} != {
+        "notional_beyond_hard_price_guard_rows": len(bad)
+    }:
+        raise ValueError("quarantine cannot waive other audit issues")
+
+
 def _validate_source(
     root: Path, record: dict, date: str, symbol: str
 ) -> tuple[Path, Path, pd.DataFrame]:
@@ -69,13 +79,7 @@ def _validate_source(
     bad = normalized[actual]
     if bad.empty or set(bad.ts_code) != {symbol}:
         raise ValueError("quarantine symbol does not cover all semantic failures")
-    issues = record["issues"]
-    if not isinstance(issues, dict) or any(type(v) is not int or v < 0 for v in issues.values()):
-        raise ValueError("invalid quarantine audit issues")
-    if {k: v for k, v in issues.items() if v} != {
-        "notional_beyond_hard_price_guard_rows": len(bad)
-    }:
-        raise ValueError("quarantine cannot waive other audit issues")
+    _validate_audit_issues(record, bad)
     return (
         partition,
         sidecar,
