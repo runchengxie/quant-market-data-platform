@@ -57,6 +57,12 @@ Add DuckDB query support with `uv sync --locked --extra dev --extra duckdb`.
 
 ## Optional integrations
 
+The `qlib` extra requires `mlflow>=3.17.2` so resolving other updates cannot silently
+downgrade MLflow to a vulnerable version. [MLflow 3.17.2 release metadata](https://pypi.org/pypi/mlflow/3.17.2/json)
+requires `pyarrow<26`, so the shared lock currently retains Arrow 25. Once upstream supports
+Arrow 26, resolve again and run the strict all-extras audit and real runtime tests below;
+do not override the upstream constraint or ignore audit failures.
+
 The locked `pyqlib 0.9.7` runtime is tested with Python 3.12. Select the same interpreter for both dependency synchronization and test execution.
 
 The standard `dev` gate does not install `pyqlib`. Default tests check native DataFrame equivalence, delayed imports, and missing-dependency errors. Real DataLoader tests use `pytest.importorskip` and skip clearly when `pyqlib` is absent. Run the real runtime case with:
