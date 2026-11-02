@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 607,
-    "python_lines": 142390,
+    "python_lines": 142417,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -19,7 +19,7 @@
   },
   "change_record": {
     "source_revision": "9adde32564b0e5ace5bc475a6830a4397ac6f681",
-    "reason": "Add immutable rolling broker forecast observation capture and truthful-clock, sealing and dry-run regressions. Exactly 2 Python files and 292 physical lines. No structural, complexity, typing, exclusion, security or reserved-headroom changes.",
+    "reason": "Add immutable rolling broker forecast observations and truthful-clock, acquisition metadata, sealing and dry-run regressions. Exactly 2 Python files and 319 physical lines. No structural, complexity, typing, exclusion, security or reserved-headroom changes.",
     "exit_condition": "Remove this exact two-file observation allowance when observation sealing is consolidated into the existing observation framework with equivalent clock, completion, unique-attempt and integrity regressions. Preserve earlier retirement conditions."
   },
   "previous_change_records": [

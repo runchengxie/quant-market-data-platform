@@ -126,3 +126,14 @@ def test_capture_does_not_publish_completion_before_verification(
 
     monkeypatch.setattr(history, "verified_month", verify)
     assert observation.capture_observation(options(tmp_path))["status"] == "completed"
+
+
+def test_verified_observation_pins_monthly_acquisition_metadata(tmp_path, offline_capture):
+    result = observation.capture_observation(options(tmp_path))
+    root = Path(result["observation_dir"])
+    proof_path = next((root / "history/raw").glob("*/receipt.json"))
+    proof = json.loads(proof_path.read_text())
+    proof["acquisition_revision"] = "b" * 40
+    proof_path.write_text(json.dumps(proof))
+    with pytest.raises(ValueError, match="metadata"):
+        observation.verify_observation(root)

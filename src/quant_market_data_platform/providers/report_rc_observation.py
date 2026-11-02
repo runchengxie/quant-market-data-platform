@@ -22,7 +22,7 @@ def verify_observation(root: Path) -> dict[str, Any]:
     return _verify_contents(root, receipt)
 
 
-def _verify_contents(root: Path, receipt: dict[str, Any]) -> dict[str, Any]:
+def _observation_clock(receipt: dict[str, Any]) -> tuple[datetime, datetime]:
     if receipt.get("status") != "completed":
         raise ValueError("forecast observation is incomplete")
     started = datetime.fromisoformat(receipt["started_at_utc"])
@@ -32,6 +32,28 @@ def _verify_contents(root: Path, receipt: dict[str, Any]) -> dict[str, Any]:
     local_day = started.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d")
     if local_day != receipt["observation_date"] or receipt["query"]["end_date"] != local_day:
         raise ValueError("forecast observation clock does not match the query")
+    return started, finished
+
+
+def _month_observation(
+    root: Path, record: dict[str, Any], dates: tuple[str, str], clock: tuple[datetime, datetime]
+) -> int:
+    start, end = dates
+    started, finished = clock
+    if record["month"] != start[:6]:
+        raise ValueError("forecast observation month identity mismatch")
+    expected = {"start_date": start, "end_date": end, "fields": history.FIELDS}
+    proof = history.verified_month(root / "history" / "raw" / f"month={start[:6]}", expected)
+    if proof != {key: value for key, value in record.items() if key != "month"}:
+        raise ValueError("forecast observation acquisition metadata mismatch")
+    fetched = datetime.fromisoformat(proof["retrieved_at_utc"])
+    if fetched.tzinfo is None or not started <= fetched <= finished:
+        raise ValueError("forecast observation acquisition clock is outside the attempt")
+    return proof["rows"]
+
+
+def _verify_contents(root: Path, receipt: dict[str, Any]) -> dict[str, Any]:
+    started, finished = _observation_clock(receipt)
     manifest_path = root / "history" / "manifest.json"
     history.reject_symlinks(manifest_path)
     if history.file_hash(manifest_path) != receipt.get("history_manifest_sha256"):
@@ -42,18 +64,12 @@ def _verify_contents(root: Path, receipt: dict[str, Any]) -> dict[str, Any]:
     months = manifest.get("months", [])
     if manifest.get("status") != "completed" or len(months) != len(ranges):
         raise ValueError("forecast observation months are incomplete")
-    total = 0
-    for record, (start, end) in zip(months, ranges, strict=True):
-        if record["month"] != start[:6]:
-            raise ValueError("forecast observation month identity mismatch")
-        expected = {"start_date": start, "end_date": end, "fields": history.FIELDS}
-        proof = history.verified_month(root / "history" / "raw" / f"month={start[:6]}", expected)
-        fetched = datetime.fromisoformat(proof["retrieved_at_utc"])
-        if fetched.tzinfo is None or not started <= fetched <= finished:
-            raise ValueError("forecast observation acquisition clock is outside the attempt")
-        if proof["payload_sha256"] != record["payload_sha256"]:
-            raise ValueError("forecast observation payload identity mismatch")
-        total += proof["rows"]
+    if any(record.get("acquisition_revision") != receipt["source_revision"] for record in months):
+        raise ValueError("forecast observation source metadata mismatch")
+    total = sum(
+        _month_observation(root, record, (start, end), (started, finished))
+        for record, (start, end) in zip(months, ranges, strict=True)
+    )
     if total != receipt["rows"] or total != manifest["total_rows"]:
         raise ValueError("forecast observation row count mismatch")
     return receipt
