@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 603,
-    "python_lines": 141701,
+    "python_files": 605,
+    "python_lines": 142098,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "5497dabcd37a02f634563f3b125c029f1f94b0a9",
-    "reason": "Extract ordered validation, immutable snapshot inventory, alias recovery, request retry and bounded bucket-writing stages in 12 existing modules. Exactly 74 net Python lines, no files added. Restore the existing strict C901 total budget from 25 findings to 9 without changing rules, thresholds, exclusions, guards, types, structural limits or reserved headroom.",
-    "exit_condition": "Recover this exact 74-line extraction allowance when equivalent validation/recovery stages can be consolidated while retaining the strict nine-finding complexity budget, full type coverage, guard ordering and existing failure-path behavior. Preserve all earlier retirement conditions."
+    "source_revision": "0be17c8b8c790481ce5f48e70d7e0bef1eb0d382",
+    "reason": "Add bounded, hash-verified broker forecast history acquisition and pagination/resume regressions. Exactly 2 Python files and 397 physical lines. No structural, complexity, typing, exclusion, security or reserved-headroom changes.",
+    "exit_condition": "Remove this exact two-file acquisition allowance if the monthly snapshot and checkpoint contract is consolidated into the existing mirror with equivalent regressions. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "5497dabcd37a02f634563f3b125c029f1f94b0a9",
+      "reason": "Extract ordered validation, immutable snapshot inventory, alias recovery, request retry and bounded bucket-writing stages in 12 existing modules. Exactly 74 net Python lines, no files added. Restore the existing strict C901 total budget from 25 findings to 9 without changing rules, thresholds, exclusions, guards, types, structural limits or reserved headroom.",
+      "exit_condition": "Recover this exact 74-line extraction allowance when equivalent validation/recovery stages can be consolidated while retaining the strict nine-finding complexity budget, full type coverage, guard ordering and existing failure-path behavior. Preserve all earlier retirement conditions."
+    },
     {
       "source_revision": "a5e2f9d1dc83af0db7054dbe3f671a4d5bb91747",
       "reason": "Add dated same-security minute request identity translation, observed source request/response lineage, promotion and CLI propagation, plus collision, date-boundary and partial-resume regressions. Exactly 2 Python files and 341 net physical Python lines. No structural, complexity, debt, typing, exclusion, oversized-file/function, coverage, security or reserved-headroom allowance increases.",
