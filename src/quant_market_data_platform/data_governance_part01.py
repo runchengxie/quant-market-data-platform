@@ -162,6 +162,16 @@ def _lexists(path: Path) -> bool:
     return True
 
 
+def _rooted_kept_path(root: Path, value: str | Path) -> Path:
+    """Admit a local kept link without admitting its external target or children."""
+    requested = Path(value).expanduser()
+    path = Path(os.path.abspath(requested if requested.is_absolute() else root / requested))
+    if path.is_symlink():
+        _rooted_path(root, path.parent)
+        return path
+    return _rooted_path(root, path)
+
+
 def _entry_stats(path: Path) -> Iterator[os.stat_result]:
     root_stat = path.lstat()
     yield root_stat
@@ -315,7 +325,11 @@ def _plan_explicit_path(
     rule: ExplicitPathRule,
     protected_paths: Sequence[Path],
 ) -> list[PlanItem]:
-    path = _rooted_path(root, rule.path)
+    path = (
+        _rooted_kept_path(root, rule.path)
+        if rule.disposition == "keep"
+        else _rooted_path(root, rule.path)
+    )
     if path == root:
         raise ValueError(f"Explicit governance rule cannot target the configured root: {rule.name}")
     if not _lexists(path):
@@ -487,7 +501,8 @@ def plan_data_governance(
         if isinstance(rule, ExplicitPathRule) and rule.disposition == "keep"
     ]
     normalized_protected_paths = tuple(
-        _rooted_path(normalized_root, path) for path in (*declared_keep_paths, *protected_paths)
+        _rooted_kept_path(normalized_root, path)
+        for path in (*declared_keep_paths, *protected_paths)
     )
     items: list[PlanItem] = []
     for rule in rules:

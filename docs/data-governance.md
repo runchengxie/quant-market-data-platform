@@ -321,3 +321,15 @@ marketdata governance plan-retention \
 可逆归档须先固定报告、源版本与证据哈希，补齐后继验证、所有消费者的释放证据及锁和任务检查，
 再生成独立归档并验证逐文件恢复。保存原 manifest、receipt、journal 和供体映射，确认可恢复后
 才可单独评审 payload 退役。目录年龄和本报告均不授权移动或删除。
+
+## Kept archive links
+
+Retention planning accepts an explicit `keep` rule or inventory protection for a
+local symlink to an external archive. Its parent must remain inside the owner
+root. The planner counts only the link and never scans the archive target.
+Review and retirement rules still reject external links, and all rules reject
+paths beneath an escaping symlink ancestor. This allows a read-only plan to
+complete after cold-storage migration while preserving deletion boundaries.
+
+The quality budget adds exactly 59 net Python lines for this change and six
+regressions in existing files; structural and safety limits are unchanged.

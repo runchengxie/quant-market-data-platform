@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 607,
-    "python_lines": 142417,
+    "python_lines": 142476,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "9adde32564b0e5ace5bc475a6830a4397ac6f681",
-    "reason": "Add immutable rolling broker forecast observations and truthful-clock, acquisition metadata, sealing and dry-run regressions. Exactly 2 Python files and 319 physical lines. No structural, complexity, typing, exclusion, security or reserved-headroom changes.",
-    "exit_condition": "Remove this exact two-file observation allowance when observation sealing is consolidated into the existing observation framework with equivalent clock, completion, unique-attempt and integrity regressions. Preserve earlier retirement conditions."
+    "source_revision": "4bbc126ab14ce39a2f039ec2bb7fb4ed9955e05b",
+    "reason": "Admit explicitly kept local archive symlinks without following external targets, plus six archive-link and ancestor-escape regressions. Exactly 59 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
+    "exit_condition": "Remove this exact 59-line allowance when equivalent nontraversing archive-keep and candidate/ancestor escape checks are consolidated without extra lines. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "9adde32564b0e5ace5bc475a6830a4397ac6f681",
+      "reason": "Add immutable rolling broker forecast observations and truthful-clock, acquisition metadata, sealing and dry-run regressions. Exactly 2 Python files and 319 physical lines. No structural, complexity, typing, exclusion, security or reserved-headroom changes.",
+      "exit_condition": "Remove this exact two-file observation allowance when observation sealing is consolidated into the existing observation framework with equivalent clock, completion, unique-attempt and integrity regressions. Preserve earlier retirement conditions."
+    },
     {
       "source_revision": "0be17c8b8c790481ce5f48e70d7e0bef1eb0d382",
       "reason": "Add bounded, hash-verified broker forecast history acquisition and pagination/resume regressions. Exactly 2 Python files and 397 physical lines. No structural, complexity, typing, exclusion, security or reserved-headroom changes.",
