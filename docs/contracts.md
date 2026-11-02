@@ -650,3 +650,13 @@ TuShare 分钟分区继续使用股票池的规范 `ts_code`。上海医药的�
 上述上海医药区间的规范分区缺少有效标识血缘时，promotion 校验失败。
 历史代码与规范代码同时产生相同请求标识时拒绝采集。响应归一后分钟键重复时拒绝该
 证券，不去重相加。行情数值及 Parquet 列结构保持不变。
+
+## Broker forecast observation receipt
+
+`tushare.report_rc.observation.v1` is a locally observed raw-forecast envelope.
+It seals an actual UTC retrieval interval, local observation date, query range,
+immutable source revision and SHA-256-bound `report_rc.history.v1` manifest.
+Monthly payload identity, pagination and acquisition metadata must all agree.
+Completed observations are available only after their actual finish timestamp;
+partial attempts and missing observation dates cannot be used as completed
+historical vintages. See [daily forecast observations](operations/report-rc-observations.md).
