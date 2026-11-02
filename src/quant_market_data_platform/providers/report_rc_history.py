@@ -23,6 +23,7 @@ from ._client import _call_tushare_api, _call_tushare_endpoint, _pandas
 PAGE_SIZE = 3000
 MAX_PAGES = 1000
 FIELDS = ",".join((*EVENT_DATE_DEFAULT_FIELDS["report_rc"], "create_time", "imp_dg"))
+ACQUISITION_CODE_SHA256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 
 
 def utc_now() -> str:
@@ -33,8 +34,15 @@ def file_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def reject_symlinks(path: Path) -> None:
+    if path.absolute() != path.resolve():
+        raise ValueError("snapshot symlink paths are rejected")
+
+
 def atomic_json(path: Path, value: dict[str, Any]) -> None:
     pending = path.with_suffix(".pending")
+    reject_symlinks(path)
+    reject_symlinks(pending)
     pending.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
     pending.replace(path)
 
@@ -104,11 +112,19 @@ def fetch_month(
 
 
 def store_month(
-    output: Path, frame: Any, counts: list[int], query: dict[str, Any]
+    output: Path,
+    frame: Any,
+    counts: list[int],
+    query: dict[str, Any],
+    *,
+    acquisition_revision: str | None = None,
 ) -> dict[str, Any]:
+    reject_symlinks(output)
     output.mkdir(parents=True, exist_ok=True)
     payload = output / "part.parquet"
     pending = output / "part.pending.parquet"
+    reject_symlinks(payload)
+    reject_symlinks(pending)
     frame.to_parquet(pending, index=False)
     pending.replace(payload)
     proof = {
@@ -120,12 +136,16 @@ def store_month(
         "complete": True,
         "retrieved_at_utc": utc_now(),
         "payload_sha256": file_hash(payload),
+        "acquisition_revision": acquisition_revision,
+        "acquisition_code_sha256": ACQUISITION_CODE_SHA256,
     }
     atomic_json(output / "receipt.json", proof)
     return proof
 
 
 def verified_month(output: Path, query: dict[str, Any]) -> dict[str, Any]:
+    reject_symlinks(output / "receipt.json")
+    reject_symlinks(output / "part.parquet")
     proof = json.loads((output / "receipt.json").read_text())
     counts = proof.get("page_rows", [])
     valid = (
@@ -149,12 +169,17 @@ def verified_month(output: Path, query: dict[str, Any]) -> dict[str, Any]:
     return proof
 
 
-def acquire_month(job: tuple[str, str, str, str, float]) -> dict[str, Any]:
-    root, token_env, start, end, interval = job
+def acquire_month(job: tuple[str, str, str, str, float, str]) -> dict[str, Any]:
+    root, token_env, start, end, interval, revision = job
     partition = Path(root) / "raw" / f"month={start[:6]}"
     query = {"start_date": start, "end_date": end, "fields": FIELDS}
     if (partition / "receipt.json").exists():
-        return {"month": start[:6], **verified_month(partition, query)}
+        proof = verified_month(partition, query)
+        return {
+            "month": start[:6],
+            **proof,
+            "acquisition_revision": proof.get("acquisition_revision"),
+        }
     client, policy, _ = _tushare_runtime(
         token_env=token_env,
         api_url=None,
@@ -162,7 +187,10 @@ def acquire_month(job: tuple[str, str, str, str, float]) -> dict[str, Any]:
         request_options={"request_timeout_seconds": 45, "request_attempts": 3},
     )
     frame, counts = fetch_month(client, policy, start, end, interval)
-    return {"month": start[:6], **store_month(partition, frame, counts, query)}
+    return {
+        "month": start[:6],
+        **store_month(partition, frame, counts, query, acquisition_revision=revision),
+    }
 
 
 def backfill(args: argparse.Namespace) -> None:
@@ -171,7 +199,7 @@ def backfill(args: argparse.Namespace) -> None:
         raise ValueError("snapshot output must not traverse symlinks")
     output.mkdir(parents=True, exist_ok=True)
     jobs = [
-        (str(output), args.token_env, start, end, args.interval)
+        (str(output), args.token_env, start, end, args.interval, args.source_revision)
         for start, end in month_ranges(args.start_date, args.end_date)
     ]
     manifest = {
@@ -179,7 +207,7 @@ def backfill(args: argparse.Namespace) -> None:
         "api": "report_rc",
         "start_date": args.start_date,
         "end_date": args.end_date,
-        "source_revision": args.source_revision,
+        "run_source_revision": args.source_revision,
         "started_at_utc": utc_now(),
         "availability": "retrieved_snapshot_not_certified_historical_vintage",
         "status": "running",

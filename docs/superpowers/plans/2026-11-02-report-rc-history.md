@@ -12,8 +12,12 @@
 
 ## Tasks
 
-- [ ] Add `scripts/research/backfill_report_rc.py` with `fetch_month(client, policy, start, end, interval)` and hash-verified monthly checkpoints. Write failing tests for pagination, duplicate pages, invalid dates and resume integrity before implementation.
-- [ ] Run the 2011–2026 backfill using the existing configuration wrapper. Retain source revision, query, fields, timestamps and checksums externally.
+- [x] Add `src/quant_market_data_platform/providers/report_rc_history.py` with `fetch_month(client, policy, start, end, interval)` and hash-verified monthly checkpoints. Write failing tests for pagination, duplicate pages, invalid dates and resume integrity before implementation.
+- [x] Run the 2011–2026 backfill using the existing configuration wrapper. Retain source revision, query, fields, timestamps and checksums externally.
 - [ ] Generate annual coverage and revision-delay quality summaries. Run affected tests and repository quality gates, independent review, PR and merge.
 
 The private consumer owns factor construction and return research. Its public projection must contain aggregates only and identify reconstructed historical availability explicitly.
+
+## Execution record
+
+The initial acquisition completed using revisions 58dbc6d and 602981f. Earlier monthly receipts did not record their acquisition revision; verified resume retains that field as unknown, with the run revision recorded separately. Independent review found and reproduced inner-symlink writes and revision relabeling; both have RED-to-GREEN regressions. Four isolated workers are bounded to separate months. The production assets remain unchanged.

@@ -109,3 +109,29 @@ def test_backfill_runtime_options_and_zero_row_checkpoint(tmp_path, monkeypatch)
     manifest = json.loads((tmp_path / "manifest.json").read_text())
     assert manifest["status"] == "completed" and manifest["total_rows"] == 0
     assert manifest["months"][0]["page_rows"] == [0]
+
+
+def test_checkpoint_records_acquisition_revision_separately(tmp_path):
+    query = {"start_date": "20110101", "end_date": "20110131", "fields": history.FIELDS}
+    history.store_month(tmp_path, rows(1), [1], query, acquisition_revision="first")
+    assert history.verified_month(tmp_path, query)["acquisition_revision"] == "first"
+
+
+def test_inner_symlinks_cannot_redirect_snapshot_writes(tmp_path):
+    outside = tmp_path / "other-asset"
+    outside.mkdir()
+    output = tmp_path / "snapshot"
+    output.mkdir()
+    (output / "raw").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError, match="symlink"):
+        history.store_month(output / "raw" / "month=201101", rows(1), [1], {})
+    assert list(outside.iterdir()) == []
+
+
+def test_pending_symlink_does_not_overwrite_existing_file(tmp_path):
+    victim = tmp_path / "victim"
+    victim.write_text("keep")
+    (tmp_path / "receipt.pending").symlink_to(victim)
+    with pytest.raises(ValueError, match="symlink"):
+        history.atomic_json(tmp_path / "receipt.json", {})
+    assert victim.read_text() == "keep"
