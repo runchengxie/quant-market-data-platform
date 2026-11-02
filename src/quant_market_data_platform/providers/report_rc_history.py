@@ -10,7 +10,9 @@ import argparse
 import hashlib
 import json
 import time
+from concurrent.futures import ProcessPoolExecutor
 from datetime import UTC, datetime, timedelta
+from multiprocessing import get_context
 from pathlib import Path
 from typing import Any
 
@@ -147,17 +149,31 @@ def verified_month(output: Path, query: dict[str, Any]) -> dict[str, Any]:
     return proof
 
 
+def acquire_month(job: tuple[str, str, str, str, float]) -> dict[str, Any]:
+    root, token_env, start, end, interval = job
+    partition = Path(root) / "raw" / f"month={start[:6]}"
+    query = {"start_date": start, "end_date": end, "fields": FIELDS}
+    if (partition / "receipt.json").exists():
+        return {"month": start[:6], **verified_month(partition, query)}
+    client, policy, _ = _tushare_runtime(
+        token_env=token_env,
+        api_url=None,
+        request_policy=None,
+        request_options={"request_timeout_seconds": 45, "request_attempts": 3},
+    )
+    frame, counts = fetch_month(client, policy, start, end, interval)
+    return {"month": start[:6], **store_month(partition, frame, counts, query)}
+
+
 def backfill(args: argparse.Namespace) -> None:
     output = Path(args.out_dir)
     if output.absolute() != output.resolve():
         raise ValueError("snapshot output must not traverse symlinks")
     output.mkdir(parents=True, exist_ok=True)
-    client, policy, _ = _tushare_runtime(
-        token_env=args.token_env,
-        api_url=None,
-        request_policy=None,
-        request_options={"request_timeout_seconds": 45, "request_attempts": 3},
-    )
+    jobs = [
+        (str(output), args.token_env, start, end, args.interval)
+        for start, end in month_ranges(args.start_date, args.end_date)
+    ]
     manifest = {
         "schema_version": "tushare.report_rc.history.v1",
         "api": "report_rc",
@@ -169,28 +185,32 @@ def backfill(args: argparse.Namespace) -> None:
         "status": "running",
         "months": [],
     }
+    workers = getattr(args, "workers", 1)
+    pool = (
+        ProcessPoolExecutor(max_workers=workers, mp_context=get_context("spawn"))
+        if workers > 1
+        else None
+    )
     try:
-        for start, end in month_ranges(args.start_date, args.end_date):
-            partition = output / "raw" / f"month={start[:6]}"
-            query = {"start_date": start, "end_date": end, "fields": FIELDS}
-            if (partition / "receipt.json").exists():
-                proof = verified_month(partition, query)
-            else:
-                frame, counts = fetch_month(client, policy, start, end, args.interval)
-                proof = store_month(partition, frame, counts, query)
-            manifest["months"].append({"month": start[:6], **proof})
+        results = pool.map(acquire_month, jobs) if pool else map(acquire_month, jobs)
+        for proof in results:
+            manifest["months"].append(proof)
             atomic_json(output / "manifest.json", manifest)
-            print(f"{start[:6]} rows={proof['rows']} pages={len(proof['page_rows'])}", flush=True)
+            print(
+                f"{proof['month']} rows={proof['rows']} pages={len(proof['page_rows'])}", flush=True
+            )
         manifest.update(
             status="completed",
             finished_at_utc=utc_now(),
             total_rows=sum(month["rows"] for month in manifest["months"]),
         )
-    except Exception as error:
+    except BaseException as error:
         manifest.update(status="partial", failure_type=type(error).__name__)
         raise
     finally:
         atomic_json(output / "manifest.json", manifest)
+        if pool:
+            pool.shutdown(cancel_futures=True)
 
 
 def main() -> None:
@@ -201,6 +221,7 @@ def main() -> None:
     parser.add_argument("--source-revision", required=True)
     parser.add_argument("--token-env", default="TUSHARE_TOKEN_2")
     parser.add_argument("--interval", type=float, default=0.25)
+    parser.add_argument("--workers", type=int, choices=range(1, 5), default=2)
     args = parser.parse_args()
     if args.interval < 0:
         parser.error("interval must be nonnegative")
