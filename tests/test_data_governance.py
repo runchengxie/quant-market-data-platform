@@ -518,3 +518,47 @@ def test_dataset_registry_csv_protects_version(tmp_path: Path, suffix: str) -> N
     )
     assert item.action == "keep"
     assert f"dataset_registry{suffix}" in item.reason
+
+
+def test_kept_external_archive_link_is_not_traversed(tmp_path: Path) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    archive = tmp_path / "archive"
+    archive.mkdir()
+    (archive / "data.bin").write_bytes(b"archive payload")
+    link = root / "cold-copy"
+    link.symlink_to(archive, target_is_directory=True)
+    [item] = plan_data_governance(
+        root, [ExplicitPathRule("cold-copy", link, "keep")], protected_paths=[link]
+    )
+    assert item.action == "keep"
+    assert item.path == link
+    assert item.usage.symlinks == 1
+    assert item.usage.files == 0
+    assert item.usage.logical_bytes == 0
+    assert (archive / "data.bin").read_bytes() == b"archive payload"
+
+
+@pytest.mark.parametrize("disposition", ["keep", "review", "retire_candidate"])
+def test_external_symlink_ancestor_is_rejected_for_all_dispositions(
+    tmp_path: Path, disposition
+) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "link").symlink_to(outside / "missing")
+    (root / "escape").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(ValueError, match="resolves outside the configured root"):
+        plan_data_governance(root, [ExplicitPathRule("escape", "escape/link", disposition)])
+
+
+@pytest.mark.parametrize("disposition", ["review", "retire_candidate"])
+def test_external_archive_link_is_not_admitted_as_a_candidate(tmp_path: Path, disposition) -> None:
+    root = tmp_path / "root"
+    root.mkdir()
+    archive = tmp_path / "archive"
+    archive.mkdir()
+    (root / "cold-copy").symlink_to(archive, target_is_directory=True)
+    with pytest.raises(ValueError, match="resolves outside the configured root"):
+        plan_data_governance(root, [ExplicitPathRule("cold-copy", "cold-copy", disposition)])
