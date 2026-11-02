@@ -1,5 +1,6 @@
 """Historical forecast pagination and immutable checkpoint regressions."""
 
+import argparse
 import json
 
 import pandas as pd
@@ -85,3 +86,26 @@ def test_calendar_months_clip_both_boundaries():
     ]
     with pytest.raises(ValueError):
         history.month_ranges("20110302", "20110101")
+
+
+def test_backfill_runtime_options_and_zero_row_checkpoint(tmp_path, monkeypatch):
+    from quant_market_data_platform.providers._adapters_part01 import _request_policy_from_options
+
+    def runtime(**kwargs):
+        policy = _request_policy_from_options(None, kwargs["request_options"])
+        return Client(lambda q: pd.DataFrame()), policy, None
+
+    monkeypatch.setattr(history, "_tushare_runtime", runtime)
+    history.backfill(
+        argparse.Namespace(
+            out_dir=tmp_path,
+            token_env="TEST",
+            start_date="20110101",
+            end_date="20110131",
+            source_revision="test",
+            interval=0,
+        )
+    )
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    assert manifest["status"] == "completed" and manifest["total_rows"] == 0
+    assert manifest["months"][0]["page_rows"] == [0]

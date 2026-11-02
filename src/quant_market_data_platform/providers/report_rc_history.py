@@ -156,7 +156,7 @@ def backfill(args: argparse.Namespace) -> None:
         token_env=args.token_env,
         api_url=None,
         request_policy=None,
-        request_options={"request_timeout_seconds": 45, "retry_attempts": 3},
+        request_options={"request_timeout_seconds": 45, "request_attempts": 3},
     )
     manifest = {
         "schema_version": "tushare.report_rc.history.v1",
