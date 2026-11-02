@@ -677,3 +677,10 @@ Agent 只读调用应省略该参数。
 历史分钟映射涉及的 `validate-minute-partition` 输出含可选 `code_identity`，保留
 sidecar 中的规范代码、源请求代码和观察到的响应代码。不涉及映射的凭证省略此字段。
 生效区间和证据限制见[数据契约](contracts.md#historical-minute-code-identity)。
+
+## Daily broker forecast observations
+
+The Linux raw observation command records actual retrieval versions without
+changing historical assets or published aliases. See
+[daily forecast observations](operations/report-rc-observations.md) for preflight,
+collection, verification and deployment boundaries.
