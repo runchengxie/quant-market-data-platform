@@ -216,7 +216,7 @@ def parse_nea_electricity_release(payload: SourcePayload) -> pd.DataFrame:
             "ingested_at": retrieved,
             "source_retrieved_at": retrieved,
             "available_at": available_at,
-            "vintage_id": retrieved.strftime("%Y%m%dT%H%M%SZ"),  # ty: ignore[unresolved-attribute]
+            "vintage_id": retrieved.strftime("%Y%m%dT%H%M%SZ"),
             "revision_number": 0,
             "source_hash": payload.sha256,
             "revision_covered": observed,

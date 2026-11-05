@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 607,
-    "python_lines": 142476,
+    "python_lines": 142493,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "4bbc126ab14ce39a2f039ec2bb7fb4ed9955e05b",
-    "reason": "Admit explicitly kept local archive symlinks without following external targets, plus six archive-link and ancestor-escape regressions. Exactly 59 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
-    "exit_condition": "Remove this exact 59-line allowance when equivalent nontraversing archive-keep and candidate/ancestor escape checks are consolidated without extra lines. Preserve all earlier retirement conditions."
+    "source_revision": "921ceb1640f73ba8c73318ec95db49436b44be23",
+    "reason": "Preserve canonical nanosecond minute timestamps across pandas input resolutions and add four explicit second/millisecond/microsecond/nanosecond regressions. Exactly 17 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
+    "exit_condition": "Remove this exact 17-line allowance when timestamp-unit regressions are consolidated with existing minute normalization tests without losing value-preservation or immutable quarantine evidence checks. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "4bbc126ab14ce39a2f039ec2bb7fb4ed9955e05b",
+      "reason": "Admit explicitly kept local archive symlinks without following external targets, plus six archive-link and ancestor-escape regressions. Exactly 59 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
+      "exit_condition": "Remove this exact 59-line allowance when equivalent nontraversing archive-keep and candidate/ancestor escape checks are consolidated without extra lines. Preserve all earlier retirement conditions."
+    },
     {
       "source_revision": "9adde32564b0e5ace5bc475a6830a4397ac6f681",
       "reason": "Add immutable rolling broker forecast observations and truthful-clock, acquisition metadata, sealing and dry-run regressions. Exactly 2 Python files and 319 physical lines. No structural, complexity, typing, exclusion, security or reserved-headroom changes.",

@@ -104,6 +104,21 @@ def register(root):
     return result, runtime, report, probe, part
 
 
+@pytest.mark.parametrize("unit", ["s", "ms", "us", "ns"])
+def test_minute_normalization_preserves_nanosecond_contract(tmp_path, unit):
+    from quant_market_data_platform.providers._a_share_mins_validation import (
+        _normalize_minute_frame,
+    )
+
+    _, _, probe, _ = fixture(tmp_path)
+    frame = pd.read_parquet(probe)
+    frame["trade_time"] = frame.trade_time.dt.as_unit(unit)
+    normalized = _normalize_minute_frame(frame, context="synthetic timestamp unit")
+
+    assert str(normalized.trade_time.dtype) == "datetime64[ns]"
+    pd.testing.assert_series_equal(normalized.trade_time, frame.trade_time.dt.as_unit("ns"))
+
+
 def test_registration_preserves_originals_and_marker(tmp_path):
     runtime, report, probe, part = fixture(tmp_path)
     files = [*part.iterdir(), runtime / "semantic-audit-blocked.json", report, probe]

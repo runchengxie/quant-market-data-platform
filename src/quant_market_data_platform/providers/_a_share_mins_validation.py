@@ -52,7 +52,9 @@ def _normalize_minute_frame(frame: pd.DataFrame, *, context: str) -> pd.DataFram
 
     normalized = frame.loc[:, DEFAULT_MINS_FIELDS].copy()
     normalized["ts_code"] = normalized["ts_code"].astype(str).str.strip().str.upper()
-    normalized["trade_time"] = pd.to_datetime(normalized["trade_time"], errors="raise")
+    normalized["trade_time"] = pd.to_datetime(normalized["trade_time"], errors="raise").dt.as_unit(
+        "ns"
+    )
     for column in DEFAULT_MINS_FIELDS[2:]:
         normalized[column] = pd.to_numeric(normalized[column], errors="raise").astype(float)
     return normalized

@@ -212,7 +212,7 @@ def _frame_failure_counts(
         numeric["high"].lt(numeric[["open", "close", "low"]].max(axis=1))
         | numeric["low"].gt(numeric[["open", "close", "high"]].min(axis=1)),
     )
-    null_rows = cast(pd.Series, frame.isna().any(axis=1))
+    null_rows = frame.isna().any(axis=1)
     expected_pattern = _BJ_CODE_PATTERN if market == "BJ" else _SH_SZ_CODE_PATTERN
     return {
         "empty_rows": int(frame.empty),

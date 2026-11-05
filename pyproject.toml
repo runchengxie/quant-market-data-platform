@@ -67,6 +67,8 @@ tushare = [
   "pandas>=2",
   "pyarrow>=25.0.0",
   "tushare>=1.4",
+  # Tushare imports six without declaring it; dateutil 4 no longer supplies it.
+  "six>=1.17,<2",
 ]
 etf-minute-public = [
   "akshare>=1.18.94,<2",
@@ -135,7 +137,7 @@ max-complexity = 14
   "src/quant_market_data_platform/tushare_refresh.py" = ["F401"]
 
 [tool.uv.sources]
-research-code-quality = { git = "https://github.com/runchengxie/quant-code-quality.git", rev = "6daeeca7a3d405f23c8ad49c8364bfdc8e9bb661" }
+research-code-quality = { git = "https://github.com/runchengxie/quant-code-quality.git", rev = "76a869e4f7982a456e4807f454815d6aa027d712" }
 
 [tool.ty.src]
 include = ["src", "scripts", "tests"]

@@ -394,7 +394,7 @@ def parse_nbs_context(payload: SourcePayload) -> pd.DataFrame:  # noqa: PLR0912
                 "ingested_at": retrieved,
                 "source_retrieved_at": retrieved,
                 "available_at": retrieved,
-                "vintage_id": retrieved.strftime("%Y%m%dT%H%M%SZ"),  # ty: ignore[unresolved-attribute]
+                "vintage_id": retrieved.strftime("%Y%m%dT%H%M%SZ"),
                 "revision_number": 0,
                 "source_hash": payload.sha256,
                 "revision_covered": observed,

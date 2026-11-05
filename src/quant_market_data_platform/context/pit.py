@@ -99,7 +99,7 @@ def select_context_as_of(
         raise ValueError("context PIT is not revision-covered for the requested as-of state")
 
     selected_vintages = {
-        f"{row.series_id}|{pd.Timestamp(row.period_end).isoformat()}": str(row.vintage_id)  # ty: ignore[unresolved-attribute]
+        f"{row.series_id}|{pd.Timestamp(row.period_end).isoformat()}": str(row.vintage_id)
         for row in selected.itertuples(index=False)
     }
     audit = MappingProxyType(

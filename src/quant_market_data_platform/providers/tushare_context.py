@@ -406,7 +406,7 @@ def normalize_tushare_context(
         releases["provider"] = "tushare"
         releases["source_locator"] = "tushare://cn_schedule"
         releases["source_retrieved_at"] = retrieved
-        return pd.DataFrame(columns=()), releases.reset_index(drop=True)  # ty: ignore[invalid-argument-type]
+        return pd.DataFrame(columns=()), releases.reset_index(drop=True)
 
     specs = _SERIES_BY_ENDPOINT[endpoint]
     expected_period_column = (
@@ -429,7 +429,7 @@ def normalize_tushare_context(
         raise ValueError(f"{endpoint} response missing known series fields: {expected}")
 
     rows: list[dict[str, Any]] = []
-    vintage_id = retrieved.strftime("%Y%m%dT%H%M%SZ")  # ty: ignore[unresolved-attribute]
+    vintage_id = retrieved.strftime("%Y%m%dT%H%M%SZ")
     # TuShare uses columns such as `3m`, `1y`, and `5y`; record dictionaries preserve them.
     for source_row in raw.to_dict(orient="records"):
         for spec in available_specs:

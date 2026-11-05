@@ -68,7 +68,7 @@ def read_snapshot(snapshot: Path) -> tuple[dict[str, Any], bytes]:
 
 
 def _receipt_time(receipt: Mapping[str, Any]) -> pd.Timestamp:
-    value = pd.Timestamp(receipt.get("retrieved_at"))  # ty: ignore[invalid-argument-type]
+    value = pd.Timestamp(receipt.get("retrieved_at"))
     if value.tzinfo is None:
         return value.tz_localize("UTC")  # ty: ignore[invalid-return-type]
     return value.tz_convert("UTC")
@@ -89,7 +89,7 @@ def _release_calendar(records: list[tuple[dict[str, Any], bytes]]) -> pd.DataFra
         if not releases.empty:
             frames.append(releases)
     if not frames:
-        return pd.DataFrame(columns=list(RELEASE_CALENDAR_COLUMNS))  # ty: ignore[invalid-argument-type]
+        return pd.DataFrame(columns=list(RELEASE_CALENDAR_COLUMNS))
     combined = pd.concat(frames, ignore_index=True)
     for column in RELEASE_CALENDAR_COLUMNS:
         if column not in combined:
@@ -187,7 +187,7 @@ def build_context_frames(
     all_records = [read_snapshot(snapshot) for snapshot in snapshots]
     records = [item for item in all_records if _receipt_time(item[0]) <= cutoff]
     if not records:
-        raise ValueError(f"no context raw snapshots had been retrieved by {cutoff.isoformat()}")  # ty: ignore[unresolved-attribute]
+        raise ValueError(f"no context raw snapshots had been retrieved by {cutoff.isoformat()}")
     release_calendar = _release_calendar(records)
 
     observation_frames: list[pd.DataFrame] = []
@@ -209,7 +209,7 @@ def build_context_frames(
         (observations["source_retrieved_at"] <= cutoff) & (observations["available_at"] <= cutoff)
     ].reset_index(drop=True)
     if pit.empty:
-        raise ValueError(f"no context observations are safely visible as of {cutoff.isoformat()}")  # ty: ignore[unresolved-attribute]
+        raise ValueError(f"no context observations are safely visible as of {cutoff.isoformat()}")
 
     release_calendar = release_calendar.copy()
     if not release_calendar.empty:

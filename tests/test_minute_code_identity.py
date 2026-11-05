@@ -83,7 +83,7 @@ def test_request_translation_preserves_values_and_observed_lineage(
     )
     assert calls == [["600849.SH"]]
     assert valid == {"601607.SH"} and not issues and calls_count == 1
-    expected = source.assign(ts_code="601607.SH")
+    expected = source.assign(ts_code="601607.SH", trade_time=source.trade_time.dt.as_unit("ns"))
     pd.testing.assert_frame_equal(frames[0].reset_index(drop=True), expected)
     assert set(source["ts_code"]) == {"600849.SH"}
     assert lineage["601607.SH"]["response_symbols"] == ["600849.SH"]
