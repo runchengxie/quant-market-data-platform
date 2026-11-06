@@ -10,6 +10,8 @@ reference reason.
 Continue resolving each filesystem link afresh and never traverse linked
 directories. Do not cache filesystem resolution, skip evidence, weaken scan-error
 handling, or change production aliases, quotas, data or schedulers. Preserve
-self-reference exclusion and native Windows path case semantics. Validate with
+self-reference exclusion and native Windows path case semantics. Precompute
+the same two excluded metadata directories as rooted paths, avoiding repeated
+relative ancestry construction; do not exclude nested lookalike directories. Validate with
 real links, nested candidates, disjoint sibling prefixes and deterministic work
 bounds, then run the full quality gate and independent review.

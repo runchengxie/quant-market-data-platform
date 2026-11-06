@@ -154,8 +154,9 @@ def test_unrelated_links_do_not_multiply_candidate_path_checks(
         ("child", "retire_candidate", "retire_candidate"),
     ],
 )
+@pytest.mark.parametrize("target_scope", ["parent", "descendant"])
 def test_link_index_preserves_nested_candidate_self_exclusion(
-    tmp_path: Path, location: str, parent_action: str, child_action: str
+    tmp_path: Path, location: str, parent_action: str, child_action: str, target_scope: str
 ) -> None:
     from quant_market_data_platform.data_governance import ExplicitPathRule
 
@@ -165,7 +166,7 @@ def test_link_index_preserves_nested_candidate_self_exclusion(
     sibling = tmp_path / "v10"
     sibling.mkdir()
     source = {"external": tmp_path, "parent": parent, "child": child}[location]
-    (source / "link").symlink_to(child / "missing")
+    (source / "link").symlink_to(parent if target_scope == "parent" else child / "missing")
     items = plan_data_governance(
         tmp_path,
         [
@@ -192,3 +193,37 @@ def test_link_index_path_components_preserve_flavor_and_anchor() -> None:
     )
     assert _path_components(PurePosixPath("/Data")) != _path_components(PurePosixPath("/data"))
     assert _path_components(PurePosixPath(".")) != _path_components(PurePosixPath("/"))
+
+
+def test_reference_scan_excludes_only_the_exact_metadata_directories(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "assets"
+    donor = root / "versions" / "v0001"
+    donor.mkdir(parents=True)
+    for relative in ("metadata/retention", "metadata/lifecycle"):
+        directory = root / relative
+        directory.mkdir(parents=True)
+        (directory / "report.md").write_text("v0001")
+    unrelated = root / "unrelated"
+    unrelated.mkdir()
+    for number in range(1024):
+        (unrelated / str(number)).mkdir()
+    original = Path.relative_to
+    calls = 0
+
+    def count_relative(path: Path, other: str | Path) -> Path:
+        nonlocal calls
+        calls += 1
+        return original(path, other)
+
+    monkeypatch.setattr(Path, "relative_to", count_relative)
+    rules = [RetainNewestRule("versions", "versions", "v*", 0)]
+    assert plan_data_governance(root, rules)[0].action == "retire_candidate"
+    nested = root / "nested/metadata/retention"
+    nested.mkdir(parents=True)
+    (nested / "report.md").write_text("v0001")
+    [item] = plan_data_governance(root, rules)
+    assert item.action == "keep"
+    assert str(nested / "report.md") in item.reason
+    assert calls < 32

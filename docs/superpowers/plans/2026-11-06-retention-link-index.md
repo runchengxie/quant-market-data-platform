@@ -4,7 +4,7 @@
 
 **Goal:** Remove per-link comparisons against unrelated candidate paths.
 
-**Architecture:** Index normalized candidate component tuples and their prefixes. Resolve a link normally, retrieve candidate ancestors and descendants, then apply the unchanged self-containment exclusion. Keep reference traversal and all error handling unchanged.
+**Architecture:** Index normalized candidate component tuples and their prefixes. Resolve a link normally, retrieve candidate ancestors and descendants, then apply the unchanged self-containment exclusion. Use exact rooted-set membership for the existing metadata exclusions. Keep reference traversal and all error handling unchanged.
 
 **Tech Stack:** Python 3.11+, pathlib, pytest, uv.
 
@@ -32,7 +32,7 @@
 
 - [ ] Add a real-link operation bound and observe failure on the current implementation.
 - [ ] Implement lexical candidate indexing without caching link resolution.
-- [ ] Verify nested, self, disjoint and Windows component behavior.
+- [ ] Verify nested, self, disjoint and Windows component behavior; bound relative ancestry work while preserving only the exact two metadata exclusions.
 - [ ] Run focused suites and the full quality gate; benchmark complete synthetic PlanItems equivalence and a bounded real-root scan.
 - [ ] Commit and independently review the complete branch, then integrate only after current target checks pass.
 - [ ] Retain results, verify postmerge checks, and remove only this task's resources.

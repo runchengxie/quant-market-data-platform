@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 607,
-    "python_lines": 142658,
+    "python_lines": 142694,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -19,8 +19,8 @@
   },
   "change_record": {
     "source_revision": "7d015abef523d27bc78776a0665d6d6d793d51fb",
-    "reason": "Index lexical candidate ancestors/descendants for retained symlinks while resolving each filesystem target afresh. Add real-link scalability, nested self-exclusion, sibling-prefix and Windows-anchor regressions. Exactly 98 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
-    "exit_condition": "Remove this exact 98-line allowance when equivalent indexed-link lookup and its safety/scalability regressions can be consolidated without weakening overlap, anchor or fresh-resolution guarantees. Preserve all earlier retirement conditions."
+    "reason": "Index lexical candidate overlap for retained links and precompute the exact same excluded metadata roots. Add real-link and directory-work bounds, nested/ancestor/self protection and Windows-anchor regressions. Exactly 134 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion-scope, coverage, security or reserved-headroom changes.",
+    "exit_condition": "Remove this exact 134-line allowance when equivalent indexed overlap and exact-exclusion scalability/safety checks can be consolidated without weakening fresh-resolution, nested evidence or anchor guarantees. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
     {

@@ -65,12 +65,13 @@ def _scan_references(
     if not root.is_dir():
         return references, [f"reference root is not a readable directory: {root}"]
     link_candidates = _LinkCandidates(candidates)
+    excluded_paths = {root / relative for relative in _EXCLUDED}
     candidate_pattern = re.compile("|".join(re.escape(path.name) for path in candidates))
     for directory, dirs, files in os.walk(
         root, followlinks=False, onerror=lambda e: errors.append(str(e))
     ):
         parent = Path(directory)
-        dirs[:] = [name for name in dirs if (parent / name).relative_to(root) not in _EXCLUDED]
+        dirs[:] = [name for name in dirs if parent / name not in excluded_paths]
         for name in [*dirs, *files]:
             path = parent / name
             try:
