@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from collections.abc import Sequence
 from dataclasses import replace
 from pathlib import Path
@@ -43,6 +44,7 @@ def _scan_references(
     errors: list[str] = []
     if not root.is_dir():
         return references, [f"reference root is not a readable directory: {root}"]
+    candidate_pattern = re.compile("|".join(re.escape(path.name) for path in candidates))
     for directory, dirs, files in os.walk(
         root, followlinks=False, onerror=lambda e: errors.append(str(e))
     ):
@@ -54,22 +56,28 @@ def _scan_references(
                 if path.is_symlink():
                     target = path.resolve(strict=False)
                     for candidate in candidates:
-                        if not path.is_relative_to(candidate) and _overlaps(target, candidate):
+                        if _overlaps(target, candidate) and not path.is_relative_to(candidate):
                             references.setdefault(candidate, f"retained symlink: {path}")
                 elif path.is_file() and path.suffix in _TEXT_SUFFIXES:
-                    _scan_text(root, path, candidates, references, validate=validate)
+                    _scan_text(
+                        path,
+                        candidates,
+                        references,
+                        validate=validate,
+                        candidate_pattern=candidate_pattern,
+                    )
             except (OSError, RuntimeError, UnicodeError, ValueError, yaml.YAMLError) as exc:
                 errors.append(f"{path}: {exc}")
     return references, errors
 
 
 def _scan_text(
-    root: Path,
     path: Path,
     candidates: Sequence[Path],
     references: dict[Path, str],
     *,
     validate: bool = False,
+    candidate_pattern: re.Pattern[str] | None = None,
 ) -> None:
     # Basename matching also protects historical references to a renamed root.
     # False positives retain data; missing references could destroy provenance.
@@ -84,8 +92,10 @@ def _scan_text(
         for line in text.splitlines():
             if line.strip():
                 json.loads(line)
+    if candidate_pattern is not None and candidate_pattern.search(text) is None:
+        return
     for candidate in candidates:
-        if not path.is_relative_to(candidate) and candidate.name in text:
+        if candidate.name in text and not path.is_relative_to(candidate):
             references.setdefault(candidate, f"retained evidence: {path}")
 
 
