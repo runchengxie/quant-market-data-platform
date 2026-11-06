@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 607,
-    "python_lines": 142560,
+    "python_lines": 142658,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "056890eb6ccf3c2f641ba33265f69ba60f4fa6aa",
-    "reason": "Prefilter unrelated retained text with an escaped candidate-name pattern after evidence validation; preserve exact per-candidate substring and containment checks for matches. Add real-filesystem operation bounds, self-reference, literal metacharacter and overlapping-name regressions. Exactly 67 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
-    "exit_condition": "Remove this exact 67-line allowance when equivalent matching scalability and protection regressions can be consolidated without losing literal-name, validation-before-filter or containment guarantees. Preserve all earlier retirement conditions."
+    "source_revision": "7d015abef523d27bc78776a0665d6d6d793d51fb",
+    "reason": "Index lexical candidate ancestors/descendants for retained symlinks while resolving each filesystem target afresh. Add real-link scalability, nested self-exclusion, sibling-prefix and Windows-anchor regressions. Exactly 98 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
+    "exit_condition": "Remove this exact 98-line allowance when equivalent indexed-link lookup and its safety/scalability regressions can be consolidated without weakening overlap, anchor or fresh-resolution guarantees. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "056890eb6ccf3c2f641ba33265f69ba60f4fa6aa",
+      "reason": "Prefilter unrelated retained text with an escaped candidate-name pattern after evidence validation; preserve exact per-candidate substring and containment checks for matches. Add real-filesystem operation bounds, self-reference, literal metacharacter and overlapping-name regressions. Exactly 67 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
+      "exit_condition": "Remove this exact 67-line allowance when equivalent matching scalability and protection regressions can be consolidated without losing literal-name, validation-before-filter or containment guarantees. Preserve all earlier retirement conditions."
+    },
     {
       "source_revision": "921ceb1640f73ba8c73318ec95db49436b44be23",
       "reason": "Preserve canonical nanosecond minute timestamps across pandas input resolutions and add four explicit second/millisecond/microsecond/nanosecond regressions. Exactly 17 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",

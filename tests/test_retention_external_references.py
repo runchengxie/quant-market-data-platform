@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import pytest
 
@@ -115,3 +115,80 @@ def test_reference_prefilter_preserves_literal_and_overlapping_names(tmp_path: P
         "v[0]+": "keep",
         "other": "retire_candidate",
     }
+
+
+def test_unrelated_links_do_not_multiply_candidate_path_checks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = tmp_path / "assets"
+    for number in range(32):
+        (root / "versions" / f"v{number:04}").mkdir(parents=True)
+    links = root / "inputs"
+    links.mkdir()
+    for number in range(64):
+        (links / f"link-{number}").symlink_to(root / "unrelated" / str(number))
+    (links / "donor").symlink_to(root / "versions" / "v0001" / "missing")
+    (root / "versions" / "v0002" / "own").symlink_to(root / "versions" / "v0002" / "missing")
+    original = Path.is_relative_to
+    checks = 0
+
+    def count_checks(path: Path, other: str | Path) -> bool:
+        nonlocal checks
+        checks += 1
+        return original(path, other)
+
+    monkeypatch.setattr(Path, "is_relative_to", count_checks)
+    items = plan_data_governance(root, [RetainNewestRule("versions", "versions", "v*", 0)])
+    decisions = {item.path.name: item.action for item in items}
+    assert decisions["v0001"] == "keep"
+    assert decisions["v0002"] == "retire_candidate"
+    assert list(decisions.values()).count("retire_candidate") == 31
+    assert checks <= 8 * (32 + 64)
+
+
+@pytest.mark.parametrize(
+    ("location", "parent_action", "child_action"),
+    [
+        ("external", "keep", "keep"),
+        ("parent", "retire_candidate", "keep"),
+        ("child", "retire_candidate", "retire_candidate"),
+    ],
+)
+def test_link_index_preserves_nested_candidate_self_exclusion(
+    tmp_path: Path, location: str, parent_action: str, child_action: str
+) -> None:
+    from quant_market_data_platform.data_governance import ExplicitPathRule
+
+    parent = tmp_path / "v1"
+    child = parent / "nested"
+    child.mkdir(parents=True)
+    sibling = tmp_path / "v10"
+    sibling.mkdir()
+    source = {"external": tmp_path, "parent": parent, "child": child}[location]
+    (source / "link").symlink_to(child / "missing")
+    items = plan_data_governance(
+        tmp_path,
+        [
+            ExplicitPathRule("parent", parent, "retire_candidate"),
+            ExplicitPathRule("child", child, "retire_candidate"),
+            ExplicitPathRule("sibling", sibling, "retire_candidate"),
+        ],
+    )
+    assert {item.rule: item.action for item in items} == {
+        "parent": parent_action,
+        "child": child_action,
+        "sibling": "retire_candidate",
+    }
+
+
+def test_link_index_path_components_preserve_flavor_and_anchor() -> None:
+    from quant_market_data_platform.retention_references import _path_components
+
+    assert _path_components(PureWindowsPath("C:/Data/V1")) == _path_components(
+        PureWindowsPath("c:/data/v1")
+    )
+    assert _path_components(PureWindowsPath("C:/Data")) != _path_components(
+        PureWindowsPath("D:/Data")
+    )
+    assert _path_components(PurePosixPath("/Data")) != _path_components(PurePosixPath("/data"))
+    assert _path_components(PurePosixPath(".")) != _path_components(PurePosixPath("/"))

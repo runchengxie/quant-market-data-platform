@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 import os
 import re
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from dataclasses import replace
-from pathlib import Path
+from pathlib import Path, PurePath, PureWindowsPath
 from typing import TYPE_CHECKING
 
 import yaml
@@ -33,8 +33,28 @@ _EXCLUDED = {Path("metadata/retention"), Path("metadata/lifecycle")}
 _MAX_TEXT_BYTES = 16 * 1024 * 1024
 
 
-def _overlaps(first: Path, second: Path) -> bool:
-    return first == second or first.is_relative_to(second) or second.is_relative_to(first)
+def _path_components(path: PurePath) -> tuple[str, ...]:
+    parts = (path.anchor, *path.parts)
+    return tuple(part.lower() for part in parts) if isinstance(path, PureWindowsPath) else parts
+
+
+class _LinkCandidates:
+    """Index lexical overlap only; filesystem targets are still resolved per link."""
+
+    def __init__(self, candidates: Sequence[Path]) -> None:
+        self._exact = {_path_components(path): path for path in candidates}
+        self._descendants: dict[tuple[str, ...], list[Path]] = {}
+        for parts, path in self._exact.items():
+            for length in range(1, len(parts) + 1):
+                self._descendants.setdefault(parts[:length], []).append(path)
+
+    def overlapping(self, target: Path) -> Iterator[Path]:
+        parts = _path_components(target)
+        yield from self._descendants.get(parts, ())
+        for length in range(1, len(parts)):
+            candidate = self._exact.get(parts[:length])
+            if candidate is not None:
+                yield candidate
 
 
 def _scan_references(
@@ -44,6 +64,7 @@ def _scan_references(
     errors: list[str] = []
     if not root.is_dir():
         return references, [f"reference root is not a readable directory: {root}"]
+    link_candidates = _LinkCandidates(candidates)
     candidate_pattern = re.compile("|".join(re.escape(path.name) for path in candidates))
     for directory, dirs, files in os.walk(
         root, followlinks=False, onerror=lambda e: errors.append(str(e))
@@ -55,8 +76,8 @@ def _scan_references(
             try:
                 if path.is_symlink():
                     target = path.resolve(strict=False)
-                    for candidate in candidates:
-                        if _overlaps(target, candidate) and not path.is_relative_to(candidate):
+                    for candidate in link_candidates.overlapping(target):
+                        if not path.is_relative_to(candidate):
                             references.setdefault(candidate, f"retained symlink: {path}")
                 elif path.is_file() and path.suffix in _TEXT_SUFFIXES:
                     _scan_text(
