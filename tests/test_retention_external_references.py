@@ -107,7 +107,8 @@ def test_reference_prefilter_preserves_literal_and_overlapping_names(tmp_path: P
     versions = root / "versions"
     for name in ("v1", "v10", "v[0]+", "other"):
         (versions / name).mkdir(parents=True)
-    (root / "report.md").write_text("former/root/v10/data and v[0]+/payload")
+    (root / "report.md").write_text("former/root/v10/data")
+    (root / "literal.md").write_text("v[0]+/payload")
     items = plan_data_governance(root, [RetainNewestRule("versions", "versions", "*", 0)])
     assert {item.path.name: item.action for item in items} == {
         "v1": "keep",

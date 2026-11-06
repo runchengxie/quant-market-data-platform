@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 607,
-    "python_lines": 142694,
+    "python_lines": 142695,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "7d015abef523d27bc78776a0665d6d6d793d51fb",
-    "reason": "Index lexical candidate overlap for retained links and precompute the exact same excluded metadata roots. Add real-link and directory-work bounds, nested/ancestor/self protection and Windows-anchor regressions. Exactly 134 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion-scope, coverage, security or reserved-headroom changes.",
-    "exit_condition": "Remove this exact 134-line allowance when equivalent indexed overlap and exact-exclusion scalability/safety checks can be consolidated without weakening fresh-resolution, nested evidence or anchor guarantees. Preserve all earlier retirement conditions."
+    "source_revision": "9100faba9219e3d3f396bebfebe18f987071bd7c",
+    "reason": "Isolate the literal-metacharacter reference in its own report so an ordinary overlapping candidate cannot mask a broken escaped-name prefilter. Exactly 1 net physical Python line in an existing test file. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
+    "exit_condition": "Remove this exact one-line allowance when equivalent independent literal-metacharacter protection coverage is consolidated without allowing ordinary candidate matches to mask escaping regressions. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "7d015abef523d27bc78776a0665d6d6d793d51fb",
+      "reason": "Index lexical candidate overlap for retained links and precompute the exact same excluded metadata roots. Add real-link and directory-work bounds, nested/ancestor/self protection and Windows-anchor regressions. Exactly 134 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion-scope, coverage, security or reserved-headroom changes.",
+      "exit_condition": "Remove this exact 134-line allowance when equivalent indexed overlap and exact-exclusion scalability/safety checks can be consolidated without weakening fresh-resolution, nested evidence or anchor guarantees. Preserve all earlier retirement conditions."
+    },
     {
       "source_revision": "056890eb6ccf3c2f641ba33265f69ba60f4fa6aa",
       "reason": "Prefilter unrelated retained text with an escaped candidate-name pattern after evidence validation; preserve exact per-candidate substring and containment checks for matches. Add real-filesystem operation bounds, self-reference, literal metacharacter and overlapping-name regressions. Exactly 67 net physical Python lines in existing files. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
