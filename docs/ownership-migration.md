@@ -20,14 +20,14 @@
 读取器遇到不完整、过期或日期不一致的同花顺热门股票快照时会直接失败。模型可用性判断由
 `quant-research` 负责，策略专属选股规则和实验组合也由该仓维护。`quant-platform` 提供
 可复用的组合构造与回测机制。`alpha-research`、`portfolio-backtester` 和 `research-apps`
-是历史名称，不是当前的仓库 owner。
+仅用于历史溯源。当前仓库 owner 按上述职责划分。
 
 数据平台提供可复现的数据视图，不决定策略是否选择某只股票，也不保存策略模型和实验结论。
 
 工作区 2.0 已完成归属迁移。新增数据读取、PIT 股票池或来源血缘逻辑应直接加入
 `quant_market_data_platform.research_views`。`quant-research` 的策略专属编排调用公开入口并
 记录运行回执。`strategy-pipeline` CLI 和 `strategy_pipeline` 命名空间是 `quant-platform`
-提供的兼容接口，不代表独立的 owner 仓库。
+提供并维护的兼容接口。
 
 `resolve_daily_watch20_assets(..., minute_dataset="legacy" | "tushare")` 默认使用 TuShare，
 解析独立的 `minute_1m_tushare` alias 和 operational receipt。复现既有 Guan 研究时必须显式传入
