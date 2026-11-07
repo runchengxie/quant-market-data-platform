@@ -329,3 +329,11 @@ Before creating directories or writing, the pilot checks every input Parquet foo
 Keep inputs stable while the pilot runs. Later I/O failures may leave partial derived files; this is not atomic publication or automatic resume. Inspect that output and select a fresh directory instead of deleting or replacing raw inputs.
 
 - `marketdata contract capture`: capture and recheck selected publication metadata; see [pinned input references](operations/published-asset-snapshot.en.md).
+
+## Verify a pinned raw fundamentals observation
+
+Use `marketdata contract verify-observation --root /path/to/observation --expected-manifest-sha256 <retained-owner-manifest-sha256>` for bounded, read-only byte verification. It does not load credentials, call providers, materialize derivatives or publish. Obtain the expected hash from independently retained owner evidence; calculating a new hash from an untrusted current file does not establish historical authority.
+
+The JSON schema `quant.raw_observation_assessment.v1` binds `manifest_sha256` and `content_snapshot_sha256` to the canonical owner child-seal and content checks. `children` reports dataset, manifest/content digests, recorded `retrieved_at` normalized to UTC, original `observed_vintage_dates`, and file counts. Missing times remain null; snapshot and vintage date tokens do not establish intraday availability. `historical_pit` remains `unknown`, `derived_materialization` is `absent` within this raw archive, and `research_ready` is false. This does not qualify historical studies or certify a normalized/PIT derivative.
+
+The default scan limits are 1 GiB of content and 10,000 files. Set `--max-content-bytes` and `--max-files` explicitly for another authorized scope. Expected identity, seals, child paths, bytes, or budget failures return nonzero with no success JSON. Output omits endpoint configuration and private reproduction paths. No cutoff is inferred: consumers must assess their own decision timestamp, required derived fields and freshness separately.

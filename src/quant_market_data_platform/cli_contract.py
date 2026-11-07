@@ -106,6 +106,16 @@ def add_contract_parser(subparsers: argparse._SubParsersAction) -> None:
     assess.add_argument("--asset", action="append", required=True)
     assess.add_argument("--target-date")
     assess.add_argument("--require-start-date")
+    from .observation_assessment import handle_verify_observation
+
+    observation = contract_subparsers.add_parser(
+        "verify-observation", help="Verify pinned raw observation bytes without provider calls."
+    )
+    observation.set_defaults(handler=handle_verify_observation)
+    observation.add_argument("--root", required=True)
+    observation.add_argument("--expected-manifest-sha256", required=True)
+    observation.add_argument("--max-content-bytes", type=int, default=1073741824)
+    observation.add_argument("--max-files", type=int, default=10000)
     capture = contract_subparsers.add_parser(
         "capture", help="Capture and recheck selected publication metadata without writing."
     )

@@ -660,3 +660,7 @@ Monthly payload identity, pagination and acquisition metadata must all agree.
 Completed observations are available only after their actual finish timestamp;
 partial attempts and missing observation dates cannot be used as completed
 historical vintages. See [daily forecast observations](operations/report-rc-observations.md).
+
+## Raw observation assessment
+
+`marketdata contract verify-observation` emits `quant.raw_observation_assessment.v1` after verifying an externally pinned raw-observation manifest and its owner-sealed content. The `content_snapshot_sha256` is SHA-256 of the verified root `children` receipt list serialized as JSON with sorted object keys and compact separators; receipt order is preserved. It is separate from `manifest_sha256`, which hashes exact manifest bytes. The response includes `data_content_integrity=passed`, `historical_pit=unknown`, `derived_materialization=absent` (scope: this raw archive), `research_ready=false`, `time_basis=UTC`, recorded snapshot date/source revision, scan totals, and per-child recorded capture metadata. Null retrieval times stay null; the API supplies no historical cutoff or qualification decision. See [operations](operations.en.md#verify-a-pinned-raw-fundamentals-observation).
