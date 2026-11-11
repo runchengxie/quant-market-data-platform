@@ -24,6 +24,7 @@ The default database is `$DATA_PLATFORM_ROOT/intraday/board_flow.sqlite3`; overr
 | Table | Contents | Primary key |
 | --- | --- | --- |
 | `board_catalog` | Board code, name, type, first and last seen time | `board_code` |
+| `board_catalog_daily` | The board universe that existed on each trading day | `(trade_date, board_code)` |
 | `flow_snapshot` | Accumulated flow for all boards at one capture time | `(trade_date, board_code, captured_at)` |
 | `flow_minute` | Archived minute cumulative flow, including order-size buckets | `(trade_date, board_code, trade_time)` |
 | `collection_run` | Duration, status, and failure samples for each monitor or archive run | `run_id` |
@@ -68,9 +69,19 @@ It archives the current day by default and skips boards that already have rows, 
 marketdata board-flow status
 marketdata board-flow export --date 2026-11-11 --board-type concept --top 30 --out flow.csv
 marketdata board-flow report --date 2026-11-11 --board-type concept --top 20 --out race.html
+marketdata board-flow report --date 2026-11-11 --metric delta --window 30 --out heat.html
+marketdata board-flow report --date 2026-11-11 --metric rank --out rank.html
 ```
 
-`report` writes a self-contained HTML page that draws cumulative net-inflow lines with ECharts and a table of the latest value plus 5, 15, and 30 minute increments. ECharts is loaded from the jsdelivr CDN; offline environments must replace that script source. Without `--out`, output goes to `reports/board-flow/` next to the database.
+`report` writes a self-contained HTML page with ECharts plus a table of the latest value and 5, 15, and 30 minute increments. `--metric` selects the view:
+
+| View | Meaning | Use it for |
+| --- | --- | --- |
+| `cumulative` (default) | Cumulative main-force net inflow lines | Who attracted the most money by the close |
+| `delta` | New net inflow per `--window` bucket, as a heatmap | How money rotates between boards |
+| `rank` | Minute-by-minute rank within the selected boards | When leadership is replaced |
+
+`--top` selects boards by their closing cumulative value, so `cumulative` is biased toward winners. Use `delta` or `rank` to study rotation, and `--name` to pin a fixed watchlist. ECharts is loaded from the jsdelivr CDN; offline environments must replace that script source. Without `--out`, output goes to `reports/board-flow/` next to the database.
 
 ## Scheduling
 

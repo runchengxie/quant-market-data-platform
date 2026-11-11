@@ -43,6 +43,15 @@ CREATE TABLE IF NOT EXISTS board_catalog (
     last_seen_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS board_catalog_daily (
+    trade_date TEXT NOT NULL,
+    board_code TEXT NOT NULL,
+    board_name TEXT NOT NULL,
+    board_type TEXT NOT NULL,
+    captured_at TEXT NOT NULL,
+    PRIMARY KEY (trade_date, board_code)
+);
+
 CREATE TABLE IF NOT EXISTS flow_snapshot (
     trade_date TEXT NOT NULL,
     board_code TEXT NOT NULL,
@@ -136,6 +145,30 @@ def upsert_catalog(
             board_name = excluded.board_name,
             board_type = excluded.board_type,
             last_seen_at = excluded.last_seen_at
+        """,
+        payload,
+    )
+    return len(payload)
+
+
+def snapshot_catalog(
+    connection: sqlite3.Connection,
+    rows: Iterable[BoardRow],
+    *,
+    trade_date: str,
+    captured_at: str,
+) -> int:
+    """Record the board universe as it existed on one trading day."""
+    payload = [
+        (trade_date, row.board_code, row.board_name, row.board_type, captured_at) for row in rows
+    ]
+    if not payload:
+        return 0
+    connection.executemany(
+        """
+        INSERT OR REPLACE INTO board_catalog_daily (
+            trade_date, board_code, board_name, board_type, captured_at
+        ) VALUES (?, ?, ?, ?, ?)
         """,
         payload,
     )
@@ -298,7 +331,13 @@ def catalog_rows(connection: sqlite3.Connection) -> list[sqlite3.Row]:
 def summary(connection: sqlite3.Connection) -> dict[str, Any]:
     """Return coarse table statistics for status output."""
     result: dict[str, Any] = {"schema_version": SCHEMA_VERSION, "tables": {}}
-    for table in ("board_catalog", "flow_snapshot", "flow_minute", "collection_run"):
+    for table in (
+        "board_catalog",
+        "board_catalog_daily",
+        "flow_snapshot",
+        "flow_minute",
+        "collection_run",
+    ):
         count = int(connection.execute(f"SELECT COUNT(*) AS n FROM {table}").fetchone()["n"])
         result["tables"][table] = count
     result["snapshot_days"] = [

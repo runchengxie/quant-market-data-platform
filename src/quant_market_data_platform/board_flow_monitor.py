@@ -131,6 +131,9 @@ def take_snapshot(
     for board_type in options.board_types:
         board_rows = client.fetch_boards(board_type)
         board_flow_store.upsert_catalog(connection, board_rows, seen_at=captured_at)
+        board_flow_store.snapshot_catalog(
+            connection, board_rows, trade_date=trade_date, captured_at=captured_at
+        )
         rows += board_flow_store.append_snapshot(
             connection, board_rows, trade_date=trade_date, captured_at=captured_at
         )

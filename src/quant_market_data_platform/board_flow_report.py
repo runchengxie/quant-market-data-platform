@@ -1,8 +1,15 @@
-"""Export archived board fund flow as CSV and a self-contained HTML race chart.
+"""Export archived board fund flow as CSV and a self-contained HTML report.
 
-The HTML report mirrors the common "sector fund-flow race" view: one line per
-board, x-axis is the trading minute, y-axis is the cumulative main-force net
-inflow in 100 million yuan.
+Three views are supported:
+
+* ``cumulative`` – cumulative main-force net inflow per board (the classic race).
+* ``delta`` – net inflow change inside fixed intraday buckets, as a heatmap. This
+  is the view that shows money rotating between boards.
+* ``rank`` – each board's cross-sectional rank over time, useful for spotting
+  leadership changes.
+
+All values are in 100 million yuan. The HTML is self-contained apart from the
+ECharts script loaded from a CDN.
 """
 
 from __future__ import annotations
@@ -16,6 +23,10 @@ from typing import Any
 
 ECHARTS_CDN = "https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"
 DELTA_WINDOWS = (5, 15, 30)
+METRICS = ("cumulative", "delta", "rank")
+SESSION_OPEN_MINUTE = 9 * 60 + 30
+LUNCH_MINUTES = 90
+SESSION_MINUTES = 240
 
 
 class ReportError(RuntimeError):
@@ -24,13 +35,21 @@ class ReportError(RuntimeError):
 
 @dataclass(frozen=True)
 class RaceReportOptions:
-    """Selection and layout of one race chart."""
+    """Selection and layout of one flow report."""
 
     trade_date: date
     board_type: str = "concept"
     top_n: int = 20
     names: tuple[str, ...] = ()
     title: str = ""
+    metric: str = "cumulative"
+    window_minutes: int = 30
+
+    def __post_init__(self) -> None:
+        if self.metric not in METRICS:
+            raise ValueError(f"Unsupported metric '{self.metric}'; choose from {METRICS}.")
+        if self.window_minutes <= 0 or SESSION_MINUTES % self.window_minutes != 0:
+            raise ValueError("window_minutes must be a positive divisor of 240.")
 
 
 def _series_rows(connection: Any, *, trade_date: str, board_type: str) -> list[dict[str, Any]]:
@@ -93,6 +112,45 @@ def _hhmm(stamp: str) -> str:
     return stamp[11:16]
 
 
+def _session_minute(stamp: str) -> int:
+    """Minutes since 09:30 on the continuous session clock (lunch removed)."""
+    moment = _parse_point_time(stamp)
+    minutes = moment.hour * 60 + moment.minute
+    if minutes >= 13 * 60:
+        minutes -= LUNCH_MINUTES
+    return minutes - SESSION_OPEN_MINUTE
+
+
+def _bucket_index(stamp: str, *, window_minutes: int) -> int:
+    return max(0, _session_minute(stamp)) // window_minutes
+
+
+def _bucket_labels(*, window_minutes: int) -> list[str]:
+    labels: list[str] = []
+    for index in range(SESSION_MINUTES // window_minutes):
+        minute = SESSION_OPEN_MINUTE + (index + 1) * window_minutes
+        if minute > 11 * 60 + 30:
+            minute += LUNCH_MINUTES
+        labels.append(f"{minute // 60:02d}:{minute % 60:02d}")
+    return labels
+
+
+def _bucket_deltas(points: list[tuple[str, float]], *, window_minutes: int) -> dict[int, float]:
+    """Net inflow added inside each bucket, in yuan."""
+    by_bucket: dict[int, float] = {}
+    for stamp, value in points:
+        by_bucket[_bucket_index(stamp, window_minutes=window_minutes)] = value
+    deltas: dict[int, float] = {}
+    previous = 0.0
+    for index in range(SESSION_MINUTES // window_minutes):
+        if index not in by_bucket:
+            continue
+        current = by_bucket[index]
+        deltas[index] = current - previous
+        previous = current
+    return deltas
+
+
 def _table_rows(selected: list[tuple[str, dict[str, Any]]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for code, entry in selected:
@@ -110,7 +168,7 @@ def _table_rows(selected: list[tuple[str, dict[str, Any]]]) -> list[dict[str, An
     return rows
 
 
-def _build_option(selected: list[tuple[str, dict[str, Any]]]) -> dict[str, Any]:
+def _cumulative_option(selected: list[tuple[str, dict[str, Any]]]) -> dict[str, Any]:
     times = sorted({_hhmm(stamp) for _, entry in selected for stamp, _ in entry["points"]})
     series = []
     for code, entry in selected:
@@ -147,7 +205,92 @@ def _build_option(selected: list[tuple[str, dict[str, Any]]]) -> dict[str, Any]:
     }
 
 
-def _html(title: str, option: dict[str, Any], table: list[dict[str, Any]]) -> str:
+def _delta_option(
+    selected: list[tuple[str, dict[str, Any]]], *, window_minutes: int
+) -> dict[str, Any]:
+    labels = _bucket_labels(window_minutes=window_minutes)
+    names = [entry["name"] for _, entry in selected]
+    data: list[list[Any]] = []
+    for y, (_, entry) in enumerate(selected):
+        deltas = _bucket_deltas(entry["points"], window_minutes=window_minutes)
+        for x, value in deltas.items():
+            if x < len(labels):
+                data.append([x, y, round(value / 1e8, 3)])
+    values = [item[2] for item in data] or [0.0]
+    bound = max(abs(min(values)), abs(max(values)), 0.01)
+    return {
+        "tooltip": {"position": "top"},
+        "grid": {"left": 160, "right": 40, "top": 30, "bottom": 90},
+        "xAxis": {"type": "category", "data": labels, "splitArea": {"show": True}},
+        "yAxis": {"type": "category", "data": names, "inverse": True, "splitArea": {"show": True}},
+        "visualMap": {
+            "min": -bound,
+            "max": bound,
+            "calculable": True,
+            "orient": "horizontal",
+            "left": "center",
+            "bottom": 10,
+            "text": ["净流入", "净流出"],
+            "inRange": {"color": ["#1a9850", "#f7f7f7", "#d73027"]},
+        },
+        "series": [
+            {
+                "name": "区间净流入",
+                "type": "heatmap",
+                "data": data,
+                "label": {"show": False},
+                "emphasis": {"itemStyle": {"shadowBlur": 10}},
+            }
+        ],
+    }
+
+
+def _rank_option(selected: list[tuple[str, dict[str, Any]]]) -> dict[str, Any]:
+    times = sorted({_hhmm(stamp) for _, entry in selected for stamp, _ in entry["points"]})
+    values = {
+        code: {_hhmm(stamp): value for stamp, value in entry["points"]} for code, entry in selected
+    }
+    rank: dict[str, dict[str, int]] = {code: {} for code in values}
+    for stamp in times:
+        present = [(code, values[code][stamp]) for code in values if stamp in values[code]]
+        present.sort(key=lambda item: item[1], reverse=True)
+        for position, (code, _) in enumerate(present, start=1):
+            rank[code][stamp] = position
+    series = [
+        {
+            "name": entry["name"],
+            "type": "line",
+            "showSymbol": False,
+            "emphasis": {"focus": "series"},
+            "data": [rank[code].get(stamp) for stamp in times],
+            "code": code,
+        }
+        for code, entry in selected
+    ]
+    return {
+        "tooltip": {"trigger": "axis", "axisPointer": {"type": "cross"}},
+        "legend": {"type": "scroll", "top": 8},
+        "grid": {"left": 70, "right": 40, "top": 70, "bottom": 60},
+        "xAxis": {
+            "type": "category",
+            "boundaryGap": False,
+            "data": times,
+            "axisLabel": {"interval": 29},
+        },
+        "yAxis": {
+            "type": "value",
+            "name": "净流入排名（越上越强）",
+            "inverse": True,
+            "min": 1,
+            "max": len(selected),
+            "interval": 1 if len(selected) <= 10 else 2,
+        },
+        "dataZoom": [{"type": "inside"}, {"type": "slider", "height": 22}],
+        "series": series,
+    }
+
+
+def _html(title: str, option: dict[str, Any], table: list[dict[str, Any]], note: str) -> str:
     payload = json.dumps(option, ensure_ascii=False)
     head = "".join(
         f"<th>{label}</th>"
@@ -192,8 +335,7 @@ def _html(title: str, option: dict[str, Any], table: list[dict[str, Any]]) -> st
 <thead><tr>{head}</tr></thead>
 <tbody>{body_rows}</tbody>
 </table>
-<p class="note">单位：亿元。数据来源 eastmoney.board_flow.kline_1m，累计主力净流入 =
-大单净流入 + 超大单净流入。板块成分股高度重叠，各板块净流入不可相加。</p>
+<p class="note">{note}</p>
 <script src="{ECHARTS_CDN}"></script>
 <script>
 const option = {payload};
@@ -206,15 +348,36 @@ window.addEventListener('resize', () => chart.resize());
 """
 
 
+NOTE_BASE = (
+    "单位：亿元。数据来源 eastmoney.board_flow.kline_1m，累计主力净流入 = 大单净流入 + "
+    "超大单净流入。板块成分股高度重叠，各板块净流入不可相加。"
+)
+NOTE_CUMULATIVE = NOTE_BASE + " 曲线按收盘累计值排序选取，天然偏向赢家，不代表盘中轮动。"
+NOTE_DELTA = NOTE_BASE + " 每个格子是该区间内新增的主力净流入；红色为净流入，绿色为净流出。"
+NOTE_RANK = NOTE_BASE + " 排名按每分钟累计净流入在所选板块内计算，线条交叉即代表领先者切换。"
+
+
 def render_race_report(connection: Any, options: RaceReportOptions) -> str:
-    """Render the race chart HTML for one archived trading day."""
+    """Render one archived trading day as HTML."""
     wanted = options.trade_date.isoformat()
     rows = _series_rows(connection, trade_date=wanted, board_type=options.board_type)
     if not rows:
         raise ReportError(f"No archived minute rows for {wanted} ({options.board_type}).")
     selected = _pick(_group(rows), options)
-    title = options.title or (f"{wanted} {options.board_type} 板块资金流（前 {len(selected)} 名）")
-    return _html(title, _build_option(selected), _table_rows(selected))
+    suffix = {"cumulative": "累计资金流", "delta": "增量热力图", "rank": "排名变化"}[options.metric]
+    title = options.title or (
+        f"{wanted} {options.board_type} 板块{suffix}（前 {len(selected)} 名）"
+    )
+    if options.metric == "delta":
+        option = _delta_option(selected, window_minutes=options.window_minutes)
+        note = NOTE_DELTA
+    elif options.metric == "rank":
+        option = _rank_option(selected)
+        note = NOTE_RANK
+    else:
+        option = _cumulative_option(selected)
+        note = NOTE_CUMULATIVE
+    return _html(title, option, _table_rows(selected), note)
 
 
 def write_csv(
