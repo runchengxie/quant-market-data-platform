@@ -12,6 +12,7 @@ from typing import Any
 from quant_market_data_platform import board_flow_monitor, board_flow_store
 from quant_market_data_platform.artifacts import resolve_artifacts_root
 from quant_market_data_platform.board_flow_report import (
+    METRICS,
     RaceReportOptions,
     ReportError,
     render_race_report,
@@ -69,6 +70,8 @@ def _report_options(args: argparse.Namespace) -> RaceReportOptions:
         board_type=str(args.board_type),
         top_n=int(args.top),
         names=tuple(names),
+        metric=str(getattr(args, "metric", "cumulative")),
+        window_minutes=int(getattr(args, "window", 30)),
     )
 
 
@@ -78,9 +81,13 @@ def _handle_catalog(args: argparse.Namespace) -> int:
     moment = board_flow_monitor.shanghai_now()
     captured_at = moment.isoformat(timespec="seconds")
     totals: dict[str, int] = {}
+    trade_date = moment.astimezone(board_flow_monitor.SHANGHAI).date().isoformat()
     for board_type in _board_types(args):
         rows = client.fetch_boards(board_type)
         board_flow_store.upsert_catalog(connection, rows, seen_at=captured_at)
+        board_flow_store.snapshot_catalog(
+            connection, rows, trade_date=trade_date, captured_at=captured_at
+        )
         totals[board_type] = len(rows)
     connection.commit()
     _print_json({"status": "ok", "db": str(path), "boards_by_type": totals})
@@ -255,6 +262,8 @@ def add_board_flow_parser(subparsers: argparse._SubParsersAction) -> None:
     report.add_argument("--board-type", choices=BOARD_TYPES, default="concept")
     report.add_argument("--top", type=int, default=20)
     report.add_argument("--name", action="append", help="Board name or code; repeatable.")
+    report.add_argument("--metric", choices=METRICS, default="cumulative")
+    report.add_argument("--window", type=int, default=30, help="Delta bucket size in minutes.")
     report.add_argument("--out", help="Output HTML path.")
     report.set_defaults(handler=handle_board_flow)
 

@@ -102,3 +102,58 @@ def test_write_csv_exports_selected_boards(tmp_path: Path) -> None:
     text = target.read_text(encoding="utf-8-sig")
     assert text.splitlines()[0].startswith("trade_date,board_code,board_name")
     assert "机器人概念" in text
+
+
+def test_delta_report_builds_heatmap_with_bucket_labels(tmp_path: Path) -> None:
+    connection = board_flow_store.connect(tmp_path / "store.sqlite3")
+    _seed(connection)
+
+    html = board_flow_report.render_race_report(
+        connection,
+        board_flow_report.RaceReportOptions(
+            trade_date=date(2026, 11, 11), metric="delta", window_minutes=30
+        ),
+    )
+
+    assert '"type": "heatmap"' in html
+    assert '"inverse": true' in html
+    assert "#d73027" in html and "#1a9850" in html
+    assert "10:00" in html
+    assert "15:00" in html
+    assert "增量热力图" in html
+
+
+def test_rank_report_marks_leadership_changes(tmp_path: Path) -> None:
+    connection = board_flow_store.connect(tmp_path / "store.sqlite3")
+    _seed(connection)
+
+    html = board_flow_report.render_race_report(
+        connection,
+        board_flow_report.RaceReportOptions(trade_date=date(2026, 11, 11), metric="rank"),
+    )
+
+    assert "净流入排名" in html
+    assert '"inverse": true' in html
+    assert "排名变化" in html
+
+
+def test_report_options_validate_metric_and_window() -> None:
+    with pytest.raises(ValueError, match="Unsupported metric"):
+        board_flow_report.RaceReportOptions(trade_date=date(2026, 11, 11), metric="flow")
+    with pytest.raises(ValueError, match="window_minutes"):
+        board_flow_report.RaceReportOptions(trade_date=date(2026, 11, 11), window_minutes=7)
+
+
+def test_bucket_labels_skip_lunch_break() -> None:
+    labels = board_flow_report._bucket_labels(window_minutes=30)
+
+    assert labels == [
+        "10:00",
+        "10:30",
+        "11:00",
+        "11:30",
+        "13:30",
+        "14:00",
+        "14:30",
+        "15:00",
+    ]

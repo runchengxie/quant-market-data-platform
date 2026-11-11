@@ -93,6 +93,7 @@ def test_summary_reports_empty_store(tmp_path: Path) -> None:
 
     assert summary["tables"] == {
         "board_catalog": 0,
+        "board_catalog_daily": 0,
         "flow_snapshot": 0,
         "flow_minute": 0,
         "collection_run": 0,
@@ -119,3 +120,31 @@ def test_record_run_is_readable(tmp_path: Path) -> None:
     stored = connection.execute("SELECT * FROM collection_run").fetchone()
     assert stored["run_id"] == "run-1"
     assert stored["status"] == "ok"
+
+
+def test_catalog_daily_snapshot_is_per_trading_day(tmp_path: Path) -> None:
+    connection = board_flow_store.connect(tmp_path / "store.sqlite3")
+    rows = [_board("BK0001", "甲", 1e8), _board("BK0002", "乙", -2e8)]
+
+    assert (
+        board_flow_store.snapshot_catalog(
+            connection, rows, trade_date="2026-11-10", captured_at="2026-11-10T09:25:00"
+        )
+        == 2
+    )
+    assert (
+        board_flow_store.snapshot_catalog(
+            connection, rows[:1], trade_date="2026-11-11", captured_at="2026-11-11T09:25:00"
+        )
+        == 1
+    )
+    connection.commit()
+
+    rows_10 = connection.execute(
+        "SELECT board_code FROM board_catalog_daily WHERE trade_date = '2026-11-10' ORDER BY 1"
+    ).fetchall()
+    rows_11 = connection.execute(
+        "SELECT board_code FROM board_catalog_daily WHERE trade_date = '2026-11-11' ORDER BY 1"
+    ).fetchall()
+    assert [row["board_code"] for row in rows_10] == ["BK0001", "BK0002"]
+    assert [row["board_code"] for row in rows_11] == ["BK0001"]

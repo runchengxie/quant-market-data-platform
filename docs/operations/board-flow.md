@@ -24,6 +24,7 @@
 | 表 | 内容 | 主键 |
 | --- | --- | --- |
 | `board_catalog` | 板块代码、名称、类型和首次/最近出现时间 | `board_code` |
+| `board_catalog_daily` | 每个交易日实际存在的板块清单 | `(trade_date, board_code)` |
 | `flow_snapshot` | 某个采集时刻全部板块的累计资金流 | `(trade_date, board_code, captured_at)` |
 | `flow_minute` | 归档的分钟累计资金流，含小单/中单/大单/超大单 | `(trade_date, board_code, trade_time)` |
 | `collection_run` | 每次 monitor、archive 的耗时、状态和失败样本 | `run_id` |
@@ -68,9 +69,19 @@ marketdata board-flow archive-minutes
 marketdata board-flow status
 marketdata board-flow export --date 2026-11-11 --board-type concept --top 30 --out flow.csv
 marketdata board-flow report --date 2026-11-11 --board-type concept --top 20 --out race.html
+marketdata board-flow report --date 2026-11-11 --metric delta --window 30 --out heat.html
+marketdata board-flow report --date 2026-11-11 --metric rank --out rank.html
 ```
 
-`report` 生成自包含 HTML，用 ECharts 画多条累计净流入曲线，并附最新值及 5、15、30 分钟增量的表格。ECharts 从 jsdelivr CDN 加载，离线环境需要自行替换脚本地址。未指定 `--out` 时输出到数据库同级的 `reports/board-flow/` 目录。
+`report` 生成自包含 HTML，用 ECharts 作图，并附最新值及 5、15、30 分钟增量的表格。`--metric` 选择视图：
+
+| 视图 | 含义 | 适用场景 |
+| --- | --- | --- |
+| `cumulative`（默认） | 累计主力净流入曲线 | 看收盘谁吸金最多 |
+| `delta` | 每个 `--window` 分钟区间新增的净流入，热力图 | 看资金在板块之间切换 |
+| `rank` | 所选板块的每分钟排名 | 看领先者何时被替换 |
+
+`--top` 默认按收盘累计值选板块，因此 `cumulative` 视图天然偏向赢家。需要观察轮动时用 `delta` 或 `rank`。`--name` 可以指定固定的观察列表。ECharts 从 jsdelivr CDN 加载，离线环境需要自行替换脚本地址。未指定 `--out` 时输出到数据库同级的 `reports/board-flow/` 目录。
 
 ## 定时建议
 
