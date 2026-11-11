@@ -7,6 +7,7 @@ from typing import cast
 
 from quant_market_data_platform.agent_access import handle_capabilities
 from quant_market_data_platform.cli_backup import add_backup_parser
+from quant_market_data_platform.cli_board_flow import add_board_flow_parser
 from quant_market_data_platform.cli_config import add_config_parser
 from quant_market_data_platform.cli_context import add_context_parser
 from quant_market_data_platform.cli_contract import add_contract_parser, add_registry_parser
@@ -47,6 +48,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_backup_parser(subparsers)
     add_tushare_parser(subparsers)
     add_margin_parser(subparsers)
+    add_board_flow_parser(subparsers)
     return parser
 
 

@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 609,
-    "python_lines": 143002,
+    "python_files": 619,
+    "python_lines": 145428,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "eab595fcbd3b18b72461150b6b886bd5422b5adc",
-    "reason": "Add a bounded read-only raw observation CLI adapter around existing canonical seal/content verification and synthetic identity, byte corruption, scan-budget, unsafe-path and concurrent-change regressions. Exactly two Python files and 307 net physical Python lines. No structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
-    "exit_condition": "Remove this exact two-file/307-line allowance if the read-only assessment adapter and equivalent failure-path regressions are consolidated into the existing owner CLI without weakening external identity, bounded scan, UTC metadata or unknown historical-PIT guarantees. Preserve all earlier retirement conditions."
+    "source_revision": "73bcb66a837638fb5f7bdbb3df81c826c514fd96",
+    "reason": "Add the intraday A-share board fund-flow pipeline: an Eastmoney provider, a SQLite store, a session-aware monitor, a report writer, and a board-flow CLI, plus five test modules. Exactly ten Python files and 2,426 net physical Python lines. No structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
+    "exit_condition": "Remove this exact ten-file/2,426-line allowance if the board-flow pipeline is folded into existing modules or moved to its own repository. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "eab595fcbd3b18b72461150b6b886bd5422b5adc",
+      "reason": "Add a bounded read-only raw observation CLI adapter around existing canonical seal/content verification and synthetic identity, byte corruption, scan-budget, unsafe-path and concurrent-change regressions. Exactly two Python files and 307 net physical Python lines. No structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",
+      "exit_condition": "Remove this exact two-file/307-line allowance if the read-only assessment adapter and equivalent failure-path regressions are consolidated into the existing owner CLI without weakening external identity, bounded scan, UTC metadata or unknown historical-PIT guarantees. Preserve all earlier retirement conditions."
+    },
     {
       "source_revision": "9100faba9219e3d3f396bebfebe18f987071bd7c",
       "reason": "Isolate the literal-metacharacter reference in its own report so an ordinary overlapping candidate cannot mask a broken escaped-name prefilter. Exactly 1 net physical Python line in an existing test file. No file-count, structural, complexity, typing, exclusion, coverage, security or reserved-headroom changes.",

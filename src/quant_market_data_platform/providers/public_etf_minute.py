@@ -248,7 +248,7 @@ def _fetch_eastmoney_with_akshare(
     *,
     period: str,
 ) -> pd.DataFrame:
-    import akshare as ak  # ty: ignore[unresolved-import]
+    import akshare as ak  # ty: ignore[import-not-found]
 
     return ak.fund_etf_hist_min_em(
         symbol=_normalize_symbol(ts_code),

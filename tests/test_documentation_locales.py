@@ -42,6 +42,7 @@ PAGE_PAIRS = (
     ),
     ("operations/hk-archive-restore.en.md", "operations/hk-archive-restore.md"),
     ("operations/etf-minutes.en.md", "operations/etf-minutes.md"),
+    ("operations/board-flow.en.md", "operations/board-flow.md"),
     ("afml-research-features.en.md", "afml-research-features.md"),
     ("a-share-research-profile.en.md", "a-share-research-profile.md"),
     ("operations/context-data.en.md", "operations/context-data.md"),
