@@ -78,7 +78,7 @@ marketdata board-flow report --date 2026-11-11 --metric rank --out rank.html
 | View | Meaning | Use it for |
 | --- | --- | --- |
 | `cumulative` (default) | Cumulative main-force net inflow lines | Who attracted the most money by the close |
-| `delta` | New net inflow per `--window` bucket, as a heatmap | How money rotates between boards |
+| `delta` | New net inflow per `--window` bucket; heatmap by default, `--style line` for lines | How money rotates between boards |
 | `rank` | Minute-by-minute rank within the selected boards | When leadership is replaced |
 
 `--top` selects boards by their closing cumulative value, so `cumulative` is biased toward winners. Use `delta` or `rank` to study rotation, and `--name` to pin a fixed watchlist. ECharts is loaded from the jsdelivr CDN; offline environments must replace that script source. Without `--out`, output goes to `reports/board-flow/` next to the database.

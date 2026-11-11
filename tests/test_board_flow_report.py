@@ -157,3 +157,25 @@ def test_bucket_labels_skip_lunch_break() -> None:
         "14:30",
         "15:00",
     ]
+
+
+def test_delta_line_style_draws_lines_around_zero(tmp_path: Path) -> None:
+    connection = board_flow_store.connect(tmp_path / "store.sqlite3")
+    _seed(connection)
+
+    html = board_flow_report.render_race_report(
+        connection,
+        board_flow_report.RaceReportOptions(
+            trade_date=date(2026, 11, 11), metric="delta", style="line", window_minutes=30
+        ),
+    )
+
+    assert "增量曲线" in html
+    assert '"type": "line"' in html
+    assert "markLine" in html
+    assert '"type": "heatmap"' not in html
+
+
+def test_report_options_validate_style() -> None:
+    with pytest.raises(ValueError, match="Unsupported style"):
+        board_flow_report.RaceReportOptions(trade_date=date(2026, 11, 11), style="bar")

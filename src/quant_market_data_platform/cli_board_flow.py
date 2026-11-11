@@ -13,6 +13,7 @@ from quant_market_data_platform import board_flow_monitor, board_flow_store
 from quant_market_data_platform.artifacts import resolve_artifacts_root
 from quant_market_data_platform.board_flow_report import (
     METRICS,
+    STYLES,
     RaceReportOptions,
     ReportError,
     render_race_report,
@@ -72,6 +73,7 @@ def _report_options(args: argparse.Namespace) -> RaceReportOptions:
         names=tuple(names),
         metric=str(getattr(args, "metric", "cumulative")),
         window_minutes=int(getattr(args, "window", 30)),
+        style=str(getattr(args, "style", "heatmap")),
     )
 
 
@@ -264,6 +266,7 @@ def add_board_flow_parser(subparsers: argparse._SubParsersAction) -> None:
     report.add_argument("--name", action="append", help="Board name or code; repeatable.")
     report.add_argument("--metric", choices=METRICS, default="cumulative")
     report.add_argument("--window", type=int, default=30, help="Delta bucket size in minutes.")
+    report.add_argument("--style", choices=STYLES, default="heatmap", help="Delta chart style.")
     report.add_argument("--out", help="Output HTML path.")
     report.set_defaults(handler=handle_board_flow)
 
