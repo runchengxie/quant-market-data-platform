@@ -24,6 +24,7 @@ from typing import Any
 ECHARTS_CDN = "https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"
 DELTA_WINDOWS = (5, 15, 30)
 METRICS = ("cumulative", "delta", "rank")
+STYLES = ("heatmap", "line")
 SESSION_OPEN_MINUTE = 9 * 60 + 30
 LUNCH_MINUTES = 90
 SESSION_MINUTES = 240
@@ -44,10 +45,13 @@ class RaceReportOptions:
     title: str = ""
     metric: str = "cumulative"
     window_minutes: int = 30
+    style: str = "heatmap"
 
     def __post_init__(self) -> None:
         if self.metric not in METRICS:
             raise ValueError(f"Unsupported metric '{self.metric}'; choose from {METRICS}.")
+        if self.style not in STYLES:
+            raise ValueError(f"Unsupported style '{self.style}'; choose from {STYLES}.")
         if self.window_minutes <= 0 or SESSION_MINUTES % self.window_minutes != 0:
             raise ValueError("window_minutes must be a positive divisor of 240.")
 
@@ -245,6 +249,51 @@ def _delta_option(
     }
 
 
+def _delta_line_option(
+    selected: list[tuple[str, dict[str, Any]]], *, window_minutes: int
+) -> dict[str, Any]:
+    labels = _bucket_labels(window_minutes=window_minutes)
+    series = []
+    for code, entry in selected:
+        deltas = _bucket_deltas(entry["points"], window_minutes=window_minutes)
+        data = [
+            None if index not in deltas else round(deltas[index] / 1e8, 3)
+            for index in range(len(labels))
+        ]
+        series.append(
+            {
+                "name": entry["name"],
+                "type": "line",
+                "showSymbol": True,
+                "symbolSize": 5,
+                "emphasis": {"focus": "series"},
+                "data": data,
+                "code": code,
+                "markLine": {
+                    "silent": True,
+                    "symbol": "none",
+                    "lineStyle": {"type": "dashed", "color": "#999"},
+                    "data": [{"yAxis": 0}],
+                }
+                if not series
+                else None,
+            }
+        )
+    return {
+        "tooltip": {"trigger": "axis"},
+        "legend": {"type": "scroll", "top": 8},
+        "grid": {"left": 70, "right": 40, "top": 70, "bottom": 60},
+        "xAxis": {"type": "category", "boundaryGap": False, "data": labels},
+        "yAxis": {
+            "type": "value",
+            "name": f"{window_minutes} 分钟区间净流入（亿元）",
+            "nameLocation": "end",
+            "scale": True,
+        },
+        "series": series,
+    }
+
+
 def _rank_option(selected: list[tuple[str, dict[str, Any]]]) -> dict[str, Any]:
     times = sorted({_hhmm(stamp) for _, entry in selected for stamp, _ in entry["points"]})
     values = {
@@ -354,6 +403,7 @@ NOTE_BASE = (
 )
 NOTE_CUMULATIVE = NOTE_BASE + " 曲线按收盘累计值排序选取，天然偏向赢家，不代表盘中轮动。"
 NOTE_DELTA = NOTE_BASE + " 每个格子是该区间内新增的主力净流入；红色为净流入，绿色为净流出。"
+NOTE_DELTA_LINE = NOTE_BASE + " 每条线是一个区间内新增的主力净流入；线在 0 轴下方即为该区间净流出。"
 NOTE_RANK = NOTE_BASE + " 排名按每分钟累计净流入在所选板块内计算，线条交叉即代表领先者切换。"
 
 
@@ -364,13 +414,21 @@ def render_race_report(connection: Any, options: RaceReportOptions) -> str:
     if not rows:
         raise ReportError(f"No archived minute rows for {wanted} ({options.board_type}).")
     selected = _pick(_group(rows), options)
-    suffix = {"cumulative": "累计资金流", "delta": "增量热力图", "rank": "排名变化"}[options.metric]
+    suffix = {
+        "cumulative": "累计资金流",
+        "delta": f"增量{'曲线' if options.style == 'line' else '热力图'}",
+        "rank": "排名变化",
+    }[options.metric]
     title = options.title or (
         f"{wanted} {options.board_type} 板块{suffix}（前 {len(selected)} 名）"
     )
     if options.metric == "delta":
-        option = _delta_option(selected, window_minutes=options.window_minutes)
-        note = NOTE_DELTA
+        if options.style == "line":
+            option = _delta_line_option(selected, window_minutes=options.window_minutes)
+            note = NOTE_DELTA_LINE
+        else:
+            option = _delta_option(selected, window_minutes=options.window_minutes)
+            note = NOTE_DELTA
     elif options.metric == "rank":
         option = _rank_option(selected)
         note = NOTE_RANK
