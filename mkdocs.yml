@@ -74,6 +74,7 @@ nav:
       - A-share TuShare: operations/a-share-tushare.en.md
       - A-share minute data: operations/a-share-minutes.en.md
       - ETF minute data: operations/etf-minutes.en.md
+      - Board fund flow: operations/board-flow.en.md
       - Credentials and configuration: operations/credentials.en.md
       - Backup and development: operations/backup-and-dev.en.md
   - Quality and governance:
@@ -120,6 +121,7 @@ nav:
           - A 股 TuShare 运维: operations/a-share-tushare.md
           - A 股分钟数据: operations/a-share-minutes.md
           - 公共源 ETF 分钟数据: operations/etf-minutes.md
+          - 板块资金流监控: operations/board-flow.md
           - 凭证和环境变量: operations/credentials.md
           - 备份和本地开发: operations/backup-and-dev.md
       - 质量与治理:

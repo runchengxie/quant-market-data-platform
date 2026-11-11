@@ -24,6 +24,7 @@
 | 构建公募基金一致口径前十大重仓 PIT 研究特征 | [a-share-fund-top10-ownership-features.md](a-share-fund-top10-ownership-features.md) |
 | 融合 Guan 与 TuShare A 股分钟数据 | [operations/a-share-minutes.md](operations/a-share-minutes.md) |
 | 归档公共源 ETF 分钟数据 | [operations/etf-minutes.md](operations/etf-minutes.md) |
+| 采集、归档和查看 A 股板块盘中资金流 | [operations/board-flow.md](operations/board-flow.md) |
 | 港股归档恢复（已退役） | [operations/hk-archive-restore.md](operations/hk-archive-restore.md) |
 | 做本地快照备份、本地开发检查和治理脚本 | [operations/backup-and-dev.md](operations/backup-and-dev.md) |
 | 构建可发布 Python 包 | [operations/package-publishing.md](operations/package-publishing.md) |
@@ -50,6 +51,7 @@
 - `marketdata data build-guan-deal-minutes`
 - `marketdata data finalize-a-share-minute-coverage`
 - `marketdata data mirror-public-etf-minute`：版本目录与只读预演约束见 [ETF 分钟数据](operations/etf-minutes.md)。
+- `marketdata board-flow catalog / snapshot / monitor / archive-minutes / report / export / status`：采集范围、存储表和已知限制见 [板块资金流](operations/board-flow.md)。
 - `marketdata tushare backfill-etf-history`
 - `marketdata tushare build-etf-daily-forward-adjusted`
 - `marketdata tushare validate-etf-daily-pair`

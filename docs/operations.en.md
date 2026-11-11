@@ -12,6 +12,7 @@ This page is the operations index. Detailed procedures are maintained by topic s
 | Build consistent PIT features for mutual-fund top-10 holdings | [Fund top-10 ownership features](a-share-fund-top10-ownership-features.en.md) |
 | Fuse Guan and TuShare A-share minute data | [A-share minutes](operations/a-share-minutes.en.md) |
 | Archive public-source ETF minute data | [ETF minutes](operations/etf-minutes.en.md) |
+| Capture, archive, and chart intraday board fund flow | [Board fund flow](operations/board-flow.en.md) |
 | Restore the retired Hong Kong archive | [Hong Kong archive recovery](operations/hk-archive-restore.en.md) |
 | Create local snapshot backups and run development/governance checks | [Backup and development](operations/backup-and-dev.en.md) |
 | Build a publishable Python package | [Package publishing](operations/package-publishing.en.md) |
@@ -31,6 +32,7 @@ marketdata data build-guan-annual-minutes
 marketdata data build-guan-deal-minutes
 marketdata data finalize-a-share-minute-coverage
 marketdata data mirror-public-etf-minute
+marketdata board-flow catalog / snapshot / monitor / archive-minutes / report / export / status
 marketdata tushare backfill-etf-history
 marketdata tushare build-etf-daily-forward-adjusted
 marketdata tushare validate-etf-daily-pair
