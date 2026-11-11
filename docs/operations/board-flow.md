@@ -83,6 +83,18 @@ marketdata board-flow report --date 2026-11-11 --metric rank --out rank.html
 
 `--top` 默认按收盘累计值选板块，因此 `cumulative` 视图天然偏向赢家。需要观察轮动时用 `delta` 或 `rank`。`--name` 可以指定固定的观察列表。ECharts 从 jsdelivr CDN 加载，离线环境需要自行替换脚本地址。未指定 `--out` 时输出到数据库同级的 `reports/board-flow/` 目录。
 
+## 数据校验
+
+归档完成后可以用 TuShare 的日度板块资金流做交叉校验：
+
+```bash
+marketdata config run --config "$DATA_PLATFORM_CONFIG" -- \
+  python scripts/operations/board_flow_tushare_check.py \
+  --date 20261111 --database "$DATA_PLATFORM_ROOT/intraday/board_flow.sqlite3"
+```
+
+脚本按板块代码对齐 `moneyflow_ind_dc.net_amount` 与归档的 15:00 累计值，输出匹配数量、平均/最大绝对差和最差板块，全部在容差内时返回 0。2026-11-11 的实测结果是 531 个概念板块全部匹配，最大绝对差为 0。
+
 ## 定时建议
 
 | 时间 | 任务 |

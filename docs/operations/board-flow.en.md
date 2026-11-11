@@ -83,6 +83,18 @@ marketdata board-flow report --date 2026-11-11 --metric rank --out rank.html
 
 `--top` selects boards by their closing cumulative value, so `cumulative` is biased toward winners. Use `delta` or `rank` to study rotation, and `--name` to pin a fixed watchlist. ECharts is loaded from the jsdelivr CDN; offline environments must replace that script source. Without `--out`, output goes to `reports/board-flow/` next to the database.
 
+## Validation
+
+After archiving, cross-check the day against TuShare's daily board flow:
+
+```bash
+marketdata config run --config "$DATA_PLATFORM_CONFIG" -- \
+  python scripts/operations/board_flow_tushare_check.py \
+  --date 20261111 --database "$DATA_PLATFORM_ROOT/intraday/board_flow.sqlite3"
+```
+
+The script aligns `moneyflow_ind_dc.net_amount` with the archived 15:00 cumulative value by board code and reports matched boards, mean and maximum absolute difference, and the worst boards. It returns 0 when every board is inside the tolerance. On 2026-11-11 all 531 concept boards matched with a maximum absolute difference of 0.
+
 ## Scheduling
 
 | Time | Task |
