@@ -78,7 +78,7 @@ marketdata board-flow report --date 2026-11-11 --metric rank --out rank.html
 | 视图 | 含义 | 适用场景 |
 | --- | --- | --- |
 | `cumulative`（默认） | 累计主力净流入曲线 | 看收盘谁吸金最多 |
-| `delta` | 每个 `--window` 分钟区间新增的净流入；默认热力图，`--style line` 改为多线条 | 看资金在板块之间切换 |
+| `delta` | 每个 `--window` 分钟区间新增的净流入，默认热力图，`--style line` 改为多线条 | 看资金在板块之间切换 |
 | `rank` | 所选板块的每分钟排名 | 看领先者何时被替换 |
 
 `--top` 默认按收盘累计值选板块，因此 `cumulative` 视图天然偏向赢家。需要观察轮动时用 `delta` 或 `rank`。`--name` 可以指定固定的观察列表。ECharts 从 jsdelivr CDN 加载，离线环境需要自行替换脚本地址。未指定 `--out` 时输出到数据库同级的 `reports/board-flow/` 目录。
