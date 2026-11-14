@@ -480,3 +480,31 @@ def test_expired_audit_records_count_unique_unresolved_dates_without_erasing_his
     progress = status(root, runtime)["progress"]
     assert progress["superseded_expired_audit_dates"] == 0
     assert progress["unresolved_expired_audit_dates"] == 2
+
+
+def test_evidence_max_age_can_cover_nightly_cadence(tmp_path, monkeypatch):
+    root, runtime = fixture(tmp_path)
+    preflight = runtime / "runtime-preflight.json"
+    stale = (NOW - timedelta(hours=2)).isoformat()
+    put(
+        preflight,
+        {
+            "generated_at": stale,
+            "quota_date": "20261019",
+            "available_requests": 100,
+            "free_disk_bytes": 10**15,
+        },
+    )
+    monkeypatch.delenv("MINUTE_HISTORY_EVIDENCE_MAX_AGE_SECONDS", raising=False)
+    assert status(root, runtime)["state"] == "unknown_stale_evidence"
+
+    monkeypatch.setenv("MINUTE_HISTORY_EVIDENCE_MAX_AGE_SECONDS", "86400")
+    assert status(root, runtime)["state"] == "idle"
+
+
+def test_invalid_evidence_max_age_falls_back_to_default(tmp_path, monkeypatch):
+    root, runtime = fixture(tmp_path)
+    monkeypatch.setenv("MINUTE_HISTORY_EVIDENCE_MAX_AGE_SECONDS", "not-a-number")
+    result = status(root, runtime)
+    assert result["state"] == "unknown_stale_evidence"
+    assert "invalid MINUTE_HISTORY_EVIDENCE_MAX_AGE_SECONDS" in result["evidence_warnings"]

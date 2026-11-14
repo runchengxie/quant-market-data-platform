@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import fcntl
 import json
+import os
 import shutil
 from datetime import UTC, datetime
 from pathlib import Path
@@ -16,6 +17,25 @@ from quant_market_data_platform._minute_history_inventory import inventory, read
 from quant_market_data_platform._minute_history_pipeline import pipeline
 
 _MIN_FREE = 10 * 1024**3
+_MIN_EVIDENCE_AGE = -60
+_DEFAULT_EVIDENCE_MAX_AGE = 600
+_EVIDENCE_MAX_AGE_ENV = "MINUTE_HISTORY_EVIDENCE_MAX_AGE_SECONDS"
+
+
+def _evidence_max_age_seconds(warnings: list[str]) -> int:
+    """Allow the nightly acquisition cadence to widen the freshness window."""
+    raw = os.environ.get(_EVIDENCE_MAX_AGE_ENV, "").strip()
+    if not raw:
+        return _DEFAULT_EVIDENCE_MAX_AGE
+    try:
+        value = int(raw)
+    except ValueError:
+        warnings.append(f"invalid {_EVIDENCE_MAX_AGE_ENV}")
+        return _DEFAULT_EVIDENCE_MAX_AGE
+    if value <= 0:
+        warnings.append(f"invalid {_EVIDENCE_MAX_AGE_ENV}")
+        return _DEFAULT_EVIDENCE_MAX_AGE
+    return value
 
 
 def _instant(value: object) -> datetime | None:
@@ -70,11 +90,12 @@ def _preflight(runtime: Path, now: datetime, warnings: list[str]) -> tuple[dict,
     if stamp is None and path.exists():
         stamp = datetime.fromtimestamp(path.stat().st_mtime, UTC)
     age = (now - stamp).total_seconds() if stamp else None
+    max_age = _evidence_max_age_seconds(warnings)
     return payload, {
         "path": str(path),
         "generated_at": stamp.isoformat() if stamp else None,
         "age_seconds": age,
-        "fresh": age is not None and -60 <= age <= 600,
+        "fresh": age is not None and _MIN_EVIDENCE_AGE <= age <= max_age,
     }
 
 
