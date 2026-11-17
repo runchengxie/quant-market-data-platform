@@ -694,3 +694,7 @@ collection, verification and deployment boundaries.
 JSON schema 为 `quant.raw_observation_assessment.v1`，通过既有 owner 校验器核对根清单、子清单封存与内容字节，输出 `manifest_sha256`、`content_snapshot_sha256`。`children` 包含数据集、清单与内容摘要、转换为 UTC 的原始 `retrieved_at`、原样保留的 `observed_vintage_dates` 和文件数。时间缺失时保留 null。快照日期和 vintage 日期不能代替日内可用时间。`historical_pit` 始终为 `unknown`，本原始观测目录的 `derived_materialization` 为 `absent`，`research_ready` 为 false，不构成历史研究或派生 PIT 认证。
 
 默认最多扫描 1 GiB、10,000 个内容文件，可显式指定 `--max-content-bytes`、`--max-files`。身份、封存、路径、内容或预算不符时非零退出，不输出成功 JSON。输出不包含接口配置或私有复现路径。不推断 cutoff。消费者仍需单独核验决策时间、派生字段与新鲜度。
+
+## 供应商原始 L2 存储试点
+
+[完整日存储试点](operations/l2-storage-pilot.zh-CN.md)说明独立转换、全字段无损证明和证券／时间区间查询。不会自动替换既有 L2 输入。

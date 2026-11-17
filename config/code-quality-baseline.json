@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 622,
-    "python_lines": 146127,
+    "python_files": 633,
+    "python_lines": 147314,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "2ffc19ae5198",
-    "reason": "Make the minute-history evidence freshness window configurable so the nightly watch no longer alarms outside the acquisition window. 49 net physical Python lines in two existing files; the history-watch unit sets 26h, existing callers keep the 600s default. No structural, complexity, typing, exclusion, coverage or security changes.",
-    "exit_condition": "Remove this 49-line allowance when the freshness window is derived from deployment scheduling state without new code, or when the history watch is retired."
+    "source_revision": "edc8f825ac184f400e5a065c3620ff50ec892228",
+    "reason": "Add the isolated complete-day full-field L2 storage pilot with checkpoint, auxiliary-symlink, source-location, corruption and lossless-query regressions: exactly eleven Python files and 1,187 net physical Python lines. No structural, complexity, typing, exclusion, coverage or security allowance changes.",
+    "exit_condition": "Remove this exact eleven-file/1,187-line allowance if the pilot is retired or consolidated into established ingestion/storage modules; preserve source-integrity, path-safety and all-field verification behavior."
   },
   "previous_change_records": [
+    {
+      "source_revision": "2ffc19ae5198",
+      "reason": "Make the minute-history evidence freshness window configurable so the nightly watch no longer alarms outside the acquisition window. 49 net physical Python lines in two existing files; the history-watch unit sets 26h, existing callers keep the 600s default. No structural, complexity, typing, exclusion, coverage or security changes.",
+      "exit_condition": "Remove this 49-line allowance when the freshness window is derived from deployment scheduling state without new code, or when the history watch is retired."
+    },
     {
       "source_revision": "3fc2072efae9b929d369775f9cb528f26bef7e27",
       "reason": "Add a board flow validation module, its operations script and tests (+3 files, +269 net physical Python lines). No structural, complexity, typing, exclusion, coverage or security changes.",
