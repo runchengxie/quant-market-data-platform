@@ -20,6 +20,9 @@ def parser():
     convert.add_argument("--buckets", type=int, default=64)
     convert.add_argument("--row-group-rows", type=int, default=65536)
     convert.add_argument("--zstd-level", type=int, default=6)
+    convert.add_argument(
+        "--identity-policy", choices=["strict", "preserve-source-labels"], default="strict"
+    )
     check = commands.add_parser("verify", help="Recheck every output file and source-member proof")
     check.add_argument("--root", type=Path, required=True)
     query = commands.add_parser("query", help="Query native fields with security/time routing")
@@ -46,6 +49,7 @@ def main(argv=None):
                 buckets=args.buckets,
                 row_group_rows=args.row_group_rows,
                 zstd_level=args.zstd_level,
+                identity_policy=args.identity_policy,
             )
         elif args.command == "verify":
             result = verify(args.root)

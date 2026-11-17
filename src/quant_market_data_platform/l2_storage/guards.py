@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .archive import MODALITIES, member_path
+from .profile import identity_summary
 from .proof import sha_file
 
 
@@ -20,6 +21,7 @@ def outside_source_tree(path: Path) -> None:
 
 
 def validate_snapshot(profile) -> None:
+    identity_summary(profile)
     root = Path(profile["source_root"])
     outside_source_tree(root)
     expected = {}

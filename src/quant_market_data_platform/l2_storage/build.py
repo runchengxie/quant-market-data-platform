@@ -14,7 +14,7 @@ from filelock import FileLock
 from .archive import extract
 from .guards import outside_source_tree, validate_snapshot
 from .layout import VERSION, bucket, digest, file_path, safe_file, typed, writer_options
-from .profile import profile_directory, read_csv
+from .profile import IDENTITY_POLICIES, identity_summary, profile_directory, read_csv
 from .proof import load, save, sha_file
 from .reader import verify, verify_bucket, verify_contents
 
@@ -26,7 +26,7 @@ def source_table(profile, member):
         raise ValueError("CSV source escapes frozen root")
     if sha_file(source) != member["sha256"]:
         raise ValueError("Frozen source CSV changed")
-    return typed(read_csv(source), profile["modalities"][member["modality"]])
+    return typed(read_csv(source), profile["modalities"][member["modality"]], member["symbol"])
 
 
 def write_bucket(profile, members, path: Path, config):
@@ -83,6 +83,7 @@ def build_csv(profile, root: Path, archive_sha256: str, *, options=None) -> dict
         "row_group_rows": row_group_rows,
         "zstd_level": zstd_level,
         "profile_digest": digest(profile),
+        "identity_policy": profile["identity_policy"],
     }
     root.parent.mkdir(parents=True, exist_ok=True)
     with FileLock(str(root.parent / ("." + root.name + ".lock")), timeout=0):
@@ -123,6 +124,7 @@ def build_owned(profile, root: Path, config):
         "config": config,
         "profile_sha256": sha_file(root / "profile.json"),
         "files": files,
+        "identity_summary": identity_summary(profile),
     }
     verify_contents(root, manifest, profile)
     save(root / "manifest.json", manifest)
@@ -132,6 +134,9 @@ def build_owned(profile, root: Path, config):
 def build(
     archive: Path, output: Path, scratch: Path, extractor: str, expected_sha256: str, **options
 ):
+    policy = options.pop("identity_policy", "strict")
+    if policy not in IDENTITY_POLICIES:
+        raise ValueError("Unknown identity policy")
     for path in (archive, output, scratch):
         outside_source_tree(Path(path))
     archive, output, scratch = (Path(p).resolve() for p in (archive, output, scratch))
@@ -141,7 +146,7 @@ def build(
     with FileLock(str(scratch / "intake.lock"), timeout=0):
         source = extract(archive, scratch, extractor, expected_sha256)
         checkpoint = scratch / "profile.json"
-        profile = profile_directory(source, archive.stem)
+        profile = profile_directory(source, archive.stem, identity_policy=policy)
         if checkpoint.exists():
             if load(checkpoint) != profile:
                 raise ValueError("Cached profile differs from complete extracted source")

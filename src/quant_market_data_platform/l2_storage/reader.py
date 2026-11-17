@@ -11,7 +11,7 @@ import pyarrow.parquet as pq
 
 from .archive import SYMBOL
 from .layout import VERSION, bucket, file_path, lexical, safe_file
-from .profile import clock
+from .profile import clock, identity_summary, record_identity
 from .proof import load, logical_hash, sha_file
 
 
@@ -26,7 +26,13 @@ def catalog(root: Path):
         raise ValueError("Duplicate output catalog entry")
     for relative in paths:
         safe_file(root, relative)
-    return manifest, load(root / "profile.json")
+    profile = load(root / "profile.json")
+    if (
+        manifest.get("identity_summary") != identity_summary(profile)
+        or manifest["config"].get("identity_policy") != profile["identity_policy"]
+    ):
+        raise ValueError("Catalog identity evidence differs from source profile")
+    return manifest, profile
 
 
 def scan(root: Path, modality: str, symbols=None, start=None, stop=None):
@@ -39,7 +45,13 @@ def scan(root: Path, modality: str, symbols=None, start=None, stop=None):
     if start is not None and stop is not None and start >= stop:
         raise ValueError("Interval start must be before exclusive stop")
     buckets = (
-        None if symbols is None else {bucket(s, manifest["config"]["buckets"]) for s in symbols}
+        None
+        if symbols is None
+        else {
+            bucket(m["symbol"], manifest["config"]["buckets"])
+            for m in profile["members"]
+            if m["modality"] == modality and m["record_symbol"] in symbols
+        }
     )
     files = [
         safe_file(root, f["path"])
@@ -49,7 +61,7 @@ def scan(root: Path, modality: str, symbols=None, start=None, stop=None):
     info = profile["modalities"][modality]
     payload_schema = pa.schema(
         [(n, pa.int64() if n in info["integer_columns"] else pa.string()) for n in info["columns"]]
-        + [("_time", pa.int64()), ("_source_row", pa.int64())]
+        + [("_time", pa.int64()), ("_source_row", pa.int64()), ("_source_symbol", pa.string())]
     )
     dataset = ds.dataset(files, format="parquet", schema=payload_schema)
     predicate = ds.scalar(True)
@@ -72,9 +84,12 @@ def verify_bucket(path: Path, members: list, info) -> dict:
         raise ValueError("Output row count differs from frozen source members")
     for member in members:
         restored = dataset.to_table(
-            filter=ds.field("万得代码") == member["symbol"], use_threads=False
+            filter=ds.field("_source_symbol") == member["symbol"], use_threads=False
         )
         raw = lexical(restored, info)
+        identity = record_identity(raw, member["symbol"], "preserve-source-labels")
+        if any(identity[key] != member[key] for key in identity):
+            raise ValueError("Output record identity differs from source evidence")
         ordinal = restored.sort_by([("_source_row", "ascending")])["_source_row"].to_numpy()
         if (
             raw.num_rows != member["rows"]
@@ -122,4 +137,5 @@ def verify_contents(root: Path, manifest, profile) -> dict:
         "rows": sum(m["rows"] for m in profile["members"]),
         "members": len(profile["members"]),
         "files": len(expected),
+        "source_label_conflicts": identity_summary(profile)["conflicting_members"],
     }

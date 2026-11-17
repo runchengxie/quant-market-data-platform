@@ -324,3 +324,8 @@ not prove daily coverage. Metadata snapshots do not verify the data bytes.
 assessment was produced, not that unknown conditions passed; a known incomplete
 publication exits nonzero. Discovery grants no permission. Omit inspect's `--out`
 when using its read-only invocation.
+
+
+## Provider-native L2 source labels
+
+The [L2 pilot v2](operations/l2-storage-pilot.md) retains every provider field and adds `_source_symbol` for the directory identifier. Queries use original record IDs across all matching source buckets. Distinct members and duplicate rows remain separate. Strict identity validation is the default. An explicit preservation policy records single-ID suffix conflicts with matching numeric prefixes in the profile and manifest, without asserting canonical exchange identity. Mixed, invalid or unrelated numeric IDs and date/clock errors remain rejected. Existing v1 artifacts require their fixed v1 runtime.
