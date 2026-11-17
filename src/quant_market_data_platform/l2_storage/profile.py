@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
+from typing import Any, cast
 
 import numpy as np
 import pyarrow as pa
-import pyarrow.compute as pc
+import pyarrow.compute as arrow_compute
 import pyarrow.csv as pacsv
 
 from .archive import MODALITIES, member_path
 from .proof import logical_hash, sha_file
+
+pc = cast(Any, arrow_compute)  # Arrow generates compute kernels dynamically.
 
 MAX_RAW_BYTES = 512 << 20
 MAX_DECODED_BYTES = 1 << 30
