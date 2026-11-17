@@ -23,17 +23,17 @@ No source deletion or canonical alias switching by the converter. Preserve every
 
 Files: `src/quant_market_data_platform/l2_storage/{archive,profile,proof}.py`, `tests/test_l2_storage.py`.
 Interfaces: archive inventory/extraction records; profile modalities and per-member logical proofs; safe paths, atomic JSON and SHA helpers.
-- [ ] Write fixtures covering GB18030, blanks, leading zeros, rare nonnumeric IDs, schema differences, empty files, invalid clocks and unsafe archive members; watch failures before implementation.
-- [ ] Implement strict intake and bounded all-string CSV parsing; global exact-roundtrip integer decisions and canonical logical fingerprints.
-- [ ] Run the focused tests and commit.
+- [x] Write fixtures covering GB18030, blanks, leading zeros, rare nonnumeric IDs, schema differences, empty files, invalid clocks and unsafe archive members; watch failures before implementation.
+- [x] Implement strict intake and bounded all-string CSV parsing; global exact-roundtrip integer decisions and canonical logical fingerprints.
+- [x] Run the focused tests and commit.
 
 ### Task 2: Versioned builder and query catalog
 
 Files: `src/quant_market_data_platform/l2_storage/{build,reader,__init__,__main__}.py`, tests.
 Interfaces: `build(archive, output, scratch, extractor, expected_sha256, ...)`; `scan(root, modality, symbols=None, start=None, stop=None)`; independent `verify(root)`.
-- [ ] Write failing build/query/verification tests using real fixture files and actual Parquet, including repeated timestamps, shared buckets, unknown destination and corruption.
-- [ ] Implement per-security row groups, stable routing, exact all-field readback proofs, file hashes, atomic complete-day publication, locks and guarded reruns.
-- [ ] Add CLI behavior tests and English documentation plus aligned Chinese operations notes.
+- [x] Write failing build/query/verification tests using real fixture files and actual Parquet, including repeated timestamps, shared buckets, unknown destination and corruption.
+- [x] Implement per-security row groups, stable routing, exact all-field readback proofs, file hashes, atomic complete-day publication, locks and guarded reruns.
+- [x] Add CLI behavior tests and English documentation plus aligned Chinese operations notes.
 - [ ] Run focused tests, full repository quality gate and a fresh whole-change review. Fix important findings, then commit/push/PR and merge against current main with required checks.
 
 ### Task 3: Real complete-day pilot

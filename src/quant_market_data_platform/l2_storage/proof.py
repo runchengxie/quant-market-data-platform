@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import uuid
 from pathlib import Path
 
 import pyarrow as pa
@@ -28,8 +29,10 @@ def logical_hash(table: pa.Table) -> str:
 
 
 def save(path: Path, value) -> None:
-    temporary = path.with_name(path.name + ".tmp")
-    with temporary.open("w", encoding="utf-8") as handle:
+    if path.is_symlink() or path.with_name(path.name + ".tmp").is_symlink():
+        raise ValueError("Refusing linked evidence or temporary paths")
+    temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    with temporary.open("x", encoding="utf-8") as handle:
         json.dump(value, handle, ensure_ascii=False, indent=2)
         handle.flush()
         os.fsync(handle.fileno())
@@ -42,4 +45,6 @@ def save(path: Path, value) -> None:
 
 
 def load(path: Path):
+    if path.is_symlink():
+        raise ValueError("Refusing linked evidence input")
     return json.loads(path.read_text(encoding="utf-8"))

@@ -69,6 +69,8 @@ def extract(archive: Path, scratch: Path, extractor: str, expected: str) -> Path
     date = archive.stem
     text = subprocess.check_output([extractor, "l", "-slt", str(archive)], text=True)
     members = parse_listing(text, date)
+    if scratch.is_symlink() or (scratch / "extraction.log").is_symlink():
+        raise ValueError("Linked extraction paths are not supported")
     marker = scratch / "extraction.json"
     destination = scratch / "csv"
     if marker.exists():
@@ -81,7 +83,7 @@ def extract(archive: Path, scratch: Path, extractor: str, expected: str) -> Path
         if shutil.disk_usage(scratch).free < needed:
             raise ValueError("Insufficient extraction space (including 20 GiB reserve)")
         destination.mkdir()
-        with (scratch / "extraction.log").open("w") as log:
+        with (scratch / "extraction.log").open("x") as log:
             subprocess.run(
                 [
                     extractor,
@@ -97,7 +99,16 @@ def extract(archive: Path, scratch: Path, extractor: str, expected: str) -> Path
                 stderr=subprocess.STDOUT,
                 check=True,
             )
+        if sha_file(archive) != expected:
+            raise ValueError("Archive changed during extraction")
         save(marker, {"archive_sha256": expected, "members": members})
+    check_extracted(destination, members)
+    return destination
+
+
+def check_extracted(destination: Path, members) -> None:
+    if destination.is_symlink():
+        raise ValueError("Linked extraction directory")
     actual = []
     for path in destination.rglob("*"):
         if path.is_symlink():
@@ -108,4 +119,3 @@ def extract(archive: Path, scratch: Path, extractor: str, expected: str) -> Path
             )
     if sorted(actual, key=lambda m: m["path"]) != sorted(members, key=lambda m: m["path"]):
         raise ValueError("Extracted inventory differs from archive inventory")
-    return destination
