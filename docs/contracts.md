@@ -664,3 +664,8 @@ historical vintages. See [daily forecast observations](operations/report-rc-obse
 ## Raw observation assessment
 
 `marketdata contract verify-observation` emits `quant.raw_observation_assessment.v1` after verifying an externally pinned raw-observation manifest and its owner-sealed content. The `content_snapshot_sha256` is SHA-256 of the verified root `children` receipt list serialized as JSON with sorted object keys and compact separators; receipt order is preserved. It is separate from `manifest_sha256`, which hashes exact manifest bytes. The response includes `data_content_integrity=passed`, `historical_pit=unknown`, `derived_materialization=absent` (scope: this raw archive), `research_ready=false`, `time_basis=UTC`, recorded snapshot date/source revision, scan totals, and per-child recorded capture metadata. Null retrieval times stay null; the API supplies no historical cutoff or qualification decision. See [operations](operations.en.md#verify-a-pinned-raw-fundamentals-observation).
+
+
+## 供应商原始 L2 标识
+
+[L2 试点 v2](operations/l2-storage-pilot.zh-CN.md)保留全部供应商字段，并以 `_source_symbol` 记录目录标识。查询使用记录原始标识，路由到全部匹配的来源桶，保留不同文件及重复记录。默认严格检查标识一致性。显式保留策略会在字段清单和 manifest 中记录同数字前缀的标识集合、逐标识行数及后缀冲突，不推断规范交易所。混入不同数字代码、非法标识，以及日期和时钟错误仍会被拒绝。已有 v1 产物使用固定 v1 运行版本读取。

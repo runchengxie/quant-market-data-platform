@@ -16,7 +16,7 @@ import pyarrow.compute as arrow_compute
 from .profile import clock
 
 pc = cast(Any, arrow_compute)
-VERSION = "l2.storage.pilot.v1"
+VERSION = "l2.storage.pilot.v2"
 
 
 def bucket(symbol: str, count: int) -> int:
@@ -33,13 +33,18 @@ def schema(info):
     return pa.schema([(n, pa.string()) for n in info["columns"]])
 
 
-def typed(table: pa.Table, info) -> pa.Table:
+def typed(table: pa.Table, info, source_symbol: str) -> pa.Table:
     result = table
     for name in info["integer_columns"]:
         i = result.schema.get_field_index(name)
         result = result.set_column(i, name, pc.cast(result[name], pa.int64(), safe=True))
     result = result.append_column("_time", clock(table))
-    return result.append_column("_source_row", pa.array(np.arange(table.num_rows), type=pa.int64()))
+    result = result.append_column(
+        "_source_row", pa.array(np.arange(table.num_rows), type=pa.int64())
+    )
+    return result.append_column(
+        "_source_symbol", pa.repeat(pa.scalar(source_symbol), table.num_rows)
+    )
 
 
 def lexical(table: pa.Table, info) -> pa.Table:
