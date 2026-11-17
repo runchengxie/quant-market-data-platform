@@ -10,8 +10,9 @@ import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 
 from .archive import SYMBOL
+from .guards import member_inventory
 from .layout import VERSION, bucket, file_path, lexical, safe_file
-from .profile import clock, identity_summary, record_identity
+from .profile import check_date, clock, identity_summary, record_identity
 from .proof import load, logical_hash, sha_file
 
 
@@ -27,6 +28,7 @@ def catalog(root: Path):
     for relative in paths:
         safe_file(root, relative)
     profile = load(root / "profile.json")
+    member_inventory(profile)
     if (
         manifest.get("identity_summary") != identity_summary(profile)
         or manifest["config"].get("identity_policy") != profile["identity_policy"]
@@ -50,7 +52,7 @@ def scan(root: Path, modality: str, symbols=None, start=None, stop=None):
         else {
             bucket(m["symbol"], manifest["config"]["buckets"])
             for m in profile["members"]
-            if m["modality"] == modality and m["record_symbol"] in symbols
+            if m["modality"] == modality and set(m["record_symbols"]).intersection(symbols)
         }
     )
     files = [
@@ -87,6 +89,7 @@ def verify_bucket(path: Path, members: list, info) -> dict:
             filter=ds.field("_source_symbol") == member["symbol"], use_threads=False
         )
         raw = lexical(restored, info)
+        check_date(raw, member["path"].split("/", 1)[0])
         identity = record_identity(raw, member["symbol"], "preserve-source-labels")
         if any(identity[key] != member[key] for key in identity):
             raise ValueError("Output record identity differs from source evidence")
@@ -138,4 +141,5 @@ def verify_contents(root: Path, manifest, profile) -> dict:
         "members": len(profile["members"]),
         "files": len(expected),
         "source_label_conflicts": identity_summary(profile)["conflicting_members"],
+        "mixed_record_label_members": identity_summary(profile)["mixed_record_label_members"],
     }

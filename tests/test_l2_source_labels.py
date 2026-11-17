@@ -27,7 +27,7 @@ def test_suffix_conflicts_require_explicit_lossless_policy(tmp_path):
     p = profile_directory(tmp_path, "20260914", identity_policy="preserve-source-labels")
     m = p["members"][0]
     assert m["symbol"] == "110075.SZ"
-    assert m["record_symbol"] == "110075.SH"
+    assert m["record_symbols"] == ["110075.SH"]
     assert m["identity_status"] == "source_label_conflict"
     assert p["identity_policy"] == "preserve-source-labels"
 
@@ -41,12 +41,12 @@ def test_policy_still_rejects_unrelated_or_invalid_identifiers(tmp_path, actual)
         profile_directory(tmp_path, "20260914", identity_policy="preserve-source-labels")
 
 
-def test_mixed_record_identifiers_in_one_member_are_rejected(tmp_path):
+def test_mixed_numeric_identifiers_in_one_member_are_rejected(tmp_path):
     from quant_market_data_platform.l2_storage.profile import profile_directory
 
     p = member(tmp_path, "110075.SZ", "110075.SH")
     with p.open("a", encoding="gb18030", newline="") as f:
-        csv.writer(f).writerow(["110075.SZ", "20260914", "100000001", "8"])
+        csv.writer(f).writerow(["110076.SZ", "20260914", "100000001", "8"])
     with pytest.raises(ValueError):
         profile_directory(tmp_path, "20260914", identity_policy="preserve-source-labels")
 
@@ -102,13 +102,15 @@ def test_independent_verify_rejects_suppressed_record_label_conflict(tmp_path):
     build_csv(p, root, "a" * 64)
     profile_path = root / "profile.json"
     stored = json.loads(profile_path.read_text())
-    stored["members"][0]["record_symbol"] = "110075.SZ"
+    stored["members"][0]["record_symbols"] = ["110075.SZ"]
+    stored["members"][0]["record_symbol_counts"] = {"110075.SZ": 1}
     stored["members"][0]["identity_status"] = "matched"
     profile_path.write_text(json.dumps(stored))
     manifest_path = root / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
     manifest["profile_sha256"] = sha_file(profile_path)
     manifest["identity_summary"]["conflicting_members"] = 0
+    manifest["identity_summary"]["conflicting_rows"] = 0
     manifest_path.write_text(json.dumps(manifest))
     with pytest.raises(ValueError):
         verify(root)
@@ -151,3 +153,147 @@ def test_cli_policy_preserves_all_labels_after_verified_extraction(tmp_path, mon
     table = scan(root, "trades", ["110075.SH"]).to_table()
     assert table["万得代码"].to_pylist() == ["110075.SH"]
     assert table["_source_symbol"].to_pylist() == ["110075.SZ"]
+
+
+def test_mixed_suffix_member_preserves_each_record_and_exact_native_queries(tmp_path):
+    from quant_market_data_platform.l2_storage.build import build_csv
+    from quant_market_data_platform.l2_storage.profile import profile_directory
+    from quant_market_data_platform.l2_storage.reader import scan, verify
+
+    inputs = tmp_path / "input"
+    p = member(inputs, "110075.SZ", "110075.SH")
+    with p.open("a", encoding="gb18030", newline="") as f:
+        csv.writer(f).writerow(["110075.SZ", "20260914", "100000001", "8"])
+    with pytest.raises(ValueError):
+        profile_directory(inputs, "20260914")
+    profile = profile_directory(inputs, "20260914", identity_policy="preserve-source-labels")
+    assert profile["members"][0]["record_symbols"] == ["110075.SH", "110075.SZ"]
+    root = tmp_path / "output"
+    build_csv(profile, root, "a" * 64)
+    sh = scan(root, "snapshots", ["110075.SH"]).to_table()
+    sz = scan(root, "snapshots", ["110075.SZ"]).to_table()
+    assert sh["编号"].to_pylist() == ["0007"]
+    assert sz["编号"].to_pylist() == ["8"]
+    assert sh["_source_row"].to_pylist() == [0]
+    assert sz["_source_row"].to_pylist() == [1]
+    assert scan(root, "snapshots").count_rows() == 2
+    assert verify(root)["mixed_record_label_members"] == 1
+
+
+def test_independent_verify_checks_per_label_counts_even_when_total_rows_match(tmp_path):
+    import json
+
+    from quant_market_data_platform.l2_storage.build import build_csv
+    from quant_market_data_platform.l2_storage.profile import profile_directory
+    from quant_market_data_platform.l2_storage.proof import sha_file
+    from quant_market_data_platform.l2_storage.reader import verify
+
+    inputs = tmp_path / "input"
+    path = member(inputs, "110075.SZ", "110075.SH")
+    with path.open("a", encoding="gb18030", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["110075.SH", "20260914", "100000001", "8"])
+        w.writerow(["110075.SZ", "20260914", "100000002", "9"])
+    root = tmp_path / "output"
+    build_csv(
+        profile_directory(inputs, "20260914", identity_policy="preserve-source-labels"),
+        root,
+        "a" * 64,
+    )
+    p = root / "profile.json"
+    stored = json.loads(p.read_text())
+    stored["members"][0]["record_symbol_counts"] = {"110075.SH": 1, "110075.SZ": 2}
+    p.write_text(json.dumps(stored))
+    m = root / "manifest.json"
+    manifest = json.loads(m.read_text())
+    manifest["profile_sha256"] = sha_file(p)
+    manifest["identity_summary"]["conflicting_rows"] = 1
+    m.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError):
+        verify(root)
+
+
+@pytest.mark.parametrize(
+    "claimed_path",
+    [
+        "20260914/110076.SZ/行情.csv",
+        "20260915/110075.SZ/行情.csv",
+        "20260914/110075.SZ/逐笔成交.csv",
+    ],
+)
+def test_independent_verify_binds_claimed_member_path_to_identity_and_modality(
+    tmp_path, claimed_path
+):
+    import json
+
+    from quant_market_data_platform.l2_storage.build import build_csv
+    from quant_market_data_platform.l2_storage.profile import profile_directory
+    from quant_market_data_platform.l2_storage.proof import sha_file
+    from quant_market_data_platform.l2_storage.reader import verify
+
+    inputs = tmp_path / "input"
+    member(inputs, "110075.SZ", "110075.SH")
+    root = tmp_path / "output"
+    build_csv(
+        profile_directory(inputs, "20260914", identity_policy="preserve-source-labels"),
+        root,
+        "a" * 64,
+    )
+    p = root / "profile.json"
+    profile = json.loads(p.read_text())
+    profile["members"][0]["path"] = claimed_path
+    p.write_text(json.dumps(profile))
+    m = root / "manifest.json"
+    manifest = json.loads(m.read_text())
+    manifest["profile_sha256"] = sha_file(p)
+    m.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError):
+        verify(root)
+
+
+def test_independent_verify_binds_record_date_to_claimed_source_date(tmp_path):
+    import json
+
+    from quant_market_data_platform.l2_storage.build import build_csv
+    from quant_market_data_platform.l2_storage.profile import profile_directory
+    from quant_market_data_platform.l2_storage.proof import sha_file
+    from quant_market_data_platform.l2_storage.reader import verify
+
+    inputs = tmp_path / "input"
+    member(inputs, "110075.SZ", "110075.SH")
+    root = tmp_path / "output"
+    build_csv(
+        profile_directory(inputs, "20260914", identity_policy="preserve-source-labels"),
+        root,
+        "a" * 64,
+    )
+    p = root / "profile.json"
+    profile = json.loads(p.read_text())
+    profile["date"] = "20260915"
+    profile["members"][0]["path"] = "20260915/110075.SZ/行情.csv"
+    p.write_text(json.dumps(profile))
+    m = root / "manifest.json"
+    manifest = json.loads(m.read_text())
+    manifest["config"]["date"] = "20260915"
+    manifest["profile_sha256"] = sha_file(p)
+    m.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError):
+        verify(root)
+
+
+def test_independent_verification_does_not_require_retired_csv_scratch(tmp_path):
+    from quant_market_data_platform.l2_storage.build import build_csv
+    from quant_market_data_platform.l2_storage.profile import profile_directory
+    from quant_market_data_platform.l2_storage.reader import verify
+
+    inputs = tmp_path / "input"
+    member(inputs, "110075.SZ", "110075.SH")
+    root = tmp_path / "output"
+    build_csv(
+        profile_directory(inputs, "20260914", identity_policy="preserve-source-labels"),
+        root,
+        "a" * 64,
+    )
+    inputs.rename(tmp_path / "retired-scratch")
+    assert verify(root)["rows"] == 1
+    assert verify(root)["source_label_conflicts"] == 1

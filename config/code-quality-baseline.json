@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 634,
-    "python_lines": 147552,
+    "python_lines": 147746,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -19,8 +19,8 @@
   },
   "change_record": {
     "source_revision": "aa4445b3f9a0ff207a1445975bc2a2fc406b47b6",
-    "reason": "Retain distinct source-directory and original record security labels under an explicit native-data policy, route raw-ID queries across all source buckets, and add regression coverage: exactly one Python file and 238 net physical Python lines. No structural, complexity, typing, exclusion, coverage or security allowance changes.",
-    "exit_condition": "Remove this exact one-file/238-line allowance if source-label evidence and equivalent conflict/routing regressions are consolidated into a shared provider identity contract; preserve all-field fidelity and strict default validation."
+    "reason": "Retain distinct source-directory and original record-label sets/counts under an explicit native-data policy, route raw-ID queries across matching source buckets, independently bind source provenance, and add regression coverage: exactly one Python file and 432 net physical Python lines. No structural, complexity, typing, exclusion, coverage or security allowance changes.",
+    "exit_condition": "Remove this exact one-file/432-line allowance if source-label evidence and equivalent conflict/routing/provenance regressions are consolidated into a shared provider identity contract; preserve all-field fidelity and strict default validation."
   },
   "previous_change_records": [
     {

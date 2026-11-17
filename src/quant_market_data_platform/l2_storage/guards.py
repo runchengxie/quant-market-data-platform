@@ -20,10 +20,7 @@ def outside_source_tree(path: Path) -> None:
         raise ValueError("Runtime inputs/output/scratch must be outside source checkouts")
 
 
-def validate_snapshot(profile) -> None:
-    identity_summary(profile)
-    root = Path(profile["source_root"])
-    outside_source_tree(root)
+def member_inventory(profile):
     expected = {}
     for member in profile["members"]:
         parts = member_path(member["path"], profile["date"]).parts
@@ -34,6 +31,14 @@ def validate_snapshot(profile) -> None:
         ):
             raise ValueError("Invalid or duplicate frozen CSV identity")
         expected[member["path"]] = (member["bytes"], member["sha256"])
+    return expected
+
+
+def validate_snapshot(profile) -> None:
+    root = Path(profile["source_root"])
+    outside_source_tree(root)
+    identity_summary(profile)
+    expected = member_inventory(profile)
     actual = {}
     for path in root.rglob("*"):
         if path.is_symlink():

@@ -70,16 +70,24 @@ def clock(table: pa.Table):
     return values
 
 
-def classify_symbol(source_symbol, record_symbol, policy):
+def normalized_symbols(values):
+    if any(not isinstance(value, str) or not SYMBOL.fullmatch(value) for value in values):
+        raise ValueError("Invalid record security identifier")
+    return sorted(set(values))
+
+
+def classify_symbols(source_symbol, record_symbols, policy):
     if policy not in IDENTITY_POLICIES:
         raise ValueError("Unknown identity policy")
-    if record_symbol is None:
+    if not isinstance(record_symbols, list) or record_symbols != normalized_symbols(record_symbols):
+        raise ValueError("Invalid record identifier set")
+    if not record_symbols:
         return "empty"
-    if not isinstance(record_symbol, str) or not SYMBOL.fullmatch(record_symbol):
-        raise ValueError("Invalid record security identifier")
-    if record_symbol == source_symbol:
+    if record_symbols == [source_symbol]:
         return "matched"
-    if policy == "preserve-source-labels" and record_symbol[:6] == source_symbol[:6]:
+    if policy == "preserve-source-labels" and all(
+        value[:6] == source_symbol[:6] for value in record_symbols
+    ):
         return "source_label_conflict"
     raise ValueError("Provider security differs from source member identity")
 
@@ -87,29 +95,60 @@ def classify_symbol(source_symbol, record_symbol, policy):
 def record_identity(table, source_symbol, policy):
     if "万得代码" not in table.column_names:
         raise ValueError("Missing provider security column")
-    values = pc.unique(table["万得代码"]).to_pylist()
-    if len(values) > 1:
-        raise ValueError("Multiple record identifiers in one source member")
-    record_symbol = values[0] if values else None
-    return {
-        "record_symbol": record_symbol,
-        "identity_status": classify_symbol(source_symbol, record_symbol, policy),
+    counts = {
+        item["values"]: item["counts"] for item in pc.value_counts(table["万得代码"]).to_pylist()
     }
+    labels = normalized_symbols(list(counts))
+    return {
+        "record_symbols": labels,
+        "record_symbol_counts": {label: counts[label] for label in labels},
+        "identity_status": classify_symbols(source_symbol, labels, policy),
+    }
+
+
+def validate_record_counts(member):
+    counts = member["record_symbol_counts"]
+    if sorted(counts) != member["record_symbols"]:
+        raise ValueError("Record counts differ from identifier set")
+    if any(type(n) is not int or n <= 0 for n in counts.values()):
+        raise ValueError("Record identifier counts must be positive integers")
+    if (
+        type(member["rows"]) is not int
+        or member["rows"] < 0
+        or sum(counts.values()) != member["rows"]
+    ):
+        raise ValueError("Record identifier counts differ from member rows")
 
 
 def identity_summary(profile):
     policy = profile["identity_policy"]
     if policy not in IDENTITY_POLICIES:
         raise ValueError("Unknown identity policy")
-    conflicts = 0
+    conflicts, mixed, conflicting_rows = 0, 0, 0
     for member in profile["members"]:
-        status = classify_symbol(member["symbol"], member["record_symbol"], policy)
-        if status != member["identity_status"] or (member["rows"] == 0) != (
-            member["record_symbol"] is None
-        ):
+        validate_record_counts(member)
+        status = classify_symbols(member["symbol"], member["record_symbols"], policy)
+        if status != member["identity_status"]:
             raise ValueError("Inconsistent source/record identity evidence")
         conflicts += status == "source_label_conflict"
-    return {"policy": policy, "conflicting_members": conflicts, "canonical_mapping": "not_inferred"}
+        mixed += len(member["record_symbols"]) > 1
+        conflicting_rows += sum(
+            n for code, n in member["record_symbol_counts"].items() if code != member["symbol"]
+        )
+    return {
+        "policy": policy,
+        "conflicting_members": conflicts,
+        "mixed_record_label_members": mixed,
+        "conflicting_rows": conflicting_rows,
+        "canonical_mapping": "not_inferred",
+    }
+
+
+def check_date(table, date):
+    if "自然日" not in table.column_names or (
+        table.num_rows and not pc.all(pc.equal(table["自然日"], date)).as_py()
+    ):
+        raise ValueError("Provider natural date differs from source member date")
 
 
 def inspect_member(root: Path, path: Path, date: str, identity_policy):
@@ -118,11 +157,7 @@ def inspect_member(root: Path, path: Path, date: str, identity_policy):
     before = path.stat()
     table = read_csv(path)
     identity = record_identity(table, parts[1], identity_policy)
-    for field, value in [("自然日", date)]:
-        if field not in table.column_names or (
-            table.num_rows and not pc.all(pc.equal(table[field], value)).as_py()
-        ):
-            raise ValueError(f"Provider {field} differs from member identity: {relative}")
+    check_date(table, date)
     clock(table)
     proof = {
         "path": relative,
@@ -153,7 +188,11 @@ def profile_directory(root: Path, date: str, identity_policy="strict") -> dict:
             raise ValueError("Source symlinks are not supported")
         if not path.is_file():
             continue
-        proof, table = inspect_member(root, path, date, identity_policy)
+        try:
+            proof, table = inspect_member(root, path, date, identity_policy)
+        except (ValueError, KeyError) as exc:
+            relative = path.relative_to(root).as_posix()
+            raise ValueError(f"Source member {relative}: {exc}") from exc
         kind = proof["modality"]
         columns = table.column_names
         current = modalities.setdefault(kind, {"columns": columns, "integer_columns": set(columns)})
