@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from quant_market_data_platform.cli import main
 from quant_market_data_platform.research_features import (
@@ -40,6 +41,55 @@ def test_activity_bars_use_trading_activity_thresholds() -> None:
         bars.iloc[0]["vwap"],
         (10.0 * 100 + 10.1 * 200 + 10.2 * 300) / 600,
     )
+
+
+@pytest.mark.parametrize("kind,threshold", [("tick", 2), ("volume", 5), ("dollar", 50)])
+@pytest.mark.parametrize("numeric_dtype", ["Float64", "string"])
+def test_activity_bars_preserve_boundaries_and_order(kind, threshold, numeric_dtype) -> None:
+    trades = pd.DataFrame(
+        {
+            "asset": ["B", "A", "A", "A", "A", "A", "B"],
+            "time": [
+                "2024-01-01 09:30",
+                "2024-01-01 09:32",
+                "2024-01-01 09:30",
+                "2024-01-01 09:30",
+                "invalid",
+                "2024-01-01 09:33",
+                "2024-01-01 09:31",
+            ],
+            "px": pd.Series([20, 12, 10, 11, 99, None, 21], dtype=numeric_dtype),
+            "qty": pd.Series([1, 1, 2, 3, 1, 1, 1], dtype=numeric_dtype),
+        },
+        index=[0, 1, 2, 3, 4, 5, 6],
+    )
+    bars = build_activity_bars(
+        trades,
+        config=BarBuildConfig(
+            kind=kind,
+            threshold=threshold,
+            symbol_col="asset",
+            time_col="time",
+            price_col="px",
+            volume_col="qty",
+        ),
+    )
+    assert bars["symbol"].tolist() == ["A", "A", "B"]
+    assert bars["bar_number"].tolist() == [0, 1, 0]
+    assert bars["trade_count"].tolist() == [2, 1, 2]
+    assert bars["open"].tolist() == [10, 12, 20]
+    assert bars["close"].tolist() == [11, 12, 21]
+    assert bars["volume"].tolist() == [5, 1, 2]
+    assert bars["notional"].tolist() == [53, 12, 41]
+    assert bars["bar_start"].tolist() == list(
+        pd.to_datetime(["2024-01-01 09:30", "2024-01-01 09:32", "2024-01-01 09:30"], utc=True)
+    )
+
+
+@pytest.mark.parametrize("kind", ["tick", "volume", "dollar"])
+def test_activity_bars_empty_input(kind) -> None:
+    trades = pd.DataFrame(columns=["symbol", "timestamp", "price", "volume"])
+    assert build_activity_bars(trades, config=BarBuildConfig(kind=kind, threshold=2)).empty
 
 
 def test_tick_rule_carries_forward_zero_price_changes() -> None:

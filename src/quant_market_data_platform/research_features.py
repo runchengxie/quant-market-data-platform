@@ -61,16 +61,18 @@ def build_activity_bars(
     records: list[dict[str, object]] = []
     for symbol, group in data.groupby(config.symbol_col, sort=False):
         group = group.reset_index(drop=True)
+        price_values = group[config.price_col].to_numpy(dtype=float)
+        volume_values = group[config.volume_col].to_numpy(dtype=float)
         accumulator = 0.0
         start = 0
         bar_number = 0
-        for position, row in group.iterrows():
+        for position in range(len(group)):
             if config.kind == "tick":
                 increment = 1.0
             elif config.kind == "volume":
-                increment = float(row[config.volume_col])
+                increment = float(volume_values[position])
             else:
-                increment = float(row[config.price_col]) * float(row[config.volume_col])
+                increment = float(price_values[position]) * float(volume_values[position])
             accumulator += increment
             if accumulator < config.threshold and position < len(group) - 1:
                 continue
