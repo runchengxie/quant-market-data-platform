@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 634,
-    "python_lines": 147746,
+    "python_lines": 147798,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "aa4445b3f9a0ff207a1445975bc2a2fc406b47b6",
-    "reason": "Retain distinct source-directory and original record-label sets/counts under an explicit native-data policy, route raw-ID queries across matching source buckets, independently bind source provenance, and add regression coverage: exactly one Python file and 432 net physical Python lines. No structural, complexity, typing, exclusion, coverage or security allowance changes.",
-    "exit_condition": "Remove this exact one-file/432-line allowance if source-label evidence and equivalent conflict/routing/provenance regressions are consolidated into a shared provider identity contract; preserve all-field fidelity and strict default validation."
+    "source_revision": "f9c4ce8",
+    "reason": "Replace per-trade Series iteration with pre-extracted numeric arrays and add nine parameterized activity-bar boundary regressions: exactly 52 net physical Python lines in existing files (2 implementation, 50 tests). No file-count, structural, complexity, typing, exclusion, coverage or security allowance changes.",
+    "exit_condition": "Remove this exact 52-line allowance if activity-bar aggregation and equivalent tick/volume/dollar, nullable/string input, stable-tie ordering, partial-tail, custom-column and empty-input coverage are consolidated without additional lines. Preserve all earlier retirement conditions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "aa4445b3f9a0ff207a1445975bc2a2fc406b47b6",
+      "reason": "Retain distinct source-directory and original record-label sets/counts under an explicit native-data policy, route raw-ID queries across matching source buckets, independently bind source provenance, and add regression coverage: exactly one Python file and 432 net physical Python lines. No structural, complexity, typing, exclusion, coverage or security allowance changes.",
+      "exit_condition": "Remove this exact one-file/432-line allowance if source-label evidence and equivalent conflict/routing/provenance regressions are consolidated into a shared provider identity contract; preserve all-field fidelity and strict default validation."
+    },
     {
       "source_revision": "edc8f825ac184f400e5a065c3620ff50ec892228",
       "reason": "Add the isolated complete-day full-field L2 storage pilot with checkpoint, auxiliary-symlink, source-location, corruption and lossless-query regressions: exactly eleven Python files and 1,187 net physical Python lines. No structural, complexity, typing, exclusion, coverage or security allowance changes.",
