@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 634,
-    "python_lines": 147798,
+    "python_lines": 147851,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "f9c4ce8",
-    "reason": "Replace per-trade Series iteration with pre-extracted numeric arrays and add nine parameterized activity-bar boundary regressions: exactly 52 net physical Python lines in existing files (2 implementation, 50 tests). No file-count, structural, complexity, typing, exclusion, coverage or security allowance changes.",
-    "exit_condition": "Remove this exact 52-line allowance if activity-bar aggregation and equivalent tick/volume/dollar, nullable/string input, stable-tie ordering, partial-tail, custom-column and empty-input coverage are consolidated without additional lines. Preserve all earlier retirement conditions."
+    "source_revision": "d5bc9e8",
+    "reason": "Add exact additional audit-marker quarantine validation and a regression that keeps uncovered markers blocking: 53 net Python lines in existing files. Other quality limits are unchanged.",
+    "exit_condition": "Remove this 53-line allowance if the marker handling is consolidated or retired while preserving binding and publication regressions."
   },
   "previous_change_records": [
+    {
+      "source_revision": "f9c4ce8",
+      "reason": "Replace per-trade Series iteration with pre-extracted numeric arrays and add nine parameterized activity-bar boundary regressions: exactly 52 net physical Python lines in existing files (2 implementation, 50 tests). No file-count, structural, complexity, typing, exclusion, coverage or security allowance changes.",
+      "exit_condition": "Remove this exact 52-line allowance if activity-bar aggregation and equivalent tick/volume/dollar, nullable/string input, stable-tie ordering, partial-tail, custom-column and empty-input coverage are consolidated without additional lines. Preserve all earlier retirement conditions."
+    },
     {
       "source_revision": "aa4445b3f9a0ff207a1445975bc2a2fc406b47b6",
       "reason": "Retain distinct source-directory and original record-label sets/counts under an explicit native-data policy, route raw-ID queries across matching source buckets, independently bind source provenance, and add regression coverage: exactly one Python file and 432 net physical Python lines. No structural, complexity, typing, exclusion, coverage or security allowance changes.",

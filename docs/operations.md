@@ -282,7 +282,7 @@ python scripts/operations/tushare_minute_history.py quarantine \
 
 登记无需凭证，使用主下载共用的写入锁。它重新验证来源绑定、完整分钟网格和基础语义，要求异常仅涉及指定股票的成交金额硬校验，并要求重新查询的整个股票日与原值相同。其他错误继续阻断。记录位于 `metadata/minute_backfill/reverse_scheduler/semantic_quarantine.json`，绑定原始分区、sidecar、失败审计和重新查询文件的 SHA256。原文件和阻断凭证保持原样。
 
-主下载仅在当前阻断被隔离记录完整覆盖时继续采集。新增异常、证据变化或损坏记录仍会暂停。主机自定义预检必须使用 `quarantine_status(root, marker)["blocked"]`，继续仅检查文件是否存在会保持暂停。普通缺口补采同样遵守此门禁，额外错误保存在 `semantic-audit-additional-blocks/` 并继续阻断。
+主下载仅在当前阻断被隔离记录完整覆盖时继续采集。额外阻断可通过它对应的验收报告登记。主阻断和所有额外阻断都核对通过后，采集才可继续。未知异常、证据变化或损坏记录仍会暂停。主机自定义预检必须使用 `quarantine_status(root, marker)["blocked"]`，继续仅检查文件是否存在会保持暂停。普通缺口补采同样遵守此门禁，额外错误保存在 `semantic-audit-additional-blocks/` 并继续阻断。
 
 隔离日期在分钟分区验收、候选发布、运行版本组装和别名切换时被拒绝。监控显示 `semantic_quarantine_dates` 并记录去重的 warning，首轮采集结束仍返回 `download_pass_complete_with_gaps`。该日期的正确分钟值需要另行核实和修复，本命令保留隔离状态，未提供自动解除或发布豁免。监控会流式核对隔离证据哈希，避免将已变化的证据继续视为已隔离。
 
