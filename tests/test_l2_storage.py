@@ -48,6 +48,48 @@ def test_profile_preserves_blanks_leading_zero_and_rare_values(tmp_path):
     assert table.schema.field("价格").type == pa.string()
 
 
+def test_trailing_empty_header_round_trips_with_its_values(tmp_path):
+    from quant_market_data_platform.l2_storage.build import build_csv
+    from quant_market_data_platform.l2_storage.layout import lexical
+    from quant_market_data_platform.l2_storage.profile import profile_directory
+    from quant_market_data_platform.l2_storage.reader import scan, verify
+
+    source = tmp_path / "input"
+    rows = [
+        ["000001.SZ", "20260914", "100000001", "7", "12000", "0007"],
+        ["000001.SZ", "20260914", "100000000", "8", "12000", ""],
+    ]
+    path = source / "20260914" / "000001.SZ" / "行情.csv"
+    path.parent.mkdir(parents=True)
+    header = ["万得代码", "自然日", "时间", "编号", "价格", ""]
+    with path.open("w", encoding="gb18030", newline="") as handle:
+        writer = csv.writer(handle)
+        writer.writerow(header)
+        writer.writerows(rows)
+
+    profile = profile_directory(source, "20260914")
+    output = tmp_path / "output"
+    build_csv(profile, output, "a" * 64)
+    assert verify(output)["rows"] == 2
+    table = scan(output, "snapshots", ["000001.SZ"]).to_table()
+    restored = lexical(table, profile["modalities"]["snapshots"])
+    assert restored.column_names == header
+    assert restored.to_pylist() == [dict(zip(header, row, strict=True)) for row in rows]
+
+
+@pytest.mark.parametrize(
+    "header", [["万得代码", "", "时间"], ["万得代码", "", ""], [""], ["时间", "时间", ""]]
+)
+def test_read_csv_rejects_missing_or_duplicate_headers(tmp_path, header):
+    from quant_market_data_platform.l2_storage.profile import read_csv
+
+    path = tmp_path / "行情.csv"
+    with path.open("w", encoding="gb18030", newline="") as handle:
+        csv.writer(handle).writerow(header)
+    with pytest.raises(ValueError, match="Missing or duplicate CSV headers"):
+        read_csv(path)
+
+
 @pytest.mark.parametrize("change", ["symbol", "date", "clock", "header"])
 def test_profile_rejects_inconsistent_member(tmp_path, change):
     from quant_market_data_platform.l2_storage.profile import profile_directory
