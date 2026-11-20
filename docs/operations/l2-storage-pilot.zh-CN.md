@@ -16,6 +16,16 @@ python -m quant_market_data_platform.l2_storage query --root "$OUTPUT" \
   --modality trades --symbol 000001.SZ --start 100000000 --stop 100500000 --count
 ```
 
+按指定日期查询已验收的产物。使用多个 `--receipt-dir` 查找不同批次的回执，用多个 `--date` 指定每个需要的交易日。
+
+```bash
+python -m quant_market_data_platform.l2_storage query-accepted \
+  --receipt-dir "$RECEIPTS" --date 20260929 --date 20260930 \
+  --modality trades --symbol 000001.SZ --start 100000000 --stop 100500000 --count
+```
+
+所有回执目录都必须可读。每个请求日期都必须有唯一的成功回执，且回执与已验证产物的日期和原始归档哈希一致。任何一天缺失、出现多份回执或验证失败时，整次查询报错。结果按请求日期顺序返回，逐日保留原字段类型。`--count` 返回逐日记录数，省略时 `--limit` 限制每天返回的记录数。查询只读取调用方指定的回执目录。
+
 `orders`、`trades`、`snapshots` 保留全部原始字段，包括未知字段和证券标识。输入为 GB18030 CSV，路径格式是 `YYYYMMDD/<security>/<type>.csv`。默认要求记录中的证券和自然日与路径一致。时间保留原始 `HHMMSSmmm` 数值，查询包含起点、不包含终点，不做时区转换或价格单位推断。空字符串保持为空字符串。只有整个数据类型中每个值都能精确转换回原文本时，该列才使用整数存储。
 
 按证券标识的 UTF-8 CRC32 对桶数取模进行文件路由。行组不跨原 CSV 文件。同一文件内按原时钟和行号排序，按 `_source_symbol` 分组、按 `_source_row` 排序可还原各个 CSV 的记录顺序。保留全部源 ID、重复记录和原字段。`_time` 只是额外查询键，不代替原时钟字段。

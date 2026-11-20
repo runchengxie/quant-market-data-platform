@@ -39,7 +39,12 @@ def catalog(root: Path):
 
 def scan(root: Path, modality: str, symbols=None, start=None, stop=None):
     root = Path(root)
-    manifest, profile = catalog(root)
+    return _scan(root, catalog(root), modality, symbols, (start, stop))
+
+
+def _scan(root, evidence, modality, symbols, interval):
+    manifest, profile = evidence
+    start, stop = interval
     if modality not in profile["modalities"]:
         raise ValueError("Unknown modality")
     if symbols is not None and (not symbols or any(not SYMBOL.fullmatch(s) for s in symbols)):

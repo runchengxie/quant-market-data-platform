@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 634,
-    "python_lines": 147851,
+    "python_files": 636,
+    "python_lines": 148054,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "d5bc9e8",
-    "reason": "Add exact additional audit-marker quarantine validation and a regression that keeps uncovered markers blocking: 53 net Python lines in existing files. Other quality limits are unchanged.",
-    "exit_condition": "Remove this 53-line allowance if the marker handling is consolidated or retired while preserving binding and publication regressions."
+    "source_revision": "823c707",
+    "reason": "Add the receipt-gated multi-date L2 query and failure-path tests with two Python files and 203 net physical Python lines. Existing structural, complexity, typing, coverage and security limits remain in effect.",
+    "exit_condition": "Remove this exact allowance when the accepted query and equivalent missing-date, duplicate-receipt and output-binding tests move to a shared catalog reader."
   },
   "previous_change_records": [
+    {
+      "source_revision": "d5bc9e8",
+      "reason": "Add exact additional audit-marker quarantine validation and a regression that keeps uncovered markers blocking: 53 net Python lines in existing files. Other quality limits are unchanged.",
+      "exit_condition": "Remove this 53-line allowance if the marker handling is consolidated or retired while preserving binding and publication regressions."
+    },
     {
       "source_revision": "f9c4ce8",
       "reason": "Replace per-trade Series iteration with pre-extracted numeric arrays and add nine parameterized activity-bar boundary regressions: exactly 52 net physical Python lines in existing files (2 implementation, 50 tests). No file-count, structural, complexity, typing, exclusion, coverage or security allowance changes.",
