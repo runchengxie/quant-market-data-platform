@@ -96,3 +96,26 @@ def test_accepted_query_rejects_entire_request_on_invalid_date(tmp_path, capsys,
     output = capsys.readouterr()
     assert not output.out
     assert "20260915" in output.err
+
+
+def test_accepted_query_rejects_missing_receipt_directory(tmp_path, capsys):
+    receipts = tmp_path / "receipts"
+    accepted_day(tmp_path / "one", receipts, "20260914")
+    missing = tmp_path / "missing"
+    assert main([*query(receipts, "20260914"), "--receipt-dir", str(missing)]) == 1
+    output = capsys.readouterr()
+    assert not output.out
+    assert str(missing) in output.err
+
+
+def test_accepted_query_requires_a_valid_archive_digest(tmp_path, capsys):
+    receipts = tmp_path / "receipts"
+    receipt = accepted_day(tmp_path / "one", receipts, "20260914")
+    data = json.loads(receipt.read_text())
+    manifest = Path(data["output"]) / "manifest.json"
+    content = json.loads(manifest.read_text())
+    content["config"]["archive_sha256"] = data["archive_sha256"] = None
+    manifest.write_text(json.dumps(content))
+    receipt.write_text(json.dumps(data))
+    assert main(query(receipts, "20260914")) == 1
+    assert "20260914" in capsys.readouterr().err

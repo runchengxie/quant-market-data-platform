@@ -24,7 +24,7 @@ python -m quant_market_data_platform.l2_storage query-accepted \
   --modality trades --symbol 000001.SZ --start 100000000 --stop 100500000 --count
 ```
 
-Each requested date must have exactly one successful acceptance receipt matching the verified output date and source archive hash. The command fails the whole request if any date is missing, ambiguous or invalid. Results follow the requested order and retain native field types per day. With `--count` it returns per-day counts. Without it, `--limit` caps the records for each date. This is a read-only query over receipt directories selected by the caller.
+Every receipt directory must be readable. Each requested date must have exactly one successful acceptance receipt matching the verified output date and source archive hash. The command fails the whole request if any date is missing, ambiguous or invalid. Results follow the requested order and retain native field types per day. With `--count` it returns per-day counts. Without it, `--limit` caps the records for each date. This is a read-only query over receipt directories selected by the caller.
 
 `orders`, `trades` and `snapshots` retain every original column, including unknown fields and security identifiers. Source files are GB18030 CSVs under `YYYYMMDD/<security>/<type>.csv`. By default, each record must agree with its directory security and date. Clocks are the original `HHMMSSmmm` values; intervals include start and exclude stop. No time zone conversion or price-unit inference is performed. Empty strings remain empty strings. Integer storage is selected only after every value in the entire modality round-trips exactly to its original text.
 

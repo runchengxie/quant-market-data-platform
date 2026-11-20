@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 636,
-    "python_lines": 148034,
+    "python_lines": 148054,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -19,7 +19,7 @@
   },
   "change_record": {
     "source_revision": "823c707",
-    "reason": "Add the receipt-gated multi-date L2 query and failure-path tests with two Python files and 183 net physical Python lines. Existing structural, complexity, typing, coverage and security limits remain in effect.",
+    "reason": "Add the receipt-gated multi-date L2 query and failure-path tests with two Python files and 203 net physical Python lines. Existing structural, complexity, typing, coverage and security limits remain in effect.",
     "exit_condition": "Remove this exact allowance when the accepted query and equivalent missing-date, duplicate-receipt and output-binding tests move to a shared catalog reader."
   },
   "previous_change_records": [
