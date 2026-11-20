@@ -12,6 +12,8 @@ import pyarrow.parquet as pq
 from quant_market_data_platform.minute_candidate import _atomic_write_json
 from quant_market_data_platform.minute_semantic_quarantine import (
     REGISTRY,
+    _acceptance_path,
+    _additional_markers,
     bound_path,
     load_registry,
     reference,
@@ -100,8 +102,9 @@ def register(  # noqa: PLR0913 - explicit evidence registration interface
     if not reason.strip():
         raise ValueError("quarantine reason is required")
     acceptance, requery = acceptance.resolve(strict=True), requery.resolve(strict=True)
-    marker = json.loads((runtime / "semantic-audit-blocked.json").read_text())
-    if Path(marker["acceptance"]).resolve() != acceptance:
+    primary = runtime / "semantic-audit-blocked.json"
+    markers = ([primary] if primary.exists() else []) + _additional_markers(primary)
+    if not any(_acceptance_path(root, marker) == acceptance for marker in markers):
         raise ValueError("quarantine must bind the current failed acceptance")
     report = json.loads(acceptance.read_text())
     records = [r for r in report["partitions"] if r.get("trade_date") == trade_date]

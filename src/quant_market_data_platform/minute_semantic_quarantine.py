@@ -60,10 +60,19 @@ def load_registry(root: Path) -> dict:
     return data
 
 
-def _covered(root: Path, marker: Path, entries: dict) -> bool:
+def _additional_markers(marker: Path) -> list[Path]:
+    return sorted((marker.parent / "semantic-audit-additional-blocks").glob("*.json"))
+
+
+def _acceptance_path(root: Path, marker: Path) -> Path:
     block = json.loads(marker.read_text())
     acceptance = Path(block["acceptance"]).resolve(strict=True)
     acceptance.relative_to(root.resolve())
+    return acceptance
+
+
+def _covered(root: Path, marker: Path, entries: dict) -> bool:
+    acceptance = _acceptance_path(root, marker)
     digest = file_hash(acceptance)
     report = json.loads(acceptance.read_text())
     partitions = report["partitions"]
@@ -102,18 +111,19 @@ def quarantine_status(root: Path, marker: Path | None) -> dict[str, Any]:
         "marker_quarantined": False,
     }
     try:
-        if marker is not None and any(
-            (marker.parent / "semantic-audit-additional-blocks").glob("*.json")
-        ):
-            raise ValueError("additional semantic failures require investigation")
         entries = load_registry(root)["dates"]
         result["dates"] = sorted(entries)
         for entry in entries.values():
             for name in ("partition", "sidecar", "acceptance", "requery"):
                 bound_path(root, entry[name])
-        if marker is not None and marker.exists():
-            result["marker_quarantined"] = _covered(root, marker, entries)
-            result["blocked"] = not result["marker_quarantined"]
+        if marker is not None:
+            if marker.exists() or marker.is_symlink():
+                result["marker_quarantined"] = _covered(root, marker, entries)
+                result["blocked"] = not result["marker_quarantined"]
+            if not result["blocked"]:
+                result["blocked"] = any(
+                    not _covered(root, extra, entries) for extra in _additional_markers(marker)
+                )
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
         result.update(blocked=True, errors=[f"invalid quarantine evidence: {type(exc).__name__}"])
     return result

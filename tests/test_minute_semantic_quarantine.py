@@ -22,10 +22,10 @@ from quant_market_data_platform.providers._a_share_mins_partition import (
 from quant_market_data_platform.providers.tushare_a_share_options import TushareRequestPolicy
 
 
-def fixture(root):
-    date, code = "20190509", "002953.SZ"
-    times = pd.date_range("2019-05-09 09:30", "2019-05-09 11:30", freq="min").append(
-        pd.date_range("2019-05-09 13:01", "2019-05-09 15:00", freq="min")
+def fixture(root, date="20190509"):
+    code = "002953.SZ"
+    times = pd.date_range(f"{date} 09:30", f"{date} 11:30", freq="min").append(
+        pd.date_range(f"{date} 13:01", f"{date} 15:00", freq="min")
     )
     f = pd.DataFrame(
         {
@@ -450,3 +450,43 @@ def test_candidate_destination_keeps_lexical_owner_registry(tmp_path):
                 root / "i.json", root / "a.json", link / "candidate", root / "r.json"
             )
     assert not (external / "candidate").exists()
+
+
+def test_additional_audit_can_be_quarantined_without_replacing_primary(tmp_path):
+    _, runtime, _, _, _ = register(tmp_path)
+    marker = runtime / "semantic-audit-blocked.json"
+    before = marker.read_bytes()
+    other_root = tmp_path / "second"
+    _, incoming_report, probe, part = fixture(other_root, "20190510")
+    original = json.loads(incoming_report.read_text())
+    new_part = tmp_path / part.relative_to(other_root)
+    new_part.parent.mkdir(parents=True, exist_ok=True)
+    part.rename(new_part)
+    original["partitions"][0]["path"] = str(new_part / "part-00000.parquet")
+    original["partitions"][0]["sidecar"] = str(new_part / "_minute_mirror.json")
+    audit = tmp_path / "reports/additional.json"
+    audit.write_text(json.dumps(original))
+    directory = runtime / "semantic-audit-additional-blocks"
+    directory.mkdir()
+    extra = directory / "invocation.json"
+    extra.write_text(json.dumps({"acceptance": str(audit)}))
+
+    assert quarantine_status(tmp_path, marker)["blocked"]
+    register_quarantine(
+        tmp_path,
+        runtime,
+        audit,
+        probe,
+        trade_date="20190510",
+        symbol="002953.SZ",
+        reason="Independently reproduced",
+    )
+    gate = quarantine_status(tmp_path, marker)
+    assert not gate["blocked"]
+    assert gate["dates"] == ["20190509", "20190510"]
+    assert marker.read_bytes() == before and extra.is_file()
+    with pytest.raises(ValueError, match="quarantin"):
+        reject_quarantined_dates(tmp_path, ["20190510"])
+
+    extra.write_text(json.dumps({"evidence": str(audit)}))
+    assert quarantine_status(tmp_path, marker)["blocked"]
