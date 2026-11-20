@@ -697,6 +697,6 @@ JSON schema 为 `quant.raw_observation_assessment.v1`，通过既有 owner 校�
 
 ## 供应商原始 L2 存储试点
 
-[完整日存储试点](operations/l2-storage-pilot.zh-CN.md)说明独立转换、全字段无损证明和证券／时间区间查询。不会自动替换既有 L2 输入。
+[完整日存储试点](operations/l2-storage-pilot.zh-CN.md)说明独立转换、全字段无损证明和证券／时间区间查询。需要每个指定日期都通过验收时，使用 `query-accepted`。
 
 试点 v2 分别保存来源目录标识和记录标识。显式选项 `--identity-policy preserve-source-labels` 会记录数字前缀相同的后缀冲突，保留标识原文。使用含冲突的数据前，请查看试点说明。

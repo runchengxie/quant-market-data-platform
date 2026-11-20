@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from .accepted import scan_accepted
 from .build import build
 from .reader import scan, verify
 
@@ -27,13 +28,37 @@ def parser():
     check.add_argument("--root", type=Path, required=True)
     query = commands.add_parser("query", help="Query native fields with security/time routing")
     query.add_argument("--root", type=Path, required=True)
-    query.add_argument("--modality", choices=["orders", "trades", "snapshots"], required=True)
-    query.add_argument("--symbol", action="append")
-    query.add_argument("--start", type=int)
-    query.add_argument("--stop", type=int)
-    query.add_argument("--limit", type=int, default=20)
-    query.add_argument("--count", action="store_true")
+    accepted = commands.add_parser(
+        "query-accepted", help="Query specific dates with verified acceptance receipts"
+    )
+    accepted.add_argument("--receipt-dir", type=Path, action="append", required=True)
+    accepted.add_argument("--date", action="append", required=True)
+    for query_parser in (query, accepted):
+        query_parser.add_argument(
+            "--modality", choices=["orders", "trades", "snapshots"], required=True
+        )
+        query_parser.add_argument("--symbol", action="append")
+        query_parser.add_argument("--start", type=int)
+        query_parser.add_argument("--stop", type=int)
+        query_parser.add_argument("--limit", type=int, default=20)
+        query_parser.add_argument("--count", action="store_true")
     return result
+
+
+def single_result(args):
+    scanner = scan(args.root, args.modality, args.symbol, args.start, args.stop)
+    return {"rows": scanner.count_rows()} if args.count else scanner.head(args.limit).to_pylist()
+
+
+def accepted_result(args):
+    scanners = scan_accepted(
+        args.date, args.receipt_dir, args.modality, args.symbol, (args.start, args.stop)
+    )
+    if args.count:
+        return [{"date": day, "rows": scanner.count_rows()} for day, scanner in scanners]
+    return [
+        {"date": day, "records": scanner.head(args.limit).to_pylist()} for day, scanner in scanners
+    ]
 
 
 def main(argv=None):
@@ -56,12 +81,10 @@ def main(argv=None):
         else:
             if args.limit < 0:
                 raise ValueError("Query display limit must be nonnegative")
-            scanner = scan(args.root, args.modality, args.symbol, args.start, args.stop)
-            result = (
-                {"rows": scanner.count_rows()}
-                if args.count
-                else scanner.head(args.limit).to_pylist()
-            )
+            if args.command == "query-accepted":
+                result = accepted_result(args)
+            else:
+                result = single_result(args)
     except Exception as exc:
         print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
