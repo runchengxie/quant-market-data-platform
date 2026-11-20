@@ -27,7 +27,7 @@ def read_csv(path: Path) -> pa.Table:
         raise ValueError(f"CSV exceeds 512 MiB raw-file guard: {path}")
     with path.open(encoding="gb18030", newline="") as handle:
         names = next(csv.reader(handle), [])
-    if not names or len(set(names)) != len(names) or any(not n for n in names):
+    if not names or not names[0] or "" in names[1:-1] or len(set(names)) != len(names):
         raise ValueError(f"Missing or duplicate CSV headers: {path}")
     if RESERVED.intersection(names):
         raise ValueError("Provider columns collide with reserved provenance names")
