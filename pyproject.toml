@@ -7,7 +7,7 @@ name = "quant-market-data-platform"
 version = "0.2.0"
 description = "Shared multi-market research data control plane contracts and helpers."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11.5"
 dependencies = [
   "numpy>=1.23,<3",
   "PyYAML>=6.0",

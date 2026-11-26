@@ -8,7 +8,7 @@ The active market scope is mainland China, with A-share assets led by TuShare an
 
 ## Quick start
 
-You need Git, `uv`, and Python 3.11 or newer. Run these commands from this repository root. Installing dependencies needs network access; displaying help needs no provider credentials and downloads no market data.
+You need Git, `uv`, and Python 3.11.5 or newer. Run these commands from this repository root. Installing dependencies needs network access; displaying help needs no provider credentials and downloads no market data.
 
 ```bash
 uv sync --locked --extra dev
