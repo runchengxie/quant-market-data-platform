@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 SCHEMA = "tushare.minute.semantic_quarantine.v1"
+SCHEMA_V2 = "tushare.minute.semantic_quarantine.v2"
+ZERO_VOLUME = "zero_volume_nonzero_amount_rows"
 REGISTRY = Path("metadata/minute_backfill/reverse_scheduler/semantic_quarantine.json")
 PASSED = {"passed_full_market", "passed_requested_universe_only", "passed_sh_sz_with_bj_omissions"}
 
@@ -30,12 +33,16 @@ def bound_path(root: Path, ref: dict) -> Path:
     return path
 
 
-def _validate_registry_entry(date: Any, entry: Any) -> None:
+def _validate_registry_entry(date: Any, entry: Any, schema: str) -> None:
     if not isinstance(date, str) or len(date) != 8 or not date.isdigit():
         raise ValueError("invalid semantic quarantine date")
     if not isinstance(entry, dict) or entry.get("trade_date") != date:
         raise ValueError("invalid semantic quarantine entry")
-    if entry.get("status") != "quarantined" or not entry.get("symbol"):
+    if entry.get("status") != "quarantined":
+        raise ValueError("invalid semantic quarantine disposition")
+    if any(key in entry for key in ("anomaly_kind", "symbols", "scope")):
+        _validate_zero_volume_entry(entry, schema)
+    elif not entry.get("symbol"):
         raise ValueError("invalid semantic quarantine disposition")
     for name in ("partition", "sidecar", "acceptance", "requery"):
         ref = entry.get(name)
@@ -45,18 +52,43 @@ def _validate_registry_entry(date: Any, entry: Any) -> None:
             raise ValueError("invalid semantic quarantine digest")
 
 
+def _validate_zero_volume_entry(entry: dict, schema: str) -> None:
+    symbols, issues = entry.get("symbols"), entry.get("issues")
+    if (
+        schema != SCHEMA_V2
+        or entry.get("anomaly_kind") != ZERO_VOLUME
+        or entry.get("scope") != "trade_date"
+        or "symbol" in entry
+        or not isinstance(symbols, list)
+        or not symbols
+        or any(
+            not isinstance(s, str) or re.fullmatch(r"\d{6}\.(SH|SZ|BJ)", s) is None for s in symbols
+        )
+        or symbols != sorted(set(symbols))
+        or entry.get("publication_allowed") is not False
+        or entry.get("source_values_modified") is not False
+        or not isinstance(entry.get("reason"), str)
+        or not entry["reason"].strip()
+        or not isinstance(issues, dict)
+        or any(type(v) is not int or v < 0 for v in issues.values())
+        or {k for k, v in issues.items() if v} != {ZERO_VOLUME}
+        or issues[ZERO_VOLUME] < len(symbols)
+    ):
+        raise ValueError("invalid semantic quarantine disposition")
+
+
 def load_registry(root: Path) -> dict:
     path = root / REGISTRY
     if not path.exists():
         return {"schema_version": SCHEMA, "dates": {}}
     data = json.loads(path.read_text())
-    if not isinstance(data, dict) or data.get("schema_version") != SCHEMA:
+    if not isinstance(data, dict) or data.get("schema_version") not in (SCHEMA, SCHEMA_V2):
         raise ValueError("invalid semantic quarantine registry")
     dates = data.get("dates")
     if not isinstance(dates, dict):
         raise ValueError("invalid semantic quarantine dates")
     for date, entry in dates.items():
-        _validate_registry_entry(date, entry)
+        _validate_registry_entry(date, entry, data["schema_version"])
     return data
 
 
@@ -166,5 +198,43 @@ def register_quarantine(  # noqa: PLR0913 - explicit evidence registration inter
             requery,
             trade_date=trade_date,
             symbol=symbol,
+            reason=reason,
+        )
+
+
+def register_zero_volume_quarantine(  # noqa: PLR0913 - explicit evidence registration interface
+    root: Path,
+    runtime: Path,
+    acceptance: Path,
+    requery: Path,
+    *,
+    trade_date: str,
+    symbols: list[str],
+    reason: str,
+    dry_run: bool = False,
+) -> dict:
+    """Quarantine a date using exact requery evidence for every zero-volume failure."""
+    from quant_market_data_platform._minute_history_lock import history_writer_lock
+    from quant_market_data_platform._minute_zero_volume_quarantine import register
+
+    if dry_run:
+        return register(
+            root.resolve(),
+            runtime,
+            acceptance,
+            requery,
+            trade_date=trade_date,
+            symbols=symbols,
+            reason=reason,
+            dry_run=True,
+        )
+    with history_writer_lock(root):
+        return register(
+            root.resolve(),
+            runtime,
+            acceptance,
+            requery,
+            trade_date=trade_date,
+            symbols=symbols,
             reason=reason,
         )

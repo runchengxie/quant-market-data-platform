@@ -29,11 +29,17 @@ def build_parser() -> argparse.ArgumentParser:
             command.add_argument("--stall-seconds", type=int, default=900)
         if name == "watch":
             command.add_argument("--state-root", type=Path, required=True)
-    quarantine = commands.add_parser("quarantine")
-    for name in ("artifacts-root", "runtime-root", "acceptance", "requery"):
-        quarantine.add_argument("--" + name, type=Path, required=True)
-    for name in ("trade-date", "symbol", "reason"):
-        quarantine.add_argument("--" + name, required=True)
+    for name in ("quarantine", "quarantine-zero-volume"):
+        quarantine = commands.add_parser(name)
+        for option in ("artifacts-root", "runtime-root", "acceptance", "requery"):
+            quarantine.add_argument("--" + option, type=Path, required=True)
+        for option in ("trade-date", "reason"):
+            quarantine.add_argument("--" + option, required=True)
+        quarantine.add_argument(
+            "--symbol", required=True, action="append" if name.endswith("zero-volume") else "store"
+        )
+        if name == "quarantine-zero-volume":
+            quarantine.add_argument("--dry-run", action="store_true")
     return parser
 
 
@@ -58,17 +64,25 @@ def _repair(args: argparse.Namespace) -> dict:
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if args.command == "quarantine":
-        from quant_market_data_platform.minute_semantic_quarantine import register_quarantine
+    if args.command in ("quarantine", "quarantine-zero-volume"):
+        from quant_market_data_platform.minute_semantic_quarantine import (
+            register_quarantine,
+            register_zero_volume_quarantine,
+        )
 
-        result = register_quarantine(
+        register = register_quarantine
+        scope = {"symbol": args.symbol}
+        if args.command == "quarantine-zero-volume":
+            register = register_zero_volume_quarantine
+            scope = {"symbols": args.symbol, "dry_run": args.dry_run}
+        result = register(
             args.artifacts_root,
             args.runtime_root,
             args.acceptance,
             args.requery,
             trade_date=args.trade_date,
-            symbol=args.symbol,
             reason=args.reason,
+            **scope,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0
