@@ -6,8 +6,8 @@ The module separates three operations so each can be scheduled independently:
 * ``run_monitor`` repeats snapshots inside the mainland trading sessions.
 * ``archive_minutes`` stores the vendor's per-minute cumulative curve for the day.
 
-All timestamps are Asia/Shanghai. Trading days are approximated by weekdays; the
-vendor simply returns no rows on a holiday, which is recorded as an empty run.
+All timestamps are Asia/Shanghai. Trading days are approximated by weekdays.
+Vendor errors or wrong-date curves do not establish that a date is a holiday.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from datetime import time as clock_time
 from typing import Any
+from urllib.error import HTTPError
 from zoneinfo import ZoneInfo
 
 from quant_market_data_platform import board_flow_store
@@ -78,6 +79,11 @@ class ArchiveOptions:
     delay_seconds: float = 0.2
     skip_archived: bool = True
     limit: int | None = None
+    max_consecutive_failures: int = 3
+
+    def __post_init__(self) -> None:
+        if type(self.max_consecutive_failures) is not int or self.max_consecutive_failures < 1:
+            raise ValueError("max_consecutive_failures must be a positive integer")
 
 
 def is_trading_session(moment: datetime) -> bool:
@@ -246,6 +252,24 @@ def _catalog_boards(connection: Any, *, board_types: tuple[str, ...]) -> list[tu
     ]
 
 
+def _archive_http_stop_reason(error: BaseException) -> str | None:
+    """Do not repeat a terminal HTTP refusal against another board."""
+    current: BaseException | None = error
+    seen: set[int] = set()
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, HTTPError) and 400 <= current.code < 500:
+            return f"http_{current.code}"
+        current = current.__cause__
+    return None
+
+
+def _archive_status(*, stored: int, failed: int, skipped: int) -> str:
+    if failed:
+        return "partial" if stored else "failed"
+    return "ok" if stored or skipped else "empty"
+
+
 def archive_minutes(
     client: BoardFlowClient,
     connection: Any,
@@ -265,17 +289,28 @@ def archive_minutes(
     )
     boards = _catalog_boards(connection, board_types=options.board_types)
     pending = [(code, kind) for code, kind in boards if code not in archived]
+    scope = {
+        "boards_catalogued": len(boards),
+        "boards_already_archived": len(boards) - len(pending),
+        "boards_pending": len(pending),
+    }
     if options.limit is not None:
         pending = pending[: max(0, options.limit)]
     stored_rows = 0
     stored_boards = 0
     failures: list[dict[str, str]] = []
     mismatched: list[str] = []
+    attempted = 0
+    consecutive_failures = 0
+    stop_reason = None
     for index, (board_code, board_type) in enumerate(pending, start=1):
+        attempted += 1
+        unsuccessful = True
         try:
             curve = client.fetch_minute_curve(board_code, board_type=board_type)
         except BoardFlowError as error:
             failures.append({"board_code": board_code, "error": str(error)})
+            stop_reason = _archive_http_stop_reason(error)
         else:
             if curve[0].trade_time.date() != trade_date:
                 mismatched.append(board_code)
@@ -284,6 +319,11 @@ def archive_minutes(
                     connection, curve, archived_at=runtime.now().isoformat(timespec="seconds")
                 )
                 stored_boards += 1
+                unsuccessful = False
+        consecutive_failures = consecutive_failures + 1 if unsuccessful else 0
+        if stop_reason or consecutive_failures >= options.max_consecutive_failures:
+            stop_reason = stop_reason or "consecutive_failures"
+            break
         if index % 50 == 0:
             connection.commit()
             if runtime.progress is not None:
@@ -291,13 +331,25 @@ def archive_minutes(
         if options.delay_seconds:
             runtime.sleep(options.delay_seconds)
     connection.commit()
-    status = "ok" if stored_boards else ("empty" if not pending else "failed")
+    status = _archive_status(
+        stored=stored_boards,
+        failed=len(failures) + len(mismatched),
+        skipped=scope["boards_already_archived"],
+    )
     detail = {
+        **scope,
         "boards_requested": len(pending),
+        "boards_attempted": attempted,
         "boards_stored": stored_boards,
+        "boards_failed": len(failures) + len(mismatched),
+        "boards_unattempted": len(pending) - attempted,
+        "boards_deferred_by_limit": scope["boards_pending"] - len(pending),
         "failure_count": len(failures),
+        "date_mismatch_count": len(mismatched),
         "date_mismatch": mismatched[:20],
         "failure_sample": failures[:10],
+        "stop_reason": stop_reason or "scope_complete",
+        "max_consecutive_failures": options.max_consecutive_failures,
     }
     run_id = RunDraft(kind="archive_minutes", trade_date=wanted, started_at=started_at).finish(
         connection,
@@ -306,4 +358,10 @@ def archive_minutes(
         detail=detail,
         now=runtime.now,
     )
-    return {"run_id": run_id, "trade_date": wanted, "row_count": stored_rows, **detail}
+    return {
+        "status": status,
+        "run_id": run_id,
+        "trade_date": wanted,
+        "row_count": stored_rows,
+        **detail,
+    }

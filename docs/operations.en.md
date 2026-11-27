@@ -44,6 +44,10 @@ marketdata tushare validate-a-share-fund-top10-portfolio-features
 marketdata backup-data
 ```
 
+`board-flow archive-minutes` exits nonzero for failed or partial work and stops
+subsequent board fetches after consecutive failures. See the board flow runbook
+for selected-scope counts and the separate transport retry budget.
+
 Public CLI documentation tests derive reachable commands from the parser. When adding a command, document it in the relevant topic page and update the tests. Historical minute backfill coverage and resume limits are described in the [A-share minute guide](operations/a-share-minutes.en.md).
 
 ## Capture daily-clean raw inputs

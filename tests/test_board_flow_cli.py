@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -10,6 +11,7 @@ import quant_market_data_platform.cli as cli
 import quant_market_data_platform.cli_board_flow as board_flow_cli
 from quant_market_data_platform import board_flow_store
 from quant_market_data_platform.providers.eastmoney_board_flow import (
+    BoardFlowError,
     BoardRow,
     MinuteFlowRow,
 )
@@ -136,4 +138,53 @@ def test_archive_command_reports_missing_store_data(tmp_path: Path, capsys) -> N
     )
 
     assert exit_code == 0
-    assert '"boards_requested": 0' in capsys.readouterr().out
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["boards_requested"] == 0
+    assert payload["status"] == "empty"
+
+
+@pytest.mark.parametrize(
+    ("successes", "expected"), [(0, ("failed", 1)), (1, ("partial", 1)), (2, ("ok", 0))]
+)
+def test_archive_cli_matches_persisted_outcome(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys,
+    successes: int,
+    expected: tuple[str, int],
+) -> None:
+    status, expected_exit = expected
+    db = tmp_path / "store.sqlite3"
+    connection = board_flow_store.connect(db)
+    boards = [BoardRow(f"BK{i:04}", "Fixture", "concept", 0.0, 0.0, 0.0, 0.0) for i in range(2)]
+    board_flow_store.upsert_catalog(connection, boards, seen_at="2026-11-11T15:00:00")
+    connection.commit()
+
+    class FakeClient:
+        def fetch_minute_curve(self, board_code: str, *, board_type: str) -> list[MinuteFlowRow]:
+            if int(board_code[2:]) >= successes:
+                raise BoardFlowError("fixture source failure")
+            return [
+                MinuteFlowRow(
+                    board_code, board_type, datetime(2026, 11, 11, 15), 1.0, -1.0, 0.0, 0.0, 1.0
+                )
+            ]
+
+    monkeypatch.setattr(board_flow_cli, "BoardFlowClient", FakeClient)
+    code = cli.main(
+        [
+            "board-flow",
+            "archive-minutes",
+            "--db",
+            str(db),
+            "--trade-date",
+            "2026-11-11",
+            "--delay",
+            "0",
+        ]
+    )
+    payload = json.loads(capsys.readouterr().out)
+    assert code == expected_exit
+    assert payload["status"] == status
+    assert payload["boards_attempted"] == 2
+    assert connection.execute("SELECT status FROM collection_run").fetchone()["status"] == status

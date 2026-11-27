@@ -51,7 +51,7 @@
 - `marketdata data build-guan-deal-minutes`
 - `marketdata data finalize-a-share-minute-coverage`
 - `marketdata data mirror-public-etf-minute`：版本目录与只读预演约束见 [ETF 分钟数据](operations/etf-minutes.md)。
-- `marketdata board-flow catalog / snapshot / monitor / archive-minutes / report / export / status`：采集范围、存储表和已知限制见 [板块资金流](operations/board-flow.md)。
+- `marketdata board-flow catalog / snapshot / monitor / archive-minutes / report / export / status`：采集范围、存储表和已知限制见 [板块资金流](operations/board-flow.md)。`archive-minutes` 的失败或部分完成以非零状态退出，连续失败会停止后续板块请求。
 - `marketdata tushare backfill-etf-history`
 - `marketdata tushare build-etf-daily-forward-adjusted`
 - `marketdata tushare validate-etf-daily-pair`

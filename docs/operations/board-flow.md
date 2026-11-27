@@ -61,7 +61,13 @@ marketdata board-flow monitor --interval 30
 marketdata board-flow archive-minutes
 ```
 
-默认归档当天、跳过已有数据的板块，因此可以重复运行做断点续传。单板块失败不会中断整体任务，失败样本写入 `collection_run.detail`。如果请求日期与返回数据的日期不一致，该板块计入 `date_mismatch`，不会写入错误日期。
+默认归档当天，跳过已保存到15:00的板块，可以重复运行续采剩余板块。这个既有跳过条件只检查收盘行，不能证明分钟网格完整。
+
+输出的 `status` 与 `collection_run` 回执一致。全部请求失败返回 `failed`，部分写入且仍有失败返回 `partial`，两者都以非零状态退出。`empty` 明确表示没有选定工作。整个目录已归档时返回 `ok`，并单独计数 `boards_already_archived`。
+
+默认连续三次板块获取不成功就停止遍历，成功写入后重新计数。错日曲线也计入失败，不会写到请求日期。错误原因链中的HTTP 4xx，包括耗尽重试后的429限流，会立即停止，不再尝试下一个板块。其他provider错误只计数，归档循环不对该板块追加重试。单请求的既有重试预算保持独立，三次板块失败最多各使用三次请求尝试。API调用方可通过 `ArchiveOptions.max_consecutive_failures` 指定正整数，CLI沿用默认三次。
+
+`boards_requested` 保持 `--limit` 之后的选定数量。新增字段分别记录目录数量 `boards_catalogued`、已归档 `boards_already_archived`、原待采 `boards_pending`、实际尝试 `boards_attempted`、失败 `boards_failed`、提前停止后未尝试 `boards_unattempted`、因限制未选中 `boards_deferred_by_limit`。`date_mismatch_count` 记录全部错日数量，`date_mismatch` 和 `failure_sample` 只保留有限样本。`stop_reason` 区分HTTP拒绝、连续失败和选定范围完成。限定范围成功不能证明整个目录覆盖，缺失板块不能当作零流入。
 
 ### 查询、导出与出图
 
@@ -108,7 +114,7 @@ marketdata config run --config "$DATA_PLATFORM_CONFIG" -- \
 ## 限制
 
 - 分钟曲线只能补当天。错过的交易日无法用这个接口回补，只能在当天采集。
-- 交易日只按工作日判断，不含交易所节假日历，节假日运行会得到空结果并记录为 `empty`。
+- 交易时段只按工作日判断，不含交易所节假日历。空的选定范围会明确记录，源请求失败或错日仍算失败，不能据此认定为节假日。
 - 板块成分高度重叠，人工智能、机器人、芯片等概念的净流入不能相加解释成全市场资金流入。
 - 主力净流入是供应商按成交金额和方向估算的统计量，不同供应商口径不同。
 - 这些是网页行情接口，没有稳定性承诺，可能限流、改字段或下线。采集失败会记录在 `collection_run`，不要假定任务一定成功。
