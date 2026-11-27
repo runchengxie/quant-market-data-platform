@@ -18,6 +18,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+from http.client import RemoteDisconnected
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -109,7 +110,7 @@ def default_fetch_json(
             last_error = error
             if error.code not in (429, 500, 502, 503, 504):
                 raise BoardFlowError(f"Eastmoney request failed with HTTP {error.code}.") from error
-        except (URLError, TimeoutError, json.JSONDecodeError) as error:
+        except (URLError, TimeoutError, RemoteDisconnected, json.JSONDecodeError) as error:
             last_error = error
         else:
             if not isinstance(payload, dict):

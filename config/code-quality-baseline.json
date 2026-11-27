@@ -7,7 +7,7 @@
   ],
   "metrics": {
     "python_files": 636,
-    "python_lines": 148096,
+    "python_lines": 148121,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "d6b05ba",
-    "reason": "Preserve the final unnamed Level-2 CSV column and add 42 net physical Python lines for the storage round-trip and invalid-header cases. Existing structural, complexity, typing, coverage and security limits remain in effect.",
-    "exit_condition": "Remove this exact allowance when the header cases and equivalent round-trip coverage move to a shared CSV compatibility suite."
+    "source_revision": "5335801",
+    "reason": "Add exactly 25 net physical Python lines for bounded remote-disconnect handling and recovery/exhaustion regression cases. File counts, structural and complexity limits, type coverage, test coverage, exclusions and security gates are unchanged.",
+    "exit_condition": "Remove this exact 25-line allowance if equivalent transport retry and exhaustion regressions are consolidated into shared provider coverage without additional lines."
   },
   "previous_change_records": [
+    {
+      "source_revision": "d6b05ba",
+      "reason": "Preserve the final unnamed Level-2 CSV column and add 42 net physical Python lines for the storage round-trip and invalid-header cases. Existing structural, complexity, typing, coverage and security limits remain in effect.",
+      "exit_condition": "Remove this exact allowance when the header cases and equivalent round-trip coverage move to a shared CSV compatibility suite."
+    },
     {
       "source_revision": "823c707",
       "reason": "Add the receipt-gated multi-date L2 query and failure-path tests with two Python files and 203 net physical Python lines. Existing structural, complexity, typing, coverage and security limits remain in effect.",

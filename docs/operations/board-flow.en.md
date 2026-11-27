@@ -112,3 +112,4 @@ The script aligns `moneyflow_ind_dc.net_amount` with the archived 15:00 cumulati
 - Board constituents overlap heavily. Net inflows of concept boards such as AI, robotics, and chips cannot be summed into market-wide flow.
 - Main-force net inflow is a vendor estimate based on trade size and direction; different vendors define it differently.
 - These are quote-page endpoints without a stability guarantee. They can rate-limit, change fields, or disappear. Failures are recorded in `collection_run`; never assume a scheduled job succeeded.
+- Remote disconnects use the bounded transport retry budget (three attempts by default). Exhausted attempts fail the command; retries do not reconstruct missed snapshots or archive past trading days.

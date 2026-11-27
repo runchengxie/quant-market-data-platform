@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from email.message import Message
+from http.client import RemoteDisconnected
 from typing import Any
 
 import pytest
@@ -162,7 +163,10 @@ def test_minute_curve_raises_when_endpoint_returns_no_data() -> None:
         provider.BoardFlowClient(fetcher=fetcher).fetch_minute_curve("BK0800", board_type="concept")
 
 
-def test_default_fetch_json_retries_transient_failures(monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("error_type", [provider.URLError, RemoteDisconnected])
+def test_default_fetch_json_retries_transient_failures(
+    monkeypatch: pytest.MonkeyPatch, error_type: type[Exception]
+) -> None:
     attempts: list[int] = []
 
     class _Response:
@@ -178,7 +182,7 @@ def test_default_fetch_json_retries_transient_failures(monkeypatch: pytest.Monke
     def fake_urlopen(request: Any, timeout: float) -> _Response:
         attempts.append(1)
         if len(attempts) < 3:
-            raise provider.URLError("temporary")
+            raise error_type("temporary")
         return _Response()
 
     sleeps: list[float] = []
@@ -190,6 +194,26 @@ def test_default_fetch_json_retries_transient_failures(monkeypatch: pytest.Monke
     )
 
     assert payload["rc"] == 0
+    assert len(attempts) == 3
+    assert sleeps == [0.5, 1.0]
+
+
+def test_default_fetch_json_bounds_retries_after_remote_disconnect(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    attempts: list[int] = []
+    sleeps: list[float] = []
+
+    def disconnected(request: Any, timeout: float) -> Any:
+        attempts.append(1)
+        raise RemoteDisconnected("Remote end closed connection without response")
+
+    monkeypatch.setattr(provider, "urlopen", disconnected)
+    monkeypatch.setattr(provider.time, "sleep", sleeps.append)
+
+    with pytest.raises(provider.BoardFlowError, match="failed after 3 attempts"):
+        provider.default_fetch_json("https://example.invalid", {}, attempts=3, retry_delay=0.5)
+
     assert len(attempts) == 3
     assert sleeps == [0.5, 1.0]
 
