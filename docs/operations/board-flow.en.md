@@ -153,3 +153,21 @@ marketdata board-flow archive-restore --archive "$DATA_PLATFORM_ROOT/archive/boa
 ```
 
 The source is read-only. Verification checks all six tables and all listed files. Restore refuses an existing destination or a path inside the input archive. Export performs bounded-batch Parquet readback and a full temporary SQLite restoration before publishing. A failed attempt does not publish a partial archive. Retain any force-killed staging for ownership review. This exports the entire store, not incremental daily deduplication. No timer, online-store pruning, index change, retention policy or shared alias is installed.
+
+## Read-only health
+
+Use `board-flow health` for monitoring. Unlike the legacy `status` command, it never initialises a missing database. It opens SQLite with `mode=ro`, enables `query_only`, and reads a single transaction without calling the provider.
+
+```bash
+uv run marketdata board-flow health --db "$DATA_PLATFORM_ROOT/intraday/board_flow.sqlite3" \
+  --expected-trade-date 2026-11-27 \
+  --now 2026-11-27T16:00:00+08:00 --deadline 2026-11-27T15:30:00+08:00
+```
+
+The caller must resolve the expected trading date using an authoritative exchange calendar and supply offset-aware check/deadline timestamps. No weekday or holiday inference occurs. The deadline must be strictly after 15:00 Shanghai time on the target date. JSON `schema_version=1` with `status_scope=all_assets` reports `phase=before_deadline|after_deadline` and `status=pending|failed|unknown`. A missing or unreadable database/schema is `unknown`; incomplete target-day coverage is `pending` before the deadline and `failed` after it. A latest recorded failed/partial collection run is `failed`. Exit status is zero for `pending` or `catalog_minute_ready=true`, one otherwise. Read the readiness field when gating a completed archive.
+
+`catalog` reports latest daily-list capture and target-day rows/expected boards. `snapshot` reports the newest capture globally and on the target day, target-day rows, newest-capture boards and missing list members. Its `status=unknown` and `full_day_complete=null` deliberately preserve uncertainty about full-session polling coverage. `minute` reports latest minute globally/on the target day, actual rows/boards, and `missing_board_minutes` against every target-day list member times the 240 minute ends (09:31–11:30, 13:01–15:00). Without a target-day list, missing counts are null. Extra observations cannot fill a missing minute.
+
+`catalog_minute_ready=true` means the check time has reached the target date’s Shanghai close, the recorded target-day universe has 240 minutes per member, and the latest collection run does not record failure. `target_day_closed` exposes that time check without interpreting the exchange calendar. Overall status remains `unknown` because full-session snapshot coverage is unproven. It does not prove the vendor list was exhaustive, snapshot polling ran throughout the session, or the newest snapshot is recent enough for a live trading decision. Consumers must inspect timestamps and coverage fields according to their own operational phase. `latest_run` contains the latest target-day collection kind/status/finish time; it is evidence, not a complete failure history.
+
+Target-day list capture, snapshot capture and minute archival timestamps must be parseable and no later than `--now`. Legacy offset-free source timestamps use the existing Shanghai wall-time contract (`naive_source_timezone=Asia/Shanghai`); explicit offsets are compared as aware instants. The command-line clock and deadline still require explicit offsets. `timestamps_valid=false` marks ambiguous or future evidence as unknown and disables archive readiness. A future or invalid latest-run finish time also disables readiness.

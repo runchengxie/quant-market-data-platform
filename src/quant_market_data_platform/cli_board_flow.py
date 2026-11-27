@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -156,6 +156,19 @@ def _handle_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def _handle_health(args: argparse.Namespace) -> int:
+    from quant_market_data_platform.board_flow_health import inspect_health
+
+    result = inspect_health(
+        _db_path(args),
+        expected_trade_date=args.expected_trade_date,
+        now=datetime.fromisoformat(args.now),
+        deadline=datetime.fromisoformat(args.deadline),
+    )
+    _print_json(result)
+    return 0 if result["status"] == "pending" or result["catalog_minute_ready"] else 1
+
+
 def _handle_archive_export(args: argparse.Namespace) -> int:
     from quant_market_data_platform.board_flow_archive import export_archive
 
@@ -213,6 +226,7 @@ def handle_board_flow(args: argparse.Namespace) -> int:
         "monitor": _handle_monitor,
         "archive-minutes": _handle_archive,
         "status": _handle_status,
+        "health": _handle_health,
         "report": _handle_report,
         "export": _handle_export,
         "archive-export": _handle_archive_export,
@@ -282,6 +296,8 @@ def add_board_flow_parser(subparsers: argparse._SubParsersAction) -> None:
     _add_common(status)
     status.set_defaults(handler=handle_board_flow)
 
+    _add_health_command(group)
+
     report = group.add_parser("report", help="Render an HTML fund-flow race chart.")
     _add_common(report)
     report.add_argument("--date", required=True, help="Trading day YYYY-MM-DD.")
@@ -321,3 +337,16 @@ def _add_archive_store_commands(group: argparse._SubParsersAction) -> None:
         if name == "archive-restore":
             command.add_argument("--out", required=True, help="New SQLite path; never overwritten.")
         command.set_defaults(handler=handle_board_flow)
+
+
+def _add_health_command(group: argparse._SubParsersAction) -> None:
+    health = group.add_parser("health", help="Read-only target-day coverage and collection health.")
+    _add_common(health)
+    health.add_argument(
+        "--expected-trade-date", required=True, help="Calendar-resolved YYYY-MM-DD."
+    )
+    health.add_argument("--now", required=True, help="Check time as ISO8601 with timezone offset.")
+    health.add_argument(
+        "--deadline", required=True, help="Completion deadline with timezone offset."
+    )
+    health.set_defaults(handler=handle_board_flow)
