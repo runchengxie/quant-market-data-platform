@@ -350,3 +350,7 @@ See [registration and consumer upgrade ordering](operations.en.md#explicit-seman
 ## Provider-native L2 source labels
 
 The [L2 pilot v2](operations/l2-storage-pilot.md) retains every provider field and adds `_source_symbol` for the directory identifier. Queries use original record IDs across all matching source buckets. Distinct members and duplicate rows remain separate. Strict identity validation is the default. An explicit preservation policy records suffix-conflict sets and their row counts with matching numeric prefixes in the profile and manifest, without asserting canonical exchange identity. Mixed numeric prefixes, invalid or unrelated IDs and date/clock errors remain rejected. Existing v1 artifacts require their fixed v1 runtime.
+
+## Board-flow archive
+
+The [board-flow Parquet v1 contract](contracts/board-flow-archive.md) defines lossless six-table snapshots, immutable file identities, typed values, distinct snapshot/minute meanings and new-target restoration. Replay consumers read this artifact rather than the live SQLite or provider implementation.

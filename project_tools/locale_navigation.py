@@ -7,6 +7,7 @@ from copy import copy
 from mkdocs.structure.nav import Navigation
 
 ENGLISH_UNSUFFIXED = {
+    "contracts/board-flow-archive.md",
     "index.md",
     "data-lifecycle-architecture.md",
     "knowledge/datasets/a-share-daily-clean.md",

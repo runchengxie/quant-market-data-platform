@@ -27,7 +27,7 @@
 | `board_catalog_daily` | 每个交易日实际存在的板块清单 | `(trade_date, board_code)` |
 | `flow_snapshot` | 某个采集时刻全部板块的累计资金流 | `(trade_date, board_code, captured_at)` |
 | `flow_minute` | 归档的分钟累计资金流，含小单/中单/大单/超大单 | `(trade_date, board_code, trade_time)` |
-| `collection_run` | 每次 monitor、archive 的耗时、状态和失败样本 | `run_id` |
+| `collection_run` | 正常监控结束与归档运行的已保留回执 | `run_id` |
 
 快照只在同一 `captured_at` 上覆盖，不做跨时刻补齐，因此中断和缺口会保留下来，便于事后区分真实采集数据与补录数据。
 
@@ -117,5 +117,20 @@ marketdata config run --config "$DATA_PLATFORM_CONFIG" -- \
 - 交易时段只按工作日判断，不含交易所节假日历。空的选定范围会明确记录，源请求失败或错日仍算失败，不能据此认定为节假日。
 - 板块成分高度重叠，人工智能、机器人、芯片等概念的净流入不能相加解释成全市场资金流入。
 - 主力净流入是供应商按成交金额和方向估算的统计量，不同供应商口径不同。
-- 这些是网页行情接口，没有稳定性承诺，可能限流、改字段或下线。采集失败会记录在 `collection_run`，不要假定任务一定成功。
+- 这些是网页行情接口，没有稳定性承诺，可能限流、改字段或下线。归档结果和失败会写入 `collection_run`。监控异常可能在回执写入前退出，须结合服务结果和实际数据时间戳判断，不能假定定时任务一定成功。
 - 服务端直接断开连接时，客户端会在有限次数内重试，默认最多尝试三次。耗尽次数后命令仍会失败。重试不能重建遗漏的快照，也不能归档过去交易日的分钟曲线。
+
+## 在线库无损归档 { #board-flow-store-archive }
+
+归档工具需要 PyArrow。最小锁定安装为 `uv sync --locked --extra quality`，已有 dev、tushare 或 offline-equities 环境也包含该依赖。
+
+
+只读回放消费遵循 [v1 归档契约](../contracts/board-flow-archive.zh-CN.md)。导出必须使用全新目录：
+
+```bash
+marketdata board-flow archive-export --db "$DATA_PLATFORM_ROOT/intraday/board_flow.sqlite3" --out "$DATA_PLATFORM_ROOT/archive/board-flow-SNAPSHOT_ID"
+marketdata board-flow archive-verify --archive "$DATA_PLATFORM_ROOT/archive/board-flow-SNAPSHOT_ID"
+marketdata board-flow archive-restore --archive "$DATA_PLATFORM_ROOT/archive/board-flow-SNAPSHOT_ID" --out "$DATA_PLATFORM_ROOT/tasks/restore-check/new.sqlite3"
+```
+
+原库只读，校验覆盖六表和全部清单文件。恢复拒绝已有目标和归档目录内的路径。导出分批写入并读回 Parquet，完整恢复临时 SQLite 验证后才发布，失败不发布半成品。强杀遗留 staging 需核对归属后处理。导出的是整库快照，日增量去重另行设计，不接定时器、不裁剪在线库、不改索引、不设保留期限，也不更新共享别名。

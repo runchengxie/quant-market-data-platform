@@ -372,3 +372,7 @@ The default scan limits are 1 GiB of content and 10,000 files. Set `--max-conten
 See the [complete-day storage pilot](operations/l2-storage-pilot.md) for isolated archive conversion, lossless proofs and routed security/time queries. Use `query-accepted` when every requested date must have a verified rollout receipt.
 
 The pilot v2 preserves directory identifiers separately from record IDs. An explicit `--identity-policy preserve-source-labels` option records compatible-prefix suffix conflicts without rewriting identifiers. See the linked pilot guide before using conflicting native labels.
+
+## Board-flow store archive
+
+`marketdata board-flow archive-export`, `archive-verify` and `archive-restore` export a read-only SQLite snapshot, validate the v1 artifact and recover into a new database. See the [board-flow guide](operations/board-flow.en.md#board-flow-store-archive) for exact arguments and publication/retention boundaries.

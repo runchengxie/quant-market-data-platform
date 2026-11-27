@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 638,
-    "python_lines": 148897,
+    "python_files": 641,
+    "python_lines": 149831,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "e37c9b22b77c1555cae1220de1cff4655273362e",
-    "reason": "Bound archive-minute board traversal and propagate failed/partial receipts to CLI exit status, with permanent HTTP, cutoff/reset, skipped and selected-scope regressions: exactly 225 net physical Python lines in four existing files. File-count, structural, complexity, type, coverage, exclusions and security limits are unchanged.",
-    "exit_condition": "Remove this exact 225-line allowance when archive outcome/cutoff logic and equivalent real CLI, HTTP refusal, persistence and scope accounting coverage are consolidated or retired. Preserve prior retirement conditions."
+    "source_revision": "b2a40031a42d3b25b5b1ca26e2a3d4ca4a336fff",
+    "reason": "Add exactly three Python files and 934 net physical Python lines in the existing src/scripts/tests scan roots for lossless board-flow v1 archive export/verify/restore, immutable input identity, duplicate-key and storage-type guards, producer metadata, CLI and failure/concurrency tests. Structural, complexity, type, coverage, exclusions and security limits are unchanged. Documentation locale hooks remain linted and verified by the strict site build.",
+    "exit_condition": "Remove this exact three-file/934-line allowance when archive tooling and equivalent typed-value, schema, immutable-input, corruption, no-overwrite, source-snapshot and interruption coverage are consolidated or retired."
   },
   "previous_change_records": [
+    {
+      "source_revision": "e37c9b22b77c1555cae1220de1cff4655273362e",
+      "reason": "Bound archive-minute board traversal and propagate failed/partial receipts to CLI exit status, with permanent HTTP, cutoff/reset, skipped and selected-scope regressions: exactly 225 net physical Python lines in four existing files. File-count, structural, complexity, type, coverage, exclusions and security limits are unchanged.",
+      "exit_condition": "Remove this exact 225-line allowance when archive outcome/cutoff logic and equivalent real CLI, HTTP refusal, persistence and scope accounting coverage are consolidated or retired. Preserve prior retirement conditions."
+    },
     {
       "source_revision": "e906f8f16c83c2f1b70ef84f6d98dcb8f522a00f",
       "reason": "Add explicit whole-date acquisition-only zero-volume source quarantine, v2 evidence validation, a no-write preview, CLI and failure-path coverage: exactly two Python files and 551 net physical Python lines. Structural, complexity, type, coverage, exclusion and security limits are unchanged.",
