@@ -156,6 +156,27 @@ def _handle_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def _handle_archive_export(args: argparse.Namespace) -> int:
+    from quant_market_data_platform.board_flow_archive import export_archive
+
+    _print_json({"status": "ok", **export_archive(_db_path(args), Path(args.out))})
+    return 0
+
+
+def _handle_archive_verify(args: argparse.Namespace) -> int:
+    from quant_market_data_platform.board_flow_archive import verify_archive
+
+    _print_json({"status": "ok", **verify_archive(Path(args.archive))})
+    return 0
+
+
+def _handle_archive_restore(args: argparse.Namespace) -> int:
+    from quant_market_data_platform.board_flow_archive import restore_archive
+
+    _print_json({"status": "ok", **restore_archive(Path(args.archive), Path(args.out))})
+    return 0
+
+
 def _handle_report(args: argparse.Namespace) -> int:
     path, connection = _open_store(args)
     options = _report_options(args)
@@ -194,6 +215,9 @@ def handle_board_flow(args: argparse.Namespace) -> int:
         "status": _handle_status,
         "report": _handle_report,
         "export": _handle_export,
+        "archive-export": _handle_archive_export,
+        "archive-verify": _handle_archive_verify,
+        "archive-restore": _handle_archive_restore,
     }
     handler = handlers[args.board_flow_command]
     try:
@@ -278,3 +302,22 @@ def add_board_flow_parser(subparsers: argparse._SubParsersAction) -> None:
     export.add_argument("--name", action="append", help="Board name or code; repeatable.")
     export.add_argument("--out", help="Output CSV path.")
     export.set_defaults(handler=handle_board_flow)
+    _add_archive_store_commands(group)
+
+
+def _add_archive_store_commands(group: argparse._SubParsersAction) -> None:
+    archive_export = group.add_parser(
+        "archive-export",
+        help="Export a verified lossless SQLite snapshot to a new Parquet archive.",
+    )
+    _add_common(archive_export)
+    archive_export.add_argument(
+        "--out", required=True, help="New archive directory; never overwritten."
+    )
+    archive_export.set_defaults(handler=handle_board_flow)
+    for name in ("archive-verify", "archive-restore"):
+        command = group.add_parser(name, help="Verify or restore a board-flow Parquet archive.")
+        command.add_argument("--archive", required=True, help="Existing v1 archive directory.")
+        if name == "archive-restore":
+            command.add_argument("--out", required=True, help="New SQLite path; never overwritten.")
+        command.set_defaults(handler=handle_board_flow)

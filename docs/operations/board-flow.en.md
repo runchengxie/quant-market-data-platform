@@ -27,7 +27,7 @@ The default database is `$DATA_PLATFORM_ROOT/intraday/board_flow.sqlite3`; overr
 | `board_catalog_daily` | The board universe that existed on each trading day | `(trade_date, board_code)` |
 | `flow_snapshot` | Accumulated flow for all boards at one capture time | `(trade_date, board_code, captured_at)` |
 | `flow_minute` | Archived minute cumulative flow, including order-size buckets | `(trade_date, board_code, trade_time)` |
-| `collection_run` | Duration, status, and failure samples for each monitor or archive run | `run_id` |
+| `collection_run` | Retained normal monitor completions and archive outcomes | `run_id` |
 
 Snapshots are only replaced at the same `captured_at`, never backfilled across capture times. Gaps and interruptions therefore stay visible, so collected and reconstructed rows can be told apart later.
 
@@ -136,5 +136,20 @@ The script aligns `moneyflow_ind_dc.net_amount` with the archived 15:00 cumulati
 - Trading sessions use weekdays without an exchange holiday calendar. Empty selections are explicit; source failures or wrong-date curves remain failures and do not establish a holiday.
 - Board constituents overlap heavily. Net inflows of concept boards such as AI, robotics, and chips cannot be summed into market-wide flow.
 - Main-force net inflow is a vendor estimate based on trade size and direction; different vendors define it differently.
-- These are quote-page endpoints without a stability guarantee. They can rate-limit, change fields, or disappear. Failures are recorded in `collection_run`; never assume a scheduled job succeeded.
+- These are quote-page endpoints without a stability guarantee. They can rate-limit, change fields, or disappear. Archive outcomes and failures are retained in `collection_run`. A monitor exception can exit before writing a receipt, so check service results and actual data timestamps together. Never assume a scheduled job succeeded.
 - Remote disconnects use the bounded transport retry budget (three attempts by default). Exhausted attempts fail the command; retries do not reconstruct missed snapshots or archive past trading days.
+
+## Lossless local-store archive { #board-flow-store-archive }
+
+The archive commands require PyArrow. A minimal locked installation uses `uv sync --locked --extra quality`; an existing dev, tushare or offline-equities environment also supplies it.
+
+
+Use the data-owner [v1 archive contract](../contracts/board-flow-archive.md) for read-only replay consumers. Export requires a new output directory and preserves the live store:
+
+```bash
+marketdata board-flow archive-export --db "$DATA_PLATFORM_ROOT/intraday/board_flow.sqlite3" --out "$DATA_PLATFORM_ROOT/archive/board-flow-SNAPSHOT_ID"
+marketdata board-flow archive-verify --archive "$DATA_PLATFORM_ROOT/archive/board-flow-SNAPSHOT_ID"
+marketdata board-flow archive-restore --archive "$DATA_PLATFORM_ROOT/archive/board-flow-SNAPSHOT_ID" --out "$DATA_PLATFORM_ROOT/tasks/restore-check/new.sqlite3"
+```
+
+The source is read-only. Verification checks all six tables and all listed files. Restore refuses an existing destination or a path inside the input archive. Export performs bounded-batch Parquet readback and a full temporary SQLite restoration before publishing. A failed attempt does not publish a partial archive. Retain any force-killed staging for ownership review. This exports the entire store, not incremental daily deduplication. No timer, online-store pruning, index change, retention policy or shared alias is installed.
