@@ -145,8 +145,10 @@ uv run marketdata board-flow health --db "$DATA_PLATFORM_ROOT/intraday/board_flo
   --now 2026-11-27T16:00:00+08:00 --deadline 2026-11-27T15:30:00+08:00
 ```
 
-调用方必须通过权威交易日历确定目标交易日，并显式传入带时区偏移的检查时间和完成期限。命令不根据星期或节假日猜测交易日。完成期限不能早于目标日上海时间 15:00。JSON `schema_version=1`、`status_scope=all_assets` 返回 `phase=before_deadline|after_deadline` 和 `status=pending|failed|unknown`。数据库缺失、不可读或架构无法识别为 `unknown`。目标日覆盖不足在期限前为 `pending`，期限后为 `failed`。最近一条采集记录为 failed/partial 时返回 `failed`。pending 或 catalog_minute_ready=true 时退出码为 0，否则为 1。归档门禁应读取 readiness 字段。
+调用方必须通过权威交易日历确定目标交易日，并显式传入带时区偏移的检查时间和完成期限。命令不根据星期或节假日猜测交易日。完成期限必须晚于目标日上海时间 15:00。JSON `schema_version=1`、`status_scope=all_assets` 返回 `phase=before_deadline|after_deadline` 和 `status=pending|failed|unknown`。数据库缺失、不可读或架构无法识别为 `unknown`。目标日覆盖不足在期限前为 `pending`，期限后为 `failed`。最近一条采集记录为 failed/partial 时返回 `failed`。pending 或 catalog_minute_ready=true 时退出码为 0，否则为 1。归档门禁应读取 readiness 字段。
 
 `catalog` 给出每日名单最近采集时间及目标日行数、预期板块数。`snapshot` 给出全局与目标日最后采集时间、目标日实际行数、最后一次采集的板块数及名单中缺失数。其 `status=unknown`、`full_day_complete=null` 保留全日轮询覆盖尚不可证明的不确定性。`minute` 给出全局与目标日最后分钟、实际行数与板块数，以及目标日名单各成员在 240 个分钟末（09:31–11:30、13:01–15:00）的 `missing_board_minutes`。目标日名单不存在时缺失数为 null。额外观测不能填补缺失分钟。
 
 `catalog_minute_ready=true` 只表示检查时间已到目标日上海收盘、已记录的目标日名单成员均有 240 分钟，且最近采集记录没有失败。`target_day_closed` 单独给出这一时间检查，不推断交易日历。由于全日快照覆盖不可证明，整体状态仍为 `unknown`。该字段不证明数据源名单穷尽、全日轮询连续，也不证明最后快照足够新、可用于实时交易。消费者需结合运行阶段检查时间和覆盖字段。`latest_run` 给出目标日最近一次采集的类型、状态和结束时间，完整失败历史仍需另查采集记录。
+
+目标日名单采集、快照采集和分钟归档时间必须可解析，且不晚于 `--now`。旧数据中没有偏移的采集时间按既有上海墙上时间契约解释（`naive_source_timezone=Asia/Shanghai`），带偏移时间按真实时刻比较。命令行时钟和完成期限仍必须带显式偏移。`timestamps_valid=false` 将时间不明或来自未来的证据标为 unknown，并关闭归档就绪标志。最近采集记录的结束时间无效或来自未来时也会关闭该标志。

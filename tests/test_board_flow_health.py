@@ -83,6 +83,17 @@ def test_full_grid_and_latest_capture_are_required(tmp_path):
     connection.commit()
     assert inspect(path)["status"] == "unknown"
     assert inspect(path)["catalog_minute_ready"] is True
+    for table, column, original in (
+        ("board_catalog_daily", "captured_at", "2026-11-27T09:00:00+08:00"),
+        ("flow_snapshot", "captured_at", "2026-11-27T15:00:00+08:00"),
+        ("flow_minute", "archived_at", "2026-11-27T15:10:00+08:00"),
+    ):
+        connection.execute(f"UPDATE {table} SET {column}=?", ("2026-11-28T09:00:00+08:00",))
+        connection.commit()
+        assert inspect(path)["catalog_minute_ready"] is False
+        assert inspect(path)["status"] == "unknown"
+        connection.execute(f"UPDATE {table} SET {column}=?", (original,))
+        connection.commit()
     early = inspect_health(
         path,
         expected_trade_date="2026-11-27",
@@ -90,7 +101,7 @@ def test_full_grid_and_latest_capture_are_required(tmp_path):
         deadline=datetime.fromisoformat("2026-11-27T15:30:00+08:00"),
     )
     assert early["catalog_minute_ready"] is False
-    assert early["status"] == "pending"
+    assert early["status"] == "unknown"
     connection.execute("DELETE FROM flow_minute WHERE trade_time='2026-11-27 10:00:00'")
     connection.commit()
     result = inspect(path)
@@ -178,3 +189,47 @@ def test_unknown_schema_version_is_not_healthy(tmp_path):
     connection.commit()
     connection.close()
     assert inspect(path)["status"] == "unknown"
+
+
+@pytest.mark.parametrize("bad_time", ["2026-11-28T09:00:00+08:00", "invalid"])
+def test_invalid_or_future_catalog_time_cannot_be_ready(tmp_path, bad_time):
+    path = tmp_path / "data.sqlite3"
+    connection = board_flow_store.connect(path)
+    connection.execute(
+        "INSERT INTO board_catalog_daily VALUES (?,?,?,?,?)",
+        ("2026-11-27", "BK1", "one", "concept", bad_time),
+    )
+    connection.commit()
+    result = inspect(path)
+    assert result["status"] == "unknown"
+    assert result["catalog"]["timestamps_valid"] is False
+    assert result["catalog_minute_ready"] is False
+
+
+def test_exact_close_deadline_is_rejected(tmp_path):
+    with pytest.raises(ValueError, match="close"):
+        inspect_health(
+            tmp_path / "x",
+            expected_trade_date="2026-11-27",
+            now=datetime.fromisoformat("2026-11-27T16:00:00+08:00"),
+            deadline=datetime.fromisoformat("2026-11-27T15:00:00+08:00"),
+        )
+
+
+@pytest.mark.parametrize(
+    "timestamp, valid",
+    [
+        ("2026-11-27T09:00:00", True),
+        ("2026-11-27T08:00:00Z", True),
+        ("2026-11-27T08:00:01Z", False),
+    ],
+)
+def test_source_times_use_legacy_shanghai_or_explicit_offsets(tmp_path, timestamp, valid):
+    path = tmp_path / "data.sqlite3"
+    connection = board_flow_store.connect(path)
+    connection.execute(
+        "INSERT INTO board_catalog_daily VALUES (?,?,?,?,?)",
+        ("2026-11-27", "BK1", "one", "concept", timestamp),
+    )
+    connection.commit()
+    assert inspect(path)["catalog"]["timestamps_valid"] is valid

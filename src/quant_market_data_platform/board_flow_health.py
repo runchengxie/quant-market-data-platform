@@ -42,8 +42,8 @@ def inspect_health(
     if any(value.tzinfo is None or value.utcoffset() is None for value in (now, deadline)):
         raise ValueError("now and deadline require timezone offsets")
     close = datetime.fromisoformat(f"{day}T15:00:00").replace(tzinfo=ZoneInfo("Asia/Shanghai"))
-    if deadline < close:
-        raise ValueError("deadline must not precede the target trading day close")
+    if deadline <= close:
+        raise ValueError("deadline must follow the target trading day close")
     due = now >= deadline
     result: dict[str, Any] = {
         "schema_version": 1,
@@ -54,6 +54,7 @@ def inspect_health(
         "deadline": deadline.isoformat(),
         "phase": "after_deadline" if due else "before_deadline",
         "status_scope": "all_assets",
+        "naive_source_timezone": "Asia/Shanghai",
         "target_day_closed": now >= close,
         "catalog_minute_ready": False,
         "catalog": {"status": "unknown", "latest": None, "target_rows": None},
@@ -89,6 +90,7 @@ def inspect_health(
                 result["error"] = "Unsupported board-flow schema version"
             else:
                 result.update(_coverage(connection, day, due, now >= close))
+                _check_times(connection, day, now, result)
         finally:
             connection.close()
     except sqlite3.Error as error:
@@ -175,3 +177,39 @@ def _coverage(connection: sqlite3.Connection, day: str, due: bool, closed: bool)
         if latest_run is None
         else dict(zip(("kind", "status", "finished_at"), latest_run, strict=True)),
     }
+
+
+def _valid_timestamp(value: str, now: datetime) -> bool:
+    try:
+        if "T" not in value and " " not in value:
+            return False
+        moment = datetime.fromisoformat(value)
+        if moment.tzinfo is None:
+            moment = moment.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+        return moment.utcoffset() is not None and moment <= now
+    except (TypeError, ValueError):
+        return False
+
+
+def _check_times(
+    connection: sqlite3.Connection, day: str, now: datetime, result: dict[str, Any]
+) -> None:
+    for asset, table, column in (
+        ("catalog", "board_catalog_daily", "captured_at"),
+        ("snapshot", "flow_snapshot", "captured_at"),
+        ("minute", "flow_minute", "archived_at"),
+    ):
+        timestamps = connection.execute(
+            f"SELECT DISTINCT {column} FROM {table} WHERE trade_date=?", (day,)
+        )
+        valid = all(_valid_timestamp(row[0], now) for row in timestamps)
+        result[asset]["timestamps_valid"] = valid
+        if not valid:
+            result[asset]["status"] = "unknown"
+            if asset == "snapshot":
+                result[asset]["latest_capture_complete"] = False
+            result.update(status="unknown", catalog_minute_ready=False)
+    run = result["latest_run"]
+    if run is not None and not _valid_timestamp(run["finished_at"], now):
+        result.update(status="unknown", catalog_minute_ready=False)
+        run["timestamp_valid"] = False
