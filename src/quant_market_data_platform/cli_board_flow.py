@@ -146,8 +146,8 @@ def _handle_archive(args: argparse.Namespace) -> int:
         options,
         runtime=board_flow_monitor.Runtime(progress=progress),
     )
-    _print_json({"status": "ok", "db": str(path), **result})
-    return 0
+    _print_json({"db": str(path), **result})
+    return 1 if result["status"] in {"failed", "partial"} else 0
 
 
 def _handle_status(args: argparse.Namespace) -> int:

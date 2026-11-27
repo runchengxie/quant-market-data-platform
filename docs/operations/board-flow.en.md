@@ -61,7 +61,32 @@ By default it only captures during 09:30–11:30 and 13:00–15:00 and skips wee
 marketdata board-flow archive-minutes
 ```
 
-It archives the current day by default and skips boards that already have rows, so rerunning resumes an interrupted job. A failing board does not stop the run; failure samples are stored in `collection_run.detail`. When the requested date differs from the returned data, the board is counted under `date_mismatch` instead of being written under a wrong date.
+It archives the current day by default and skips boards whose saved curve reaches
+15:00, so rerunning resumes pending boards without re-requesting those closing
+rows. This existing skip test does not certify a complete minute grid.
+
+The returned `status` matches the `collection_run` receipt. Failed work returns
+`failed`; some stored boards together with failures returns `partial`. Both exit
+nonzero. `empty` explicitly means no selected work, while an already archived
+catalogue returns `ok` with `boards_already_archived` counted separately.
+
+Three consecutive unsuccessful board fetches stop traversal by default. A
+successful store resets the count; wrong-date curves count as unsuccessful and
+are never stored under the requested date. An HTTP 4xx cause, including exhausted
+429 throttling, stops immediately rather than trying another board. Other
+provider errors are counted, not retried by the archive loop. The existing
+per-request retry policy remains separate: three failed board fetches can each
+use up to three transport attempts. `ArchiveOptions.max_consecutive_failures`
+accepts a positive integer for API callers; the CLI uses the default of three.
+
+`boards_requested` retains the selected count after `--limit`. Additional fields
+separate `boards_catalogued`, `boards_already_archived`, `boards_pending`,
+`boards_attempted`, `boards_failed`, `boards_unattempted` and
+`boards_deferred_by_limit`. `date_mismatch_count` includes every wrong-date
+response, while `date_mismatch` and `failure_sample` are bounded samples.
+`stop_reason` records a terminal HTTP code, consecutive failures or completion
+of the selected scope. A successful limited scope does not certify the entire
+catalogue, and missing boards must not be interpreted as zero flow.
 
 ### Query, export, and chart
 
@@ -108,7 +133,7 @@ The script aligns `moneyflow_ind_dc.net_amount` with the archived 15:00 cumulati
 ## Limitations
 
 - Minute curves can only be captured on the same day. A missed trading day cannot be recovered from this endpoint.
-- Trading days are approximated by weekdays without an exchange holiday calendar; holiday runs return nothing and are recorded as `empty`.
+- Trading sessions use weekdays without an exchange holiday calendar. Empty selections are explicit; source failures or wrong-date curves remain failures and do not establish a holiday.
 - Board constituents overlap heavily. Net inflows of concept boards such as AI, robotics, and chips cannot be summed into market-wide flow.
 - Main-force net inflow is a vendor estimate based on trade size and direction; different vendors define it differently.
 - These are quote-page endpoints without a stability guarantee. They can rate-limit, change fields, or disappear. Failures are recorded in `collection_run`; never assume a scheduled job succeeded.

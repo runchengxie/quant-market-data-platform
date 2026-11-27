@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
+from urllib.error import HTTPError
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -13,6 +14,7 @@ from quant_market_data_platform import board_flow_store
 from quant_market_data_platform.providers.eastmoney_board_flow import (
     BoardFlowClient,
     BoardFlowDataError,
+    BoardFlowError,
     BoardRow,
     MinuteFlowRow,
 )
@@ -68,11 +70,13 @@ class FakeClient:
     boards: list[BoardRow]
     curves: dict[str, list[MinuteFlowRow]]
     failing: tuple[str, ...] = ()
+    attempted: list[str] = field(default_factory=list)
 
     def fetch_boards(self, board_type: str) -> list[BoardRow]:
         return [row for row in self.boards if row.board_type == board_type]
 
     def fetch_minute_curve(self, board_code: str, *, board_type: str) -> list[MinuteFlowRow]:
+        self.attempted.append(board_code)
         if board_code in self.failing:
             raise BoardFlowDataError(f"no data for {board_code}")
         return self.curves[board_code]
@@ -234,7 +238,7 @@ def test_archive_minutes_skips_archived_and_reports_mismatch(tmp_path: Path) -> 
     assert result["row_count"] == 2
 
 
-def test_archive_minutes_without_pending_boards_is_empty(tmp_path: Path) -> None:
+def test_archive_minutes_counts_already_completed_boards(tmp_path: Path) -> None:
     connection = board_flow_store.connect(tmp_path / "store.sqlite3")
     _seed_catalog(connection, ["BK0001"])
     board_flow_store.upsert_minutes(
@@ -252,8 +256,11 @@ def test_archive_minutes_without_pending_boards_is_empty(tmp_path: Path) -> None
 
     assert result["boards_requested"] == 0
     assert result["boards_stored"] == 0
+    assert result["boards_already_archived"] == 1
+    assert result["boards_pending"] == 0
+    assert result["boards_failed"] == 0
     run = connection.execute("SELECT status FROM collection_run").fetchone()
-    assert run["status"] == "empty"
+    assert run["status"] == result["status"] == "ok"
 
 
 def test_snapshot_options_reject_unknown_board_types() -> None:
@@ -332,3 +339,112 @@ def test_archive_limit_restricts_requested_boards(tmp_path: Path) -> None:
 
     assert result["boards_requested"] == 2
     assert result["boards_stored"] == 2
+    assert result["boards_catalogued"] == 3
+    assert result["boards_pending"] == 3
+    assert result["boards_deferred_by_limit"] == 1
+    assert result["boards_unattempted"] == 0
+    assert result["status"] == "ok"
+
+
+def test_archive_stops_after_three_consecutive_failures(tmp_path: Path) -> None:
+    connection = board_flow_store.connect(tmp_path / "store.sqlite3")
+    codes = [f"BK{i:04}" for i in range(5)]
+    _seed_catalog(connection, codes)
+    fake = FakeClient(boards=[], curves={}, failing=tuple(codes))
+    result = monitor.archive_minutes(
+        cast(BoardFlowClient, fake),
+        connection,
+        monitor.ArchiveOptions(trade_date=_at(15, 30).date(), delay_seconds=0),
+        runtime=monitor.Runtime(now=lambda: _at(15, 30), sleep=lambda _: None),
+    )
+    assert fake.attempted == codes[:3]
+    assert result["boards_requested"] == 5
+    assert result["boards_attempted"] == result["boards_failed"] == 3
+    assert result["boards_unattempted"] == 2
+    assert result["stop_reason"] == "consecutive_failures"
+    assert result["status"] == "failed"
+    assert connection.execute("SELECT status FROM collection_run").fetchone()["status"] == "failed"
+
+
+def test_archive_preserves_partial_rows_and_resets_failure_streak(tmp_path: Path) -> None:
+    connection = board_flow_store.connect(tmp_path / "store.sqlite3")
+    codes = [f"BK{i:04}" for i in range(8)]
+    _seed_catalog(connection, codes)
+    fake = FakeClient(
+        boards=[],
+        curves={codes[2]: _curve(codes[2], _at(9, 0))},
+        failing=tuple(code for code in codes if code != codes[2]),
+    )
+    result = monitor.archive_minutes(
+        cast(BoardFlowClient, fake),
+        connection,
+        monitor.ArchiveOptions(trade_date=_at(15, 30).date(), delay_seconds=0),
+        runtime=monitor.Runtime(now=lambda: _at(15, 30), sleep=lambda _: None),
+    )
+    assert fake.attempted == codes[:6]
+    assert result["boards_stored"] == 1
+    assert result["boards_failed"] == 5
+    assert result["boards_unattempted"] == 2
+    assert result["status"] == "partial"
+    assert connection.execute("SELECT COUNT(*) FROM flow_minute").fetchone()[0] == 2
+    assert connection.execute("SELECT status FROM collection_run").fetchone()["status"] == "partial"
+
+
+@pytest.mark.parametrize(
+    ("http_code", "attempts"), [(400, 1), (401, 1), (403, 1), (404, 1), (429, 1), (503, 3)]
+)
+def test_archive_distinguishes_http_refusal_from_other_failures(
+    tmp_path: Path,
+    http_code: int,
+    attempts: int,
+) -> None:
+    connection = board_flow_store.connect(tmp_path / "store.sqlite3")
+    codes = ["BK0001", "BK0002", "BK0003", "BK0004"]
+    _seed_catalog(connection, codes)
+
+    class RefusedClient(FakeClient):
+        def fetch_minute_curve(self, board_code: str, *, board_type: str) -> list[MinuteFlowRow]:
+            self.attempted.append(board_code)
+            raise BoardFlowError("request refused") from HTTPError(
+                "https://example.invalid/", http_code, "refused", cast(Any, {}), None
+            )
+
+    fake = RefusedClient(boards=[], curves={})
+    result = monitor.archive_minutes(
+        cast(BoardFlowClient, fake),
+        connection,
+        monitor.ArchiveOptions(trade_date=_at(15, 30).date(), delay_seconds=0),
+        runtime=monitor.Runtime(now=lambda: _at(15, 30), sleep=lambda _: None),
+    )
+    assert fake.attempted == codes[:attempts]
+    assert result["boards_attempted"] == result["boards_failed"] == attempts
+    assert result["boards_unattempted"] == len(codes) - attempts
+    assert result["status"] == "failed"
+    assert result["stop_reason"] == (
+        f"http_{http_code}" if http_code < 500 else "consecutive_failures"
+    )
+
+
+def test_archive_wrong_dates_count_towards_failure_cutoff(tmp_path: Path) -> None:
+    connection = board_flow_store.connect(tmp_path / "store.sqlite3")
+    codes = [f"BK{i:04}" for i in range(4)]
+    _seed_catalog(connection, codes)
+    fake = FakeClient(boards=[], curves={code: _curve(code, _at(9, 0, day=10)) for code in codes})
+    result = monitor.archive_minutes(
+        cast(BoardFlowClient, fake),
+        connection,
+        monitor.ArchiveOptions(trade_date=_at(15, 30).date(), delay_seconds=0),
+        runtime=monitor.Runtime(now=lambda: _at(15, 30), sleep=lambda _: None),
+    )
+    assert fake.attempted == codes[:3]
+    assert result["boards_failed"] == result["date_mismatch_count"] == 3
+    assert result["failure_count"] == 0
+    assert result["boards_unattempted"] == 1
+    assert result["status"] == "failed"
+    assert connection.execute("SELECT COUNT(*) FROM flow_minute").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("value", [0, -1, True, 1.5])
+def test_archive_rejects_invalid_consecutive_failure_limit(value: Any) -> None:
+    with pytest.raises(ValueError, match="positive integer"):
+        monitor.ArchiveOptions(max_consecutive_failures=value)
