@@ -666,6 +666,24 @@ historical vintages. See [daily forecast observations](operations/report-rc-obse
 `marketdata contract verify-observation` emits `quant.raw_observation_assessment.v1` after verifying an externally pinned raw-observation manifest and its owner-sealed content. The `content_snapshot_sha256` is SHA-256 of the verified root `children` receipt list serialized as JSON with sorted object keys and compact separators; receipt order is preserved. It is separate from `manifest_sha256`, which hashes exact manifest bytes. The response includes `data_content_integrity=passed`, `historical_pit=unknown`, `derived_materialization=absent` (scope: this raw archive), `research_ready=false`, `time_basis=UTC`, recorded snapshot date/source revision, scan totals, and per-child recorded capture metadata. Null retrieval times stay null; the API supplies no historical cutoff or qualification decision. See [operations](operations.en.md#verify-a-pinned-raw-fundamentals-observation).
 
 
+## 分钟语义异常的采集隔离契约
+
+`metadata/minute_backfill/reverse_scheduler/semantic_quarantine.json` 的旧单股票金额硬界记录
+使用 `tushare.minute.semantic_quarantine.v1`。新 reader 同时接受 v1 和 v2。
+显式登记零量正额类别时升级为 `tushare.minute.semantic_quarantine.v2`，保留旧记录。
+旧 reader 遇到新版本继续阻断。
+
+v2 零量正额记录使用 `anomaly_kind=zero_volume_nonzero_amount_rows`、`scope=trade_date`，
+以排序且无重复的 `symbols` 列出全部异常股票，不包含旧 `symbol` 字段。
+`publication_allowed` 和 `source_values_modified` 均为 false。
+`issues` 仅允许该类别为非零，计数须与重新扫描的异常行数一致。
+原始分区、sidecar、失败验收和完整股票日重查文件均通过相对路径和 SHA-256 绑定。
+结构校验和金额硬界校验继续生效。
+
+该处置仅在全部当前审计阻断都有证据覆盖时允许继续采集。
+它不证明全日源数据完整，不授权发布，也不解决其他分钟与日线差异。
+登记和消费者升级顺序见[操作说明](operations.md#显式隔离已复现的分钟语义异常)。
+
 ## 供应商原始 L2 标识
 
 [L2 试点 v2](operations/l2-storage-pilot.zh-CN.md)保留全部供应商字段，并以 `_source_symbol` 记录目录标识。查询使用记录原始标识，路由到全部匹配的来源桶，保留不同文件及重复记录。默认严格检查标识一致性。显式保留策略会在字段清单和 manifest 中记录同数字前缀的标识集合、逐标识行数及后缀冲突，不推断规范交易所。混入不同数字代码、非法标识，以及日期和时钟错误仍会被拒绝。已有 v1 产物使用固定 v1 运行版本读取。

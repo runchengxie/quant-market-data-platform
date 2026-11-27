@@ -176,6 +176,29 @@ Use `scripts/operations/tushare_minute_history.py quarantine --artifacts-root <d
 
 The registry at `metadata/minute_backfill/reverse_scheduler/semantic_quarantine.json` binds source partition, sidecar, failed acceptance and requery SHA256 values. Original evidence and the persistent block remain unchanged. Acquisition proceeds only when quarantine fully covers that block. A recorded additional block can be registered by passing its exact acceptance report. Acquisition stays blocked until the primary and all additional markers are covered. Unknown failures, changed evidence and malformed registries remain blocking. Custom host preflights must use `quarantine_status(root, marker)["blocked"]` rather than marker existence. Gap repair uses the same gate and retains additional failures under `semantic-audit-additional-blocks/`.
 
+For reproduced zero-volume/positive-amount failures, use the separate
+`quarantine-zero-volume` command with the same evidence arguments and repeat
+`--symbol <ts-code>` for every failing stock. The named set must exactly cover all
+such failures. The requery must contain exactly those complete stock-days and
+reproduce every normalized field. Structural failures, any hard-notional failure,
+and other nonzero audit issues remain blocking. This records acquisition-only
+quarantine for the entire date. It does not certify source completeness, explain
+minute-versus-daily differences, or repair missing activity.
+
+Start with `--dry-run`: it validates the evidence and existing registry and prints
+the proposed entry without creating a writer lock or writing files. No provider
+request is made. Preview is not registration or recovery permission and must be
+revalidated under the shared writer lock when registering.
+
+This variant upgrades the registry to `tushare.minute.semantic_quarantine.v2`.
+Upgrade all acquisition, gap-repair, monitoring and recovery-verifier consumers
+to v2-capable immutable releases first. Verify their actual service pins rather
+than assuming a shared `current` link controls every service. Run registration
+preview and recovery preview, then explicitly coordinate registration and
+reconcile. Old v1 readers reject v2 and remain blocked. Existing v1 records remain
+readable by new readers, including legacy entries retained inside a v2 registry.
+Publication continues to reject the entire quarantined date.
+
 Partition acceptance, candidate publication, operational assembly and alias promotion reject quarantined dates, including paths through symlinks. Monitoring exposes `semantic_quarantine_dates` with a deduplicated warning; exhausted first-pass acquisition returns `download_complete_with_gaps`. Correct minute values still require separate investigation and repair. This command provides no automatic release from quarantine or publication exemption. Monitoring streams the bound evidence hashes to detect changes.
 
 The size baseline admits the quarantine evidence helpers and failure-path tests. Complexity and large-file budgets stay fixed; consolidate or remove these additions when the workflow is retired.

@@ -6,8 +6,8 @@
     "tests"
   ],
   "metrics": {
-    "python_files": 636,
-    "python_lines": 148121,
+    "python_files": 638,
+    "python_lines": 148672,
     "long_lines_over_100": 16,
     "functions_over_100": 37,
     "functions_over_250": 0,
@@ -18,11 +18,16 @@
     "tests_over_1000": 6
   },
   "change_record": {
-    "source_revision": "5335801",
-    "reason": "Add exactly 25 net physical Python lines for bounded remote-disconnect handling and recovery/exhaustion regression cases. File counts, structural and complexity limits, type coverage, test coverage, exclusions and security gates are unchanged.",
-    "exit_condition": "Remove this exact 25-line allowance if equivalent transport retry and exhaustion regressions are consolidated into shared provider coverage without additional lines."
+    "source_revision": "e906f8f16c83c2f1b70ef84f6d98dcb8f522a00f",
+    "reason": "Add explicit whole-date acquisition-only zero-volume source quarantine, v2 evidence validation, a no-write preview, CLI and failure-path coverage: exactly two Python files and 551 net physical Python lines. Structural, complexity, type, coverage, exclusion and security limits are unchanged.",
+    "exit_condition": "Remove this exact two-file/551-line allowance when zero-volume quarantine and equivalent multi-stock reproduction, v1 migration, immutable evidence, preview, locking and publication-refusal coverage are consolidated or the workflow is retired."
   },
   "previous_change_records": [
+    {
+      "source_revision": "5335801",
+      "reason": "Add exactly 25 net physical Python lines for bounded remote-disconnect handling and recovery/exhaustion regression cases. File counts, structural and complexity limits, type coverage, test coverage, exclusions and security gates are unchanged.",
+      "exit_condition": "Remove this exact 25-line allowance if equivalent transport retry and exhaustion regressions are consolidated into shared provider coverage without additional lines."
+    },
     {
       "source_revision": "d6b05ba",
       "reason": "Preserve the final unnamed Level-2 CSV column and add 42 net physical Python lines for the storage round-trip and invalid-header cases. Existing structural, complexity, typing, coverage and security limits remain in effect.",

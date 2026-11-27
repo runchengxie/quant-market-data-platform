@@ -41,6 +41,27 @@ def _validate_audit_issues(record: dict, bad: pd.DataFrame) -> None:
 def _validate_source(
     root: Path, record: dict, date: str, symbol: str
 ) -> tuple[Path, Path, pd.DataFrame]:
+    partition, sidecar, normalized = _source_partition(root, record, date)
+    flow = price_flow_diagnostics(normalized)
+    if flow["zero_volume_nonzero_amount_rows"]:
+        raise ValueError("quarantine cannot waive structural errors")
+    actual = (normalized.vol > 0) & (
+        (normalized.amount < normalized.low * normalized.vol * 0.9 - 1)
+        | (normalized.amount > normalized.high * normalized.vol * 1.1 + 1)
+    )
+    bad = normalized[actual]
+    if bad.empty or set(bad.ts_code) != {symbol}:
+        raise ValueError("quarantine symbol does not cover all semantic failures")
+    _validate_audit_issues(record, bad)
+    return (
+        partition,
+        sidecar,
+        normalized[normalized.ts_code.eq(symbol)].sort_values("trade_time").reset_index(drop=True),
+    )
+
+
+def _source_partition(root: Path, record: dict, date: str) -> tuple[Path, Path, pd.DataFrame]:
+    """Load a complete, hash-bound source without waiving any structural check."""
     partition = Path(record["path"]).resolve(strict=True)
     sidecar = Path(record["sidecar"]).resolve(strict=True)
     relative = partition.relative_to(root / "staging/tushare_minute_backfill_reverse/runs")
@@ -71,22 +92,9 @@ def _validate_source(
     ):
         raise ValueError("quarantine source grid or universe failure")
     structural = _frame_validation_issues(date, normalized)
-    flow = price_flow_diagnostics(normalized)
-    if any(structural.values()) or flow["zero_volume_nonzero_amount_rows"]:
+    if any(structural.values()):
         raise ValueError("quarantine cannot waive structural errors")
-    actual = (normalized.vol > 0) & (
-        (normalized.amount < normalized.low * normalized.vol * 0.9 - 1)
-        | (normalized.amount > normalized.high * normalized.vol * 1.1 + 1)
-    )
-    bad = normalized[actual]
-    if bad.empty or set(bad.ts_code) != {symbol}:
-        raise ValueError("quarantine symbol does not cover all semantic failures")
-    _validate_audit_issues(record, bad)
-    return (
-        partition,
-        sidecar,
-        normalized[normalized.ts_code.eq(symbol)].sort_values("trade_time").reset_index(drop=True),
-    )
+    return partition, sidecar, normalized
 
 
 def register(  # noqa: PLR0913 - explicit evidence registration interface
@@ -102,6 +110,22 @@ def register(  # noqa: PLR0913 - explicit evidence registration interface
     if not reason.strip():
         raise ValueError("quarantine reason is required")
     acceptance, requery = acceptance.resolve(strict=True), requery.resolve(strict=True)
+    record = _failed_record(root, runtime, acceptance, trade_date)
+    partition, sidecar, original = _validate_source(root, record, trade_date, symbol)
+    fresh, valid, problems = _validate_batch_frame(
+        pq.ParquetFile(requery).read().to_pandas(),
+        requested_symbols=[symbol],
+        trade_date=trade_date,
+    )
+    fresh = fresh.sort_values("trade_time").reset_index(drop=True)
+    if problems or valid != {symbol} or not original.equals(fresh):
+        raise ValueError("requery must reproduce the complete original stock-day")
+    entry = _entry(root, record, partition, sidecar, acceptance, requery, trade_date, reason)
+    entry["symbol"] = symbol
+    return _store_entry(root, entry)
+
+
+def _failed_record(root: Path, runtime: Path, acceptance: Path, trade_date: str) -> dict:
     primary = runtime / "semantic-audit-blocked.json"
     markers = ([primary] if primary.exists() else []) + _additional_markers(primary)
     if not any(_acceptance_path(root, marker) == acceptance for marker in markers):
@@ -114,22 +138,25 @@ def register(  # noqa: PLR0913 - explicit evidence registration interface
         or records[0].get("binding_matches") is not True
     ):
         raise ValueError("quarantine requires a bound failed semantic audit")
-    partition, sidecar, original = _validate_source(root, records[0], trade_date, symbol)
-    fresh, valid, problems = _validate_batch_frame(
-        pq.ParquetFile(requery).read().to_pandas(),
-        requested_symbols=[symbol],
-        trade_date=trade_date,
-    )
-    fresh = fresh.sort_values("trade_time").reset_index(drop=True)
-    if problems or valid != {symbol} or not original.equals(fresh):
-        raise ValueError("requery must reproduce the complete original stock-day")
-    entry = {
+    return records[0]
+
+
+def _entry(  # noqa: PLR0913 - immutable source and evidence identities
+    root: Path,
+    record: dict,
+    partition: Path,
+    sidecar: Path,
+    acceptance: Path,
+    requery: Path,
+    trade_date: str,
+    reason: str,
+) -> dict:
+    return {
         "status": "quarantined",
         "trade_date": trade_date,
-        "symbol": symbol,
         "reason": reason,
         "registered_at": datetime.now(UTC).isoformat(),
-        "issues": records[0]["issues"],
+        "issues": record["issues"],
         "partition": reference(root, partition),
         "sidecar": reference(root, sidecar),
         "acceptance": reference(root, acceptance),
@@ -137,18 +164,36 @@ def register(  # noqa: PLR0913 - explicit evidence registration interface
         "publication_allowed": False,
         "source_values_modified": False,
     }
+
+
+def _store_entry(
+    root: Path, entry: dict, *, schema: str | None = None, dry_run: bool = False
+) -> dict:
     data = load_registry(root)
     for existing in data["dates"].values():
         for name in ("partition", "sidecar", "acceptance", "requery"):
             bound_path(root, existing[name])
+    trade_date = entry["trade_date"]
     if trade_date in data["dates"]:
         old = data["dates"][trade_date]
-        if any(
-            old[k] != entry[k]
-            for k in ("symbol", "partition", "sidecar", "acceptance", "requery", "issues")
-        ):
+        keys = set(old) | set(entry)
+        if any(old.get(k) != entry.get(k) for k in keys - {"registered_at", "reason"}):
             raise ValueError("quarantine date is already bound to different evidence")
-        return {"status": "quarantined", "entry": old, "registry": str(root / REGISTRY)}
+        return {
+            "status": "preview" if dry_run else "quarantined",
+            "entry": old,
+            "registry": str(root / REGISTRY),
+            **({"would_update_registry": False} if dry_run else {}),
+        }
+    if dry_run:
+        return {
+            "status": "preview",
+            "entry": entry,
+            "registry": str(root / REGISTRY),
+            "would_update_registry": True,
+        }
     data["dates"][trade_date] = entry
+    if schema is not None:
+        data["schema_version"] = schema
     _atomic_write_json(root / REGISTRY, data)
     return {"status": "quarantined", "entry": entry, "registry": str(root / REGISTRY)}

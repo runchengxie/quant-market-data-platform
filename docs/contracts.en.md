@@ -326,6 +326,27 @@ publication exits nonzero. Discovery grants no permission. Omit inspect's `--out
 when using its read-only invocation.
 
 
+## Acquisition-only minute semantic quarantine
+
+`metadata/minute_backfill/reverse_scheduler/semantic_quarantine.json` uses
+`tushare.minute.semantic_quarantine.v1` for legacy single-symbol hard-notional
+entries. New readers accept both v1 and v2. The explicit zero-volume registration
+upgrades this registry to `tushare.minute.semantic_quarantine.v2`, retaining old
+entries. Old readers reject the new registry version and remain blocked.
+
+The v2 zero-volume entry has `anomaly_kind=zero_volume_nonzero_amount_rows`,
+`scope=trade_date`, a sorted distinct `symbols` list covering every affected
+stock, and no legacy `symbol` field. `publication_allowed` and
+`source_values_modified` are both false. `issues` must contain exactly this one
+nonzero category, with the recomputed row count. Partition, sidecar, failed
+acceptance and exact complete-stock-day requery are bound by relative path and
+SHA-256. Structural checks and the hard-notional guard remain unchanged.
+
+This disposition only lets acquisition proceed when all current audit markers
+are covered. It does not certify whole-day source completeness or authorize
+publication, and it does not resolve other minute-versus-daily discrepancies.
+See [registration and consumer upgrade ordering](operations.en.md#explicit-semantic-quarantine).
+
 ## Provider-native L2 source labels
 
 The [L2 pilot v2](operations/l2-storage-pilot.md) retains every provider field and adds `_source_symbol` for the directory identifier. Queries use original record IDs across all matching source buckets. Distinct members and duplicate rows remain separate. Strict identity validation is the default. An explicit preservation policy records suffix-conflict sets and their row counts with matching numeric prefixes in the profile and manifest, without asserting canonical exchange identity. Mixed numeric prefixes, invalid or unrelated IDs and date/clock errors remain rejected. Existing v1 artifacts require their fixed v1 runtime.
